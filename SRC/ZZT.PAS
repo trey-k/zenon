@@ -26,7 +26,7 @@
 {$I-}
 {$M 49152,163840,655360}
 program ZZT;
-uses Crt, Dos, Video, Keys, Sounds, Input, TxtWind, GameVars, Elements, Editor, Oop, Game;
+uses Crt, Dos, ExtMem, Video, Keys, Sounds, Input, TxtWind, GameVars, Elements, Editor, Oop, Game;
 
 procedure ParseArguments;
 	var
@@ -158,6 +158,7 @@ begin
 		VideoInstall(80, Blue);
 		OrderPrintId := @GameVersion;
 		TextWindowInit(5, 3, 50, 18);
+		ExtMemInstall;
 		New(IoTmpBuf);
 
 		VideoHideCursor;
@@ -173,6 +174,7 @@ begin
 		GameTitleLoop;
 
 		Dispose(IoTmpBuf);
+		ExtMemUninstall;
 	end;
 
 	SoundUninstall;
