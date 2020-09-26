@@ -209,8 +209,9 @@ procedure BoardClose;
 
 		ExtMemFree(World.BoardData[World.Info.CurrentBoard], World.BoardLen[World.Info.CurrentBoard]);
 		World.BoardLen[World.Info.CurrentBoard] := Ofs(ptr^) - Ofs(IoTmpBuf^);
-		ExtMemGet(World.BoardData[World.Info.CurrentBoard], World.BoardLen[World.Info.CurrentBoard]);
-		ExtMemWrite(World.BoardData[World.Info.CurrentBoard], IoTmpBuf^, World.BoardLen[World.Info.CurrentBoard]);
+		if ExtMemGet(World.BoardData[World.Info.CurrentBoard], World.BoardLen[World.Info.CurrentBoard]) then begin
+			ExtMemWrite(World.BoardData[World.Info.CurrentBoard], IoTmpBuf^, World.BoardLen[World.Info.CurrentBoard]);
+		end else RunError(203);
 	end;
 
 procedure BoardOpen(boardId: integer);
@@ -745,9 +746,10 @@ function WorldLoad(filename, extension: TString50; titleOnly: boolean): boolean;
 				for boardId := 0 to World.BoardCount do begin
 					SidebarAnimateLoading;
 					BlockRead(f, World.BoardLen[boardId], 2);
-					ExtMemGet(World.BoardData[boardId], World.BoardLen[boardId]);
-					BlockRead(f, IoTmpBuf^, World.BoardLen[boardId]);
-					ExtMemWrite(World.BoardData[boardId], IoTmpBuf^, World.BoardLen[boardId]);
+					if ExtMemGet(World.BoardData[boardId], World.BoardLen[boardId]) then begin
+						BlockRead(f, IoTmpBuf^, World.BoardLen[boardId]);
+						ExtMemWrite(World.BoardData[boardId], IoTmpBuf^, World.BoardLen[boardId]);
+					end else RunError(203);
 				end;
 
 				Close(f);
@@ -1146,10 +1148,14 @@ procedure GameUpdateSidebar;
 			if DebugEnabled then begin
 				Str(MemAvail, numStr);
 				VideoWriteText(62, 3, $1E, 'm' + numStr + ' ');
-				Str(ExtMemEmsAvailPages, numstr);
-				VideoWriteText(70, 3, $1E, 'e' + numStr + 'p ');
-				Str(ExtMemXmsAvail, numStr);
-				VideoWriteText(62, 4, $1E, 'x' + numStr + ' ');
+				if ExtMemEmsActive then begin
+					Str(ExtMemEmsAvailPages, numstr);
+					VideoWriteText(70, 3, $1E, 'e' + numStr + 'p ');
+				end;
+				if ExtMemXmsActive then begin
+					Str(ExtMemXmsAvail, numStr);
+					VideoWriteText(62, 4, $1E, 'x' + numStr + ' ');
+				end;
 			end;
 		end;
 	end;

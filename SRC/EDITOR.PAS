@@ -529,9 +529,11 @@ procedure EditorLoop;
 		var
 			i: byte;
 			f: file;
+			memoryError: boolean;
 		label TransferEnd;
 		begin
 			i := 1;
+			memoryError := false;
 			SidebarPromptChoice(true, 3, 'Transfer board:', 'Import Export', i);
 			if InputKeyPressed <> KEY_ESCAPE then begin
 				if i = 0 then begin
@@ -545,14 +547,15 @@ procedure EditorLoop;
 						ExtMemFree(World.BoardData[World.Info.CurrentBoard], World.BoardLen[World.Info.CurrentBoard]);
 						BlockRead(f, World.BoardLen[World.Info.CurrentBoard], 2);
 						if not DisplayIOError then begin
-							ExtMemGet(World.BoardData[World.Info.CurrentBoard], World.BoardLen[World.Info.CurrentBoard]);
-							BlockRead(f, IoTmpBuf^,
-								  World.BoardLen[World.Info.CurrentBoard]);
-							ExtMemWrite(World.BoardData[World.Info.CurrentBoard], IoTmpBuf^,
-								  World.BoardLen[World.Info.CurrentBoard]);
+							if ExtMemGet(World.BoardData[World.Info.CurrentBoard], World.BoardLen[World.Info.CurrentBoard]) then begin
+								BlockRead(f, IoTmpBuf^,
+									  World.BoardLen[World.Info.CurrentBoard]);
+								ExtMemWrite(World.BoardData[World.Info.CurrentBoard], IoTmpBuf^,
+									  World.BoardLen[World.Info.CurrentBoard]);
+							end else memoryError := true;
 						end;
 
-						if DisplayIOError then begin
+						if DisplayIOError or memoryError then begin
 							World.BoardLen[World.Info.CurrentBoard] := 0;
 							BoardCreate;
 							EditorDrawRefresh;

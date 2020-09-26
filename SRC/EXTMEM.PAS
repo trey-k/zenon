@@ -37,12 +37,14 @@ interface
 		end;
 	function ExtMemXmsAvail: longint;
 	function ExtMemEmsAvailPages: word;
-	procedure ExtMemInstall;
-	procedure ExtMemGet(var block: TExtMemBlock; size: word);
+	procedure ExtMemInstall(useEms: boolean; useXms: boolean);
+	function ExtMemGet(var block: TExtMemBlock; size: word): boolean;
 	procedure ExtMemWrite(var block: TExtMemBlock; var data; count: word);
 	procedure ExtMemRead(var block: TExtMemBlock; var data; count: word);
 	procedure ExtMemFree(var block: TExtMemBlock; size: word);
 	procedure ExtMemUninstall;
+	function ExtMemEmsActive: boolean;
+	function ExtMemXmsActive: boolean;
 implementation
 uses Dos;
 const
@@ -72,6 +74,7 @@ const
 	ExtMemInstalled: boolean = false;
 	{$ENDIF}
 var
+	ConvError: boolean;
 	EmsPageSets: array[0 .. EMS_MAX_PAGE_SETS-1] of set of byte;
 	{$IFDEF EXT_MEM_DEBUG}
 	ExtMemDebug: text;
@@ -84,6 +87,31 @@ type
 		SourceOffset: longint;
 		DestHandle: word;
 		DestOffset: longint;
+	end;
+
+{$F+}
+
+function ConvErrorHandler(size: word): integer;
+	begin
+		ConvError := true;
+		ConvErrorHandler := 1; { prevent runtime error }
+	end;
+
+function ConvDefErrorHandler(size: word): integer;
+	begin
+		ConvDefErrorHandler := 0; { crash! }
+	end;
+
+{$F-}
+
+function ExtMemEmsActive: boolean;
+	begin
+		ExtMemEmsActive := EmsHandle <> 0;
+	end;
+
+function ExtMemXmsActive: boolean;
+	begin
+		ExtMemXmsActive := XmsControl <> nil;
 	end;
 
 function XmsPresent: boolean;
@@ -221,7 +249,7 @@ function RoundUp(a, b: longint): longint;
 		RoundUp := (a + (b - 1)) div b;
 	end;
 
-function XmsInstall(maxAlloc: longint): longint;
+function XmsInstall(maxAlloc: longint; useXms: boolean): longint;
 	var
 		regs: Registers;
 		version: word;
@@ -230,6 +258,7 @@ function XmsInstall(maxAlloc: longint): longint;
 		XmsInstall := maxAlloc;
 		XmsControl := nil;
 		if maxAlloc <= 0 then exit;
+		if not useXms then exit;
 		if not XmsPresent then exit;
 		XmsControl := XmsGetControlProc;
 		version := XmsVersion;
@@ -456,13 +485,14 @@ function EmsVersion: byte;
 			EmsVersion := 0;
 	end;
 
-function EmsInstall(maxAlloc: longint): longint;
+function EmsInstall(maxAlloc: longint; useEms: boolean): longint;
 	var
 		avail, i: word;
 	begin
 		EmsInstall := maxAlloc;
 		EmsHandle := 0;
 		if maxAlloc <= 0 then exit;
+		if not useEms then exit;
 		if not EmsPresent then exit;
 		if EmsVersion < EMS_MIN_VERSION then exit;
 		EmsFrame := Ptr(EmsFrameSeg, 0);
@@ -587,10 +617,16 @@ function ExtMemEmsAvailPages: word;
 			ExtMemEmsAvailPages := 0;
 	end;
 
-procedure ConvGet(var block: TExtMemBlock; size: word);
+function ConvGet(var block: TExtMemBlock; size: word): boolean;
 	begin
+		HeapError := @ConvErrorHandler;
+		ConvError := false;
+
 		block.MemType := Conv;
 		GetMem(block.Ptr, size);
+
+		HeapError := @ConvDefErrorHandler;
+		ConvGet := not ConvError;
 	end;
 
 procedure ConvWrite(var block: TExtMemBlock; var data; count: word);
@@ -657,13 +693,16 @@ procedure ExtMemDebugBlock(var block: TExtMemBlock);
 	end;
 {$ENDIF}
 
-procedure ExtMemInstall;
+procedure ExtMemInstall(useEms: boolean; useXms: boolean);
 	var
 		extAlloc: longint;
 	begin
 		extAlloc := EXT_MEM_MAX_ALLOC;
-		extAlloc := XmsInstall(extAlloc);
-		extAlloc := EmsInstall(extAlloc);
+		extAlloc := XmsInstall(extAlloc, useXms);
+		extAlloc := EmsInstall(extAlloc, useEms);
+
+		HeapError := @ConvDefErrorHandler;
+
 		{$IFDEF EXT_MEM_DEBUG}
 		ExtMemInstalled := true;
 		Assign(ExtMemDebug, 'MEMDEBUG.LOG');
@@ -674,7 +713,7 @@ procedure ExtMemInstall;
 		{$ENDIF}
 	end;
 
-procedure ExtMemGet(var block: TExtMemBlock; size: word);
+function ExtMemGet(var block: TExtMemBlock; size: word): boolean;
 	label Done;
 	begin
 		{$IFDEF EXT_MEM_DEBUG}
@@ -691,11 +730,14 @@ procedure ExtMemGet(var block: TExtMemBlock; size: word);
 		end;
 		if XmsGet(block, size) then goto Done;
 		if EmsGet(block, size) then goto Done;
-		ConvGet(block, size);
+		if ConvGet(block, size) then goto Done;
+		ExtMemGet := false;
+		exit;
 	Done:
 		{$IFDEF EXT_MEM_DEBUG}
 		ExtMemDebugBlock(block);
 		{$ENDIF}
+		ExtMemGet := true;
 	end;
 
 procedure ExtMemWrite(var block: TExtMemBlock; var data; count: word);
