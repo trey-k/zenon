@@ -1,46 +1,22 @@
 @echo off
-if not exist BIN mkdir BIN
-del BIN\*.*
 
-if not exist DIST mkdir DIST
-del DIST\*.*
-
-echo.
-echo [ Building DATPACK.EXE ]
-echo.
-TPC /B /EBIN TOOLS\DATPACK.PAS
+echo [ Building DATPACK.EXE ] >> BUILD.LOG
+TPC /B /Q /EBUILD TOOLS\DATPACK.PAS >> BUILD.LOG
 if errorlevel 1 goto error
-echo.
-echo [ Building ZZT.DAT ]
-echo.
+
+echo [ Building ZZT.DAT ] >> BUILD.LOG
 cd DOC
-..\BIN\DATPACK.EXE /C ..\BIN\ZZT.DAT *.*
+..\BUILD\DATPACK.EXE /C ..\BUILD\ZZT.DAT *.* >> BUILD.LOG
 if errorlevel 1 goto error
 cd ..
 
-echo.
-echo [ Building ZZT.EXE ]
-echo.
-TPC /B /EBIN /GD /ISRC /USRC SRC\ZZT.PAS
+echo [ Building ZZT.EXE ] >> BUILD.LOG
+TPC /B /Q /EBUILD /GD /ISRC /USRC %COMPARGS% SRC\ZZT.PAS >> BUILD.LOG
 if errorlevel 1 goto error
-echo.
-echo [ Compressing ZZT.EXE ]
-echo.
-cd BIN
-..\TOOLS\LZEXE.EXE ZZT.EXE
-cd ..
-
-echo.
-echo [ Creating DIST/ ]
-echo.
-
-copy BIN\ZZT.EXE DIST\ZZT.EXE
-copy BIN\ZZT.DAT DIST\ZZT.DAT
-copy RES\ZZT.CFG DIST\ZZT.CFG
-copy RES\DEMO.ZZT DIST\DEMO.ZZT
-copy LICENSE.TXT DIST\LICENSE.TXT
 goto done
+
 :error
 echo.
 echo [ Error detected! Stopping. ]
 :done
+exit
