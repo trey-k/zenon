@@ -107,7 +107,7 @@ const
 	LineChars: string[16] = #249#208#210#186#181#188#187#185#198#200#201#204#205#202#203#206;
 
 implementation
-uses Dos, Crt, Video, Sounds, Input, Elements, Editor, Oop;
+uses Dos, Crt, ExtMem, Video, Sounds, Input, Elements, Editor, Oop;
 
 procedure SidebarClearLine(y: integer);
 	begin
@@ -207,10 +207,10 @@ procedure BoardClose;
 			end;
 		end;
 
-		FreeMem(World.BoardData[World.Info.CurrentBoard], World.BoardLen[World.Info.CurrentBoard]);
+		ExtMemFree(World.BoardData[World.Info.CurrentBoard], World.BoardLen[World.Info.CurrentBoard]);
 		World.BoardLen[World.Info.CurrentBoard] := Ofs(ptr^) - Ofs(IoTmpBuf^);
-		GetMem(World.BoardData[World.Info.CurrentBoard], World.BoardLen[World.Info.CurrentBoard]);
-		Move(IoTmpBuf^, World.BoardData[World.Info.CurrentBoard]^, World.BoardLen[World.Info.CurrentBoard]);
+		ExtMemGet(World.BoardData[World.Info.CurrentBoard], World.BoardLen[World.Info.CurrentBoard]);
+		ExtMemWrite(World.BoardData[World.Info.CurrentBoard], IoTmpBuf^, World.BoardLen[World.Info.CurrentBoard]);
 	end;
 
 procedure BoardOpen(boardId: integer);
@@ -222,7 +222,9 @@ procedure BoardOpen(boardId: integer);
 		if boardId > World.BoardCount then
 			boardId := World.Info.CurrentBoard;
 
-		ptr := World.BoardData[boardId];
+		ExtMemRead(World.BoardData[boardId], IoTmpBuf^, World.BoardLen[boardId]);
+
+		ptr := IoTmpBuf;
 
 		Move(ptr^, Board.Name, SizeOf(Board.Name));
 		AdvancePointer(ptr, SizeOf(Board.Name));
@@ -685,7 +687,7 @@ procedure WorldUnload;
 	begin
 		BoardClose;
 		for i := 0 to World.BoardCount do
-			FreeMem(World.BoardData[i], World.BoardLen[i]);
+			ExtMemFree(World.BoardData[i], World.BoardLen[i]);
 	end;
 
 function WorldLoad(filename, extension: TString50; titleOnly: boolean): boolean;
@@ -743,8 +745,9 @@ function WorldLoad(filename, extension: TString50; titleOnly: boolean): boolean;
 				for boardId := 0 to World.BoardCount do begin
 					SidebarAnimateLoading;
 					BlockRead(f, World.BoardLen[boardId], 2);
-					GetMem(World.BoardData[boardId], World.BoardLen[boardId]);
-					BlockRead(f, World.BoardData[boardId]^, World.BoardLen[boardId]);
+					ExtMemGet(World.BoardData[boardId], World.BoardLen[boardId]);
+					BlockRead(f, IoTmpBuf^, World.BoardLen[boardId]);
+					ExtMemWrite(World.BoardData[boardId], IoTmpBuf^, World.BoardLen[boardId]);
 				end;
 
 				Close(f);
@@ -795,7 +798,8 @@ procedure WorldSave(filename, extension: TString50);
 				BlockWrite(f, World.BoardLen[i], 2);
 				if DisplayIOError then goto OnError;
 
-				BlockWrite(f, World.BoardData[i]^, World.BoardLen[i]);
+				ExtMemRead(World.BoardData[i], IoTmpBuf^, World.BoardLen[i]);
+				BlockWrite(f, IoTmpBuf^, World.BoardLen[i]);
 				if DisplayIOError then goto OnError;
 			end;
 		end;
@@ -1141,7 +1145,11 @@ procedure GameUpdateSidebar;
 
 			if DebugEnabled then begin
 				Str(MemAvail, numStr);
-				VideoWriteText(69, 4, $1E, 'm' + numStr + ' ');
+				VideoWriteText(62, 3, $1E, 'm' + numStr + ' ');
+				Str(ExtMemEmsAvailPages, numstr);
+				VideoWriteText(70, 3, $1E, 'e' + numStr + 'p ');
+				Str(ExtMemXmsAvail, numStr);
+				VideoWriteText(62, 4, $1E, 'x' + numStr + ' ');
 			end;
 		end;
 	end;
