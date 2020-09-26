@@ -210,7 +210,7 @@ procedure TextWindowDraw(var state: TTextWindowState; withoutFormatting, viewing
 procedure TextWindowAppend(var state: TTextWindowState; line: TTextWindowLine);
 	begin
 		with state do begin
-			LineCount := LineCount + 1;
+			Inc(LineCount);
 			New(Lines[LineCount]);
 			Lines[LineCount]^ := line;
 		end;
@@ -221,7 +221,7 @@ procedure TextWindowFree(var state: TTextWindowState);
 		with state do begin
 			while LineCount > 0 do begin
 				Dispose(Lines[LineCount]);
-				LineCount := LineCount - 1;
+				Dec(LineCount);
 			end;
 			LoadedFilename := '';
 		end;
@@ -381,7 +381,7 @@ procedure TextWindowEdit(var state: TTextWindowState);
 					for i := (LinePos + 1) to LineCount do
 						Lines[i - 1] := Lines[i];
 
-					LineCount := LineCount - 1;
+					Dec(LineCount);
 					if LinePos > LineCount then
 						newLinePos := LineCount
 					else
@@ -423,14 +423,14 @@ procedure TextWindowEdit(var state: TTextWindowState);
 					KEY_PAGE_UP: newLinePos := LinePos - TextWindowHeight + 4;
 					KEY_PAGE_DOWN: newLinePos := LinePos + TextWindowHeight - 4;
 					KEY_RIGHT: begin
-						charPos := charPos + 1;
+						Inc(charPos);
 						if charPos > (Length(Lines[LinePos]^) + 1) then begin
 							charPos := 1;
 							newLinePos := LinePos + 1;
 						end;
 					end;
 					KEY_LEFT: begin
-						charPos := charPos - 1;
+						Dec(charPos);
 						if charPos < 1 then begin
 							charPos := TextWindowWidth;
 							newLinePos := LinePos - 1;
@@ -449,7 +449,7 @@ procedure TextWindowEdit(var state: TTextWindowState);
 
 							newLinePos := LinePos + 1;
 							charPos := 1;
-							LineCount := LineCount + 1;
+							Inc(LineCount);
 						end;
 					end;
 					KEY_BACKSPACE: begin
@@ -457,7 +457,7 @@ procedure TextWindowEdit(var state: TTextWindowState);
 							Lines[LinePos]^ :=
 								Copy(Lines[LinePos]^, 1, charPos - 2)
 								+ Copy(Lines[LinePos]^, charPos, Length(Lines[LinePos]^) - charPos + 1);
-							charPos := charPos - 1;
+							Dec(charPos);
 						end else if Length(Lines[LinePos]^) = 0 then begin
 							DeleteCurrLine;
 							newLinePos := LinePos - 1;
@@ -481,13 +481,13 @@ procedure TextWindowEdit(var state: TTextWindowState);
 							Lines[LinePos]^ := Copy(Lines[LinePos]^, 1, charPos - 1)
 								+ InputKeyPressed
 								+ Copy(Lines[LinePos]^, charPos + 1, Length(Lines[LinePos]^) - charPos);
-							charPos := charPos + 1;
+							Inc(charPos);
 						end else begin
 							if Length(Lines[LinePos]^) < (TextWindowWidth - 8) then begin
 								Lines[LinePos]^ := Copy(Lines[LinePos]^, 1, charPos - 1)
 									+ InputKeyPressed
 									+ Copy(Lines[LinePos]^, charPos, Length(Lines[LinePos]^) - charPos + 1);
-								charPos := charPos + 1;
+								Inc(charPos);
 							end;
 						end;
 					end;
@@ -508,7 +508,7 @@ procedure TextWindowEdit(var state: TTextWindowState);
 
 			if Length(Lines[LineCount]^) = 0 then begin
 				Dispose(Lines[LineCount]);
-				LineCount := LineCount - 1;
+				Dec(LineCount);
 			end;
 		end;
 	end;

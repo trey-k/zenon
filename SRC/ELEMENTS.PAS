@@ -65,10 +65,10 @@ procedure ElementMessageTimerTick(statId: integer);
 			case X of
 				0: begin
 					VideoWriteText((60 - Length(Board.Info.Message)) div 2, 24, 9 + (P2 mod 7), ' '+Board.Info.Message+' ');
-					P2 := P2 - 1;
+					Dec(P2);
 					if P2 <= 0 then begin
 						RemoveStat(statId);
-						CurrentStatTicked := CurrentStatTicked - 1;
+						Dec(CurrentStatTicked);
 						BoardDrawBorder;
 						Board.Info.Message := '';
 					end;
@@ -311,7 +311,7 @@ procedure ElementCentipedeSegmentTick(statId: integer);
 				if Leader < -1 then
 					Board.Tiles[X][Y].Element := E_CENTIPEDE_HEAD
 				else
-					Leader := Leader - 1;
+					Dec(Leader);
 			end;
 		end;
 	end;
@@ -378,7 +378,7 @@ procedure ElementBulletTick(statId: integer);
 			end;
 
 			RemoveStat(statId);
-			CurrentStatTicked := CurrentStatTicked - 1;
+			Dec(CurrentStatTicked);
 			if (iElem = E_OBJECT) or (iElem = E_SCROLL) then begin
 				iStat := GetStatIdAt(ix, iy);
 				if OopSend(-iStat, 'SHOT', false) then begin end;
@@ -558,7 +558,7 @@ procedure ElementBombTick(statId: integer);
 	begin
 		with Board.Stats[statId] do begin
 			if P1 > 0 then begin
-				P1 := P1 - 1;
+				Dec(P1);
 				BoardDrawTile(X, Y);
 
 				if P1 = 1 then begin
@@ -669,7 +669,7 @@ procedure ElementTransporterDraw(x, y: integer; var ch: byte);
 procedure ElementStarDraw(x, y: integer; var ch: byte);
 	begin
 		ch := Ord(StarAnimChars[(CurrentTick mod 4) + 1]);
-		Board.Tiles[x][y].Color := Board.Tiles[x][y].Color + 1;
+		Inc(Board.Tiles[x][y].Color);
 		if Board.Tiles[x][y].Color > 15 then
 			Board.Tiles[x][y].Color := 9;
 	end;
@@ -677,7 +677,7 @@ procedure ElementStarDraw(x, y: integer; var ch: byte);
 procedure ElementStarTick(statId: integer);
 	begin
 		with Board.Stats[statId] do begin
-			P2 := P2 - 1;
+			Dec(P2);
 			if P2 <= 0 then begin
 				RemoveStat(statId);
 			end else if (P2 mod 2) = 0 then begin
@@ -730,7 +730,7 @@ procedure ElementSlimeTick(statId: integer);
 	begin
 		with Board.Stats[statId] do begin
 			if P1 < P2 then
-				P1 := P1 + 1
+				Inc(P1)
 			else begin
 				color := Board.Tiles[X][Y].Color;
 				P1 := 0;
@@ -751,7 +751,7 @@ procedure ElementSlimeTick(statId: integer);
 							Board.Stats[Board.StatCount].P2 := P2;
 						end;
 
-						changedTiles := changedTiles + 1;
+						Inc(changedTiles);
 					end;
 				end;
 
@@ -870,7 +870,7 @@ procedure ElementBlinkWallTick(statId: integer);
 					P3 := (P2 * 2) + 1;
 				end;
 			end else begin
-				P3 := P3 - 1;
+				Dec(P3);
 			end;
 		end;
 	end;
@@ -966,7 +966,7 @@ procedure ElementDuplicatorTick(statId: integer);
 	begin
 		with Board.Stats[statId] do begin
 			if P1 <= 4 then begin
-				P1 := P1 + 1;
+				Inc(P1);
 				BoardDrawTile(X, Y);
 			end else begin
 				P1 := 0;
@@ -1010,7 +1010,7 @@ procedure ElementDuplicatorTick(statId: integer);
 procedure ElementScrollTick(statId: integer);
 	begin
 		with Board.Stats[statId] do begin
-			Board.Tiles[X][Y].Color := Board.Tiles[X][Y].Color + 1;
+			Inc(Board.Tiles[X][Y].Color);
 			if Board.Tiles[X][Y].Color > $0F then
 				Board.Tiles[X][Y].Color := $09;
 
@@ -1073,8 +1073,8 @@ procedure ElementAmmoTouch(x, y: integer; sourceStatId: integer; var deltaX, del
 
 procedure ElementGemTouch(x, y: integer; sourceStatId: integer; var deltaX, deltaY: integer);
 	begin
-		World.Info.Gems := World.Info.Gems + 1;
-		World.Info.Health := World.Info.Health + 1;
+		Inc(World.Info.Gems);
+		Inc(World.Info.Health);
 		World.Info.Score := World.Info.Score + 10;
 
 		Board.Tiles[x][y].Element := E_EMPTY;
@@ -1165,7 +1165,7 @@ procedure ElementPusherTick(statId: integer);
 
 procedure ElementTorchTouch(x, y: integer; sourceStatId: integer; var deltaX, deltaY: integer);
 	begin
-		World.Info.Torches := World.Info.Torches + 1;
+		Inc(World.Info.Torches);
 		Board.Tiles[x][y].Element := E_EMPTY;
 
 		BoardDrawTile(x, y);
@@ -1369,11 +1369,11 @@ procedure ElementPlayerTick(statId: integer);
 							if (Board.Tiles[Board.Stats[i].X][Board.Stats[i].Y].Element = E_BULLET)
 								and (Board.Stats[i].P1 = SHOT_SOURCE_PLAYER)
 							then
-								bulletCount := bulletCount + 1;
+								Inc(bulletCount);
 
 						if bulletCount < Board.Info.MaxShots then begin
 							if BoardShoot(E_BULLET, X, Y, PlayerDirX, PlayerDirY, SHOT_SOURCE_PLAYER) then begin
-								World.Info.Ammo := World.Info.Ammo - 1;
+								Dec(World.Info.Ammo);
 								GameUpdateSidebar;
 
 								SoundQueue(2, #64#1#48#1#32#1);
@@ -1409,7 +1409,7 @@ procedure ElementPlayerTick(statId: integer);
 					if World.Info.TorchTicks <= 0 then begin
 						if World.Info.Torches > 0 then begin
 							if Board.Info.IsDark then begin
-								World.Info.Torches := World.Info.Torches - 1;
+								Dec(World.Info.Torches);
 								World.Info.TorchTicks := TORCH_DURATION;
 
 								DrawPlayerSurroundings(X, Y, 0);
@@ -1457,7 +1457,7 @@ procedure ElementPlayerTick(statId: integer);
 			end;
 
 			if World.Info.TorchTicks > 0 then begin
-				World.Info.TorchTicks := World.Info.TorchTicks - 1;
+				Dec(World.Info.TorchTicks);
 				if World.Info.TorchTicks <= 0 then begin
 					DrawPlayerSurroundings(X, Y, 0);
 					SoundQueue(3, #48#1#32#1#16#1);
@@ -1468,7 +1468,7 @@ procedure ElementPlayerTick(statId: integer);
 			end;
 
 			if World.Info.EnergizerTicks > 0 then begin
-				World.Info.EnergizerTicks := World.Info.EnergizerTicks - 1;
+				Dec(World.Info.EnergizerTicks);
 
 				if World.Info.EnergizerTicks = 10 then
 					SoundQueue(9, #32#3#26#3#23#3#22#3#21#3#19#3#16#3)
@@ -1480,7 +1480,7 @@ procedure ElementPlayerTick(statId: integer);
 
 			if (Board.Info.TimeLimitSec > 0) and (World.Info.Health > 0) then
 				if SoundHasTimeElapsed(World.Info.BoardTimeHsec, 100) then begin
-					World.Info.BoardTimeSec := World.Info.BoardTimeSec + 1;
+					Inc(World.Info.BoardTimeSec);
 
 					if (Board.Info.TimeLimitSec - 10) = World.Info.BoardTimeSec then begin
 						DisplayMessage(200, 'Running out of time!');

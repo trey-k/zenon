@@ -53,7 +53,7 @@ procedure EditorAppendBoard;
 		if World.BoardCount < MAX_BOARD then begin
 			BoardClose;
 
-			World.BoardCount := World.BoardCount + 1;
+			Inc(World.BoardCount);
 			World.Info.CurrentBoard := World.BoardCount;
 			World.BoardLen[World.BoardCount] := 0;
 			BoardCreate;
@@ -607,11 +607,11 @@ procedure EditorLoop;
 							begin
 								xPosition[toFill] := x + NeighborDeltaX[i];
 								yPosition[toFill] := y + NeighborDeltaY[i];
-								toFill := toFill + 1;
+								Inc(toFill);
 							end;
 						end;
 
-				filled := filled + 1;
+				Inc(filled);
 				x := xPosition[filled];
 				y := yPosition[filled];
 			end;
@@ -672,7 +672,7 @@ procedure EditorLoop;
 				end else if (InputKeyPressed = KEY_BACKSPACE) and (cursorX > 1)
 					and EditorPrepareModifyTile(cursorX - 1, cursorY) then
 				begin
-					cursorX := cursorX - 1;
+					Dec(cursorX);
 				end else if (InputKeyPressed = KEY_ENTER) or (InputKeyPressed = KEY_ESCAPE) then begin
 					drawMode := DrawingOff;
 					InputKeyPressed := #0;
@@ -718,7 +718,7 @@ procedure EditorLoop;
 					'P': begin
 						VideoWriteText(62, 21, $1F, '       ');
 						if cursorPattern <= EditorPatternCount then
-							cursorPattern := cursorPattern + 1
+							Inc(cursorPattern)
 						else
 							cursorPattern := 1;
 					end;
@@ -726,7 +726,7 @@ procedure EditorLoop;
 						VideoWriteText(72, 19, $1E, '       ');
 						VideoWriteText(69, 21, $1F, '        ');
 						if (cursorColor mod $10) <> $0F then
-							cursorColor := cursorColor + 1
+							Inc(cursorColor)
 						else
 							cursorColor := ((cursorColor div $10) * $10) + 9;
 					end;
@@ -818,9 +818,9 @@ procedure EditorLoop;
 						for iElem := 0 to MAX_ELEMENT do begin
 							if ElementDefs[iElem].EditorCategory = selectedCategory then begin
 								if Length(ElementDefs[iElem].CategoryName) <> 0 then begin
-									i := i + 1;
+									Inc(i);
 									VideoWriteText(65, i, $1E, ElementDefs[iElem].CategoryName);
-									i := i + 1;
+									Inc(i);
 								end;
 
 								VideoWriteText(61, i, ((i mod 2) shl 6) + $30, ' ' + ElementDefs[iElem].EditorShortcut + ' ');
@@ -837,7 +837,7 @@ procedure EditorLoop;
 									elemMenuColor := ElementDefs[iElem].Color;
 								VideoWriteText(78, i, elemMenuColor, ElementDefs[iElem].Character);
 
-								i := i + 1;
+								Inc(i);
 							end;
 						end;
 						InputReadWaitKey;
@@ -1044,7 +1044,7 @@ procedure HighScoresAdd(score: integer);
 	begin
 		listPos := 1;
 		while (listPos <= 30) and (score < HighScoreList[listPos].Score) do
-			listPos := listPos + 1;
+			Inc(listPos);
 		if (listPos <= 30) and (score > 0) then begin
 			for i := 29 downto listPos do
 				HighScoreList[i + 1] := HighScoreList[i];
