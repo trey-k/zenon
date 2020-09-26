@@ -226,18 +226,18 @@ function SoundParse(input: string): string;
 		noteDuration: integer;
 		output: string;
 		noteTone: integer;
+		inPos: byte;
 	procedure AdvanceInput;
-		begin
-			input := Copy(input, 2, Length(input) - 1);
-		end;
+		inline($FE/$86/>inPos); { Inc(inPos); in inline assembly }
 	begin
 		output := '';
 		noteOctave := 3;
 		noteDuration := 1;
+		inPos := 1;
 
-		while Length(input) <> 0 do begin
+		while inPos <= Length(input) do begin
 			noteTone := -1;
-			case UpCase(input[1]) of
+			case UpCase(input[inPos]) of
 				'T': begin
 					noteDuration := 1;
 					AdvanceInput;
@@ -281,7 +281,7 @@ function SoundParse(input: string): string;
 					AdvanceInput;
 				end;
 				'A'..'G': begin
-					case UpCase(input[1]) of
+					case UpCase(input[inPos]) of
 						'C': begin
 							noteTone := 0;
 							AdvanceInput;
@@ -312,7 +312,7 @@ function SoundParse(input: string): string;
 						end;
 					end;
 
-					case UpCase(input[1]) of
+					if inPos <= Length(input) then case UpCase(input[inPos]) of
 						'!': begin
 							Dec(noteTone);
 							AdvanceInput;
@@ -330,7 +330,7 @@ function SoundParse(input: string): string;
 					AdvanceInput;
 				end;
 				'0'..'9': begin
-					output := output + Chr(Ord(input[1]) + $F0 - Ord('0')) + Chr(noteDuration);
+					output := output + Chr(Ord(input[inPos]) + $F0 - Ord('0')) + Chr(noteDuration);
 					AdvanceInput;
 				end;
 			else AdvanceInput end;
