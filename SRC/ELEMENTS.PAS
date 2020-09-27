@@ -1044,7 +1044,10 @@ procedure ElementScrollTouch(x, y: integer; sourceStatId: integer; var deltaX, d
 			OopExecute(statId, DataPos, 'Scroll');
 		end;
 
-		RemoveStat(GetStatIdAt(x, y));
+		statId := GetStatIdAt(x, y);
+		if statId <> -1 then begin
+			RemoveStat(statId);
+		end;
 	end;
 
 procedure ElementKeyTouch(x, y: integer; sourceStatId: integer; var deltaX, deltaY: integer);
