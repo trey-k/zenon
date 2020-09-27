@@ -904,10 +904,13 @@ procedure ElementPushablePush(x, y: integer; deltaX, deltaY: integer);
 			if ((Element = E_SLIDER_NS) and (deltaX = 0)) or ((Element = E_SLIDER_EW) and (deltaY = 0))
 				or ElementDefs[Element].Pushable then
 			begin
-				if Board.Tiles[x + deltaX][y + deltaY].Element = E_TRANSPORTER then
-					ElementTransporterMove(x, y, deltaX, deltaY)
-				else if Board.Tiles[x + deltaX][y + deltaY].Element <> E_EMPTY then
-					ElementPushablePush(x + deltaX, y + deltaY, deltaX, deltaY);
+				if Board.Tiles[x + deltaX][y + deltaY].Element = E_TRANSPORTER then begin
+					ElementTransporterMove(x, y, deltaX, deltaY);
+				end else if Board.Tiles[x + deltaX][y + deltaY].Element <> E_EMPTY then begin
+					if (deltaX <> 0) or (deltaY <> 0) then begin
+						ElementPushablePush(x + deltaX, y + deltaY, deltaX, deltaY);
+					end;
+				end;
 
 				if not ElementDefs[Board.Tiles[x + deltaX][y + deltaY].Element].Walkable
 					and ElementDefs[Board.Tiles[x + deltaX][y + deltaY].Element].Destructible
