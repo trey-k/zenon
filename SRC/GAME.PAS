@@ -1475,10 +1475,12 @@ procedure GamePlayLoop(boardChanged: boolean);
 				VideoWriteText(62, 17, $70, ' H ');
 				VideoWriteText(65, 17, $1E, ' High Scores');
 
+{$IFDEF EDITOR}
 				if EditorEnabled then begin
 					VideoWriteText(62, 18, $30, ' E ');
 					VideoWriteText(65, 18, $1E, ' Board Editor');
 				end;
+{$ENDIF}
 			end;
 		end;
 	begin
@@ -1647,11 +1649,13 @@ procedure GameTitleLoop;
 					'A': begin
 						GameAboutScreen;
 					end;
+{$IFDEF EDITOR}
 					'E': if EditorEnabled then begin
 						EditorLoop;
 						ReturnBoardId := World.Info.CurrentBoard;
 						boardChanged := true;
 					end;
+{$ENDIF}
 					'S': begin
 						SidebarPromptSlider(true, 66, 21, 'Game speed:;FS', TickSpeed);
 						InputKeyPressed := #0;
