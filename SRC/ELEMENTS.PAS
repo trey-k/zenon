@@ -489,6 +489,8 @@ procedure ElementConveyorTick(x, y: integer; direction: integer);
 							Board.Tiles[ix][iy].Element := E_EMPTY;
 							MoveStat(iStat, ix, iy);
 							Board.Tiles[x + DiagonalDeltaX[i]][y + DiagonalDeltaY[i]] := tmpTile;
+							{ FIX: Add missing BoardDrawTile. }
+							BoardDrawTile(x + DiagonalDeltaX[i], y + DiagonalDeltaY[i]);
 						end else begin
 							Board.Tiles[ix][iy] := tiles[i];
 							BoardDrawTile(ix, iy);
