@@ -662,12 +662,18 @@ procedure ElementTransporterTick(statId: integer);
 	end;
 
 procedure ElementTransporterDraw(x, y: integer; var ch: byte);
+	var
+		i: integer;
 	begin
 		with Board.Stats[GetStatIdAt(x, y)] do begin
-			if StepX = 0 then
-				ch := Ord(TransporterNSChars[StepY * 2 + 3 + (CurrentTick div Cycle) mod 4])
+			if Cycle = 0 then
+				i := 0
 			else
-				ch := Ord(TransporterEWChars[StepX * 2 + 3 + (CurrentTick div Cycle) mod 4]);
+				i := (CurrentTick div Cycle) mod 4;
+			if StepX = 0 then
+				ch := Ord(TransporterNSChars[StepY * 2 + 3 + i])
+			else
+				ch := Ord(TransporterEWChars[StepX * 2 + 3 + i]);
 		end;
 	end;
 
