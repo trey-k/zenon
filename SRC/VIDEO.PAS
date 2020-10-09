@@ -40,6 +40,8 @@ interface
 		VideoTextSegment: word;
 		VideoTextPointer: pointer;
 		VideoCursorVisible: boolean;
+		VideoEGAInstalled: boolean;
+		VideoMDAInstalled: boolean;
 	function VideoConfigure: boolean;
 	procedure VideoInstall(columns, borderColor: integer);
 	procedure VideoUninstall;
@@ -126,6 +128,21 @@ procedure VideoWriteTextFast(x, y, color: byte; text: TVideoLine);
 		);
 	end;
 
+procedure VideoWriteTextCGABW(x, y, color: byte; text: TVideoLine);
+	begin
+		if (color and $09) = $09 then
+			color := (color and $F0) or $0F
+		else if (color and $07) <> 0 then
+			color := (color and $F0) or $07;
+
+		if (color and $0F) = $00 then
+			color := (color and $8F) or $70
+		else if (color and $70) <> $70 then
+			color := color and $8F;
+
+		VideoWriteTextCGA(x, y, color, text);
+	end;
+
 procedure VideoWriteTextFastBW(x, y, color: byte; text: TVideoLine);
 	begin
 		if (color and $09) = $09 then
@@ -171,17 +188,26 @@ procedure VideoInstall(columns, borderColor: integer);
 	var
 		regs: Registers;
 	begin
-		regs.AX := $1201;
-		regs.BL := $30;
+		regs.AH := $12;
+		regs.BX := $FF10;
 		Intr($10, regs);
+		VideoEGAInstalled := regs.BH <> $FF;
+		VideoMDAInstalled := LastMode = 7;
 
-		if not VideoMonochrome then
-			TextBackground(borderColor);
+		if VideoEGAInstalled then begin
+			regs.AX := $1201;
+			regs.BL := $30;
+			Intr($10, regs);
+		end;
 
 		VideoColumns := columns;
 		if VideoMonochrome then begin
-			VideoWriteText := VideoWriteTextFastBW;
-			if LastMode in [0, 1, 2, 3] then begin
+			if VideoEGAInstalled or VideoMDAInstalled then
+				VideoWriteText := VideoWriteTextFastBW
+			else
+				VideoWriteText := VideoWriteTextCGABW;
+
+			if (LastMode >= 0) and (LastMode <= 3) then begin
 				if columns = 80 then begin
 					TextMode(BW80);
 				end else begin
@@ -192,16 +218,22 @@ procedure VideoInstall(columns, borderColor: integer);
 				VideoColumns := 80;
 			end;
 		end else begin
-			VideoWriteText := VideoWriteTextCGA;
-			if VideoColumns = 80 then begin
+			if VideoEGAInstalled or VideoMDAInstalled then
+				VideoWriteText := VideoWriteTextFast
+			else
+				VideoWriteText := VideoWriteTextCGA;
+
+			if columns = 80 then begin
 				TextMode(CO80);
 			end else begin
 				TextMode(CO40);
 			end;
-			if not VideoMonochrome then
-				TextBackground(borderColor);
-			ClrScr;
+
+			TextBackground(borderColor);
 		end;
+
+		ClrScr;
+
 		if not VideoCursorVisible then
 			VideoHideCursor;
 		VideoSetBorderColor(borderColor);
@@ -211,9 +243,12 @@ procedure VideoUninstall;
 	var
 		regs: Registers;
 	begin
-		regs.AX := $1201;
-		regs.BL := $30;
-		Intr($10, regs);
+		if VideoEGAInstalled then begin
+			regs.AX := $1201;
+			regs.BL := $30;
+			Intr($10, regs);
+		end;
+
 		TextBackground(0);
 		VideoColumns := 80;
 		if VideoMonochrome then
@@ -256,7 +291,6 @@ procedure VideoMove(x, y, chars: integer; data: pointer; toVideo: boolean);
 		offset: integer;
 	begin
 		offset := (y * VideoColumns + x) * 2;
-		VideoWriteTextCGA(0, 0, 0, '');
 		if toVideo then
 			Move(data^, Ptr(VideoTextSegment, offset)^, chars * 2)
 		else
@@ -267,7 +301,7 @@ procedure VideoMove(x, y, chars: integer; data: pointer; toVideo: boolean);
 begin
 	VideoBorderColor := 0;
 	VideoColumns := 80;
-	VideoWriteText := VideoWriteTextFastBW;
+	VideoWriteText := VideoWriteTextCGA;
 	if LastMode = 7 then begin
 		VideoTextSegment := $B000;
 		VideoMonochrome := true;
