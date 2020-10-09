@@ -867,14 +867,15 @@ function GameWorldLoad(extension: TString50): boolean;
 			entryName := textWindow.Lines[textWindow.LinePos]^;
 			if Pos(' ', entryName) <> 0 then
 				entryName := Copy(entryName, 1, Pos(' ', entryName) - 1);
+		end else entryName := '';
 
+		TextWindowFree(textWindow);
+		New(IoTmpBuf);
+
+		if Length(entryName) > 0 then begin
 			GameWorldLoad := WorldLoad(entryName, extension, false);
 			TransitionDrawToFill(#219, $44);
 		end;
-
-		TextWindowFree(textWindow);
-
-		New(IoTmpBuf);
 	end;
 
 procedure CopyStatDataToTextWindow(statId: integer; var state: TTextWindowState);
