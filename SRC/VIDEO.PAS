@@ -128,34 +128,37 @@ procedure VideoWriteTextFast(x, y, color: byte; text: TVideoLine);
 		);
 	end;
 
-procedure VideoWriteTextCGABW(x, y, color: byte; text: TVideoLine);
+function ColorToBW(color: byte): byte;
 	begin
+		{ FIX: Special handling of blinking solids }
+		if (color and $80) = $80 then
+			if ((color shr 4) and $07) = (color and $0F) then
+				color := (color and $7F);
+
 		if (color and $09) = $09 then
 			color := (color and $F0) or $0F
 		else if (color and $07) <> 0 then
 			color := (color and $F0) or $07;
 
-		if (color and $0F) = $00 then
-			color := (color and $8F) or $70
-		else if (color and $70) <> $70 then
+		if (color and $0F) = $00 then begin
+			if (color and $70) = $00 then
+				color := (color and $8F)
+			else
+				color := (color and $8F) or $70;
+		end else if (color and $70) <> $70 then
 			color := color and $8F;
 
-		VideoWriteTextCGA(x, y, color, text);
+		ColorToBW := color;
+	end;
+
+procedure VideoWriteTextCGABW(x, y, color: byte; text: TVideoLine);
+	begin
+		VideoWriteTextCGA(x, y, ColorToBW(color), text);
 	end;
 
 procedure VideoWriteTextFastBW(x, y, color: byte; text: TVideoLine);
 	begin
-		if (color and $09) = $09 then
-			color := (color and $F0) or $0F
-		else if (color and $07) <> 0 then
-			color := (color and $F0) or $07;
-
-		if (color and $0F) = $00 then
-			color := (color and $8F) or $70
-		else if (color and $70) <> $70 then
-			color := color and $8F;
-
-		VideoWriteTextFast(x, y, color, text);
+		VideoWriteTextFast(x, y, ColorToBW(color), text);
 	end;
 
 {$F-}
