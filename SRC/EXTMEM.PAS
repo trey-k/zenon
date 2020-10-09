@@ -551,6 +551,7 @@ function EmsGet(var block: TExtMemBlock; size: word): boolean;
 		numPages, i: word;
 	begin
 		EmsGet := false;
+		if EmsHandle = 0 then exit;
 		numPages := RoundUp(size, 16384);
 		if numPages > EmsPageAvail then exit;
 		block.MemType := Ems;
@@ -724,10 +725,8 @@ function ExtMemGet(var block: TExtMemBlock; size: word): boolean;
 		{ Unlink block from XMS block list }
 		{ in case we're overwriting an allocated XMS block }
 		XmsUnlink(block);
-		if size = 0 then begin
-			block.MemType := NoMem;
-			goto Done;
-		end;
+		block.MemType := NoMem;
+		if size = 0 then goto Done;
 		if XmsGet(block, size) then goto Done;
 		if EmsGet(block, size) then goto Done;
 		if ConvGet(block, size) then goto Done;
