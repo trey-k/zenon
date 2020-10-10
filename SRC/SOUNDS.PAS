@@ -227,8 +227,6 @@ function SoundParse(input: string): string;
 		output: string;
 		noteTone: integer;
 		inPos: byte;
-	procedure AdvanceInput;
-		inline($FE/$86/>inPos); { Inc(inPos); in inline assembly }
 	begin
 		output := '';
 		noteOctave := 3;
@@ -240,86 +238,86 @@ function SoundParse(input: string): string;
 			case UpCase(input[inPos]) of
 				'T': begin
 					noteDuration := 1;
-					AdvanceInput;
+					Inc(inPos);
 				end;
 				'S': begin
 					noteDuration := 2;
-					AdvanceInput;
+					Inc(inPos);
 				end;
 				'I': begin
 					noteDuration := 4;
-					AdvanceInput;
+					Inc(inPos);
 				end;
 				'Q': begin
 					noteDuration := 8;
-					AdvanceInput;
+					Inc(inPos);
 				end;
 				'H': begin
 					noteDuration := 16;
-					AdvanceInput;
+					Inc(inPos);
 				end;
 				'W': begin
 					noteDuration := 32;
-					AdvanceInput;
+					Inc(inPos);
 				end;
 				'.': begin
 					noteDuration := (noteDuration * 3) div 2;
-					AdvanceInput;
+					Inc(inPos);
 				end;
 				'3': begin
 					noteDuration := noteDuration div 3;
-					AdvanceInput;
+					Inc(inPos);
 				end;
 				'+': begin
 					if noteOctave < 6 then
 						Inc(noteOctave);
-					AdvanceInput;
+					Inc(inPos);
 				end;
 				'-': begin
 					if noteOctave > 1 then
 						Dec(noteOctave);
-					AdvanceInput;
+					Inc(inPos);
 				end;
 				'A'..'G': begin
 					case UpCase(input[inPos]) of
 						'C': begin
 							noteTone := 0;
-							AdvanceInput;
+							Inc(inPos);
 						end;
 						'D': begin
 							noteTone := 2;
-							AdvanceInput;
+							Inc(inPos);
 						end;
 						'E': begin
 							noteTone := 4;
-							AdvanceInput;
+							Inc(inPos);
 						end;
 						'F': begin
 							noteTone := 5;
-							AdvanceInput;
+							Inc(inPos);
 						end;
 						'G': begin
 							noteTone := 7;
-							AdvanceInput;
+							Inc(inPos);
 						end;
 						'A': begin
 							noteTone := 9;
-							AdvanceInput;
+							Inc(inPos);
 						end;
 						'B': begin
 							noteTone := 11;
-							AdvanceInput;
+							Inc(inPos);
 						end;
 					end;
 
 					if inPos <= Length(input) then case UpCase(input[inPos]) of
 						'!': begin
 							Dec(noteTone);
-							AdvanceInput;
+							Inc(inPos);
 						end;
 						'#': begin
 							Inc(noteTone);
-							AdvanceInput;
+							Inc(inPos);
 						end;
 					end;
 
@@ -327,13 +325,13 @@ function SoundParse(input: string): string;
 				end;
 				'X': begin
 					output := output + #0 + Chr(noteDuration);
-					AdvanceInput;
+					Inc(inPos);
 				end;
 				'0'..'9': begin
 					output := output + Chr(Ord(input[inPos]) + $F0 - Ord('0')) + Chr(noteDuration);
-					AdvanceInput;
+					Inc(inPos);
 				end;
-			else AdvanceInput end;
+			else Inc(inPos) end;
 		end;
 		SoundParse := output;
 	end;
