@@ -89,6 +89,7 @@ type
 		DestOffset: longint;
 	end;
 
+{$IFNDEF FPC}
 {$F+}
 
 function ConvErrorHandler(size: word): integer;
@@ -103,6 +104,7 @@ function ConvDefErrorHandler(size: word): integer;
 	end;
 
 {$F-}
+{$ENDIF}
 
 function ExtMemEmsActive: boolean;
 	begin
@@ -132,6 +134,7 @@ function XmsGetControlProc: pointer;
 		XmsGetControlProc := Ptr(regs.ES, regs.BX);
 	end;
 
+{$IFNDEF FPC}
 function XmsVersion: word;
 	var
 		version: word;
@@ -207,6 +210,86 @@ procedure XmsCopy(var moveStruct: ExtMemMoveStruct);
 			);
 		end;
 	end;
+{$ELSE}
+function XmsVersion: word;
+	var
+		version: word;
+	begin
+		if XmsControl <> nil then begin
+			asm
+				mov ah, 00h
+				call far [XmsControl]
+				mov version, ax
+			end ['ax', 'bx', 'dx'];
+			XmsVersion := version;
+		end else
+			XmsVersion := 0;
+	end;
+
+function XmsMaxAvail: word;
+	var
+		avail: word;
+	begin
+		if XmsControl <> nil then begin
+			asm
+				mov ah, 08h
+				call far [XmsControl]
+				mov avail, ax;
+			end ['ax', 'bx', 'dx'];
+			XmsMaxAvail := avail;
+		end else
+			XmsMaxAvail := 0;
+	end;
+
+function XmsAlloc(size: word): word;
+	var
+		handle: word;
+	label success;
+	begin
+		if XmsControl <> nil then begin
+			asm
+				mov ah, 09h
+				mov dx, size
+				call far [XmsControl]
+				cmp ax, 1
+				je success
+				xor dx, dx
+			success:
+				mov handle, dx
+			end ['ax', 'bx', 'dx'];
+			XmsAlloc := handle;
+		end else
+			XmsAlloc := 0;
+	end;
+
+procedure XmsDealloc(handle: word);
+	begin
+		if XmsControl <> nil then begin
+			asm
+				mov ah, 0Ah
+				mov dx, handle
+				call far [XmsControl]
+			end ['ax', 'bx', 'dx'];
+		end;
+	end;
+
+procedure XmsCopy(var moveStruct: ExtMemMoveStruct);
+	begin
+		if XmsControl <> nil then begin
+			asm
+				push es
+				push ds
+				push ds
+				pop es
+				mov ah, 0Bh
+				lds si, moveStruct
+				call far es:[XmsControl]
+				pop ds
+				pop es
+			end ['ax', 'bx', 'dx', 'si'];
+		end;
+	end;
+{$ENDIF}
 
 procedure XmsCopyIn(var source; destHandle: word; destOffset: longint; count: longint);
 	var
@@ -620,6 +703,7 @@ function ExtMemEmsAvailPages: word;
 
 function ConvGet(var block: TExtMemBlock; size: word): boolean;
 	begin
+{$IFNDEF FPC}
 		HeapError := @ConvErrorHandler;
 		ConvError := false;
 
@@ -628,6 +712,15 @@ function ConvGet(var block: TExtMemBlock; size: word): boolean;
 
 		HeapError := @ConvDefErrorHandler;
 		ConvGet := not ConvError;
+{$ELSE}
+		ReturnNilIfGrowHeapfails := true;
+
+		block.MemType := Conv;
+		GetMem(block.Ptr, size);
+
+		ReturnNilIfGrowHeapfails := false;
+		ConvGet := block.Ptr <> nil;
+{$ENDIF}
 	end;
 
 procedure ConvWrite(var block: TExtMemBlock; var data; count: word);
@@ -702,7 +795,11 @@ procedure ExtMemInstall(useEms: boolean; useXms: boolean);
 		extAlloc := XmsInstall(extAlloc, useXms);
 		extAlloc := EmsInstall(extAlloc, useEms);
 
+{$IFNDEF FPC}
 		HeapError := @ConvDefErrorHandler;
+{$ELSE}
+		ReturnNilIfGrowHeapfails := false;
+{$ENDIF}
 
 		{$IFDEF EXT_MEM_DEBUG}
 		ExtMemInstalled := true;
