@@ -61,7 +61,8 @@ effort.
      automatically be placed wherever the
      cursor is moved.
 [P]  Select pattern.
-[C]  Select color.
+[C]  Select foreground color.
+[Shift+C] Select background color.
 
    Some useful commands are not listed on
 the screen.  These are:
@@ -71,11 +72,17 @@ the screen.  These are:
      current pattern - just draw the
      outline of a shape and use this
      command to fill it in.
+[D]  Disable ZZT's default coloring
+     rules. This allows you to use
+     non-standard colors for certain
+     objects which don't allow it
+     otherwise.
 [Enter] Modify object under cursor:
      Allows you to change the
-     properties of an object
-     that has already been
-     placed.
+     properties of an object that
+     has already been placed. It also
+     copies the object to the pattern
+     list, allowing it to be re-used.
 [N]  New: Create a new world.
 [T]  Transfer:  Import or Export boards.
      Allows individual boards to be
