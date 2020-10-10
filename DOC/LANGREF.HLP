@@ -100,10 +100,22 @@ $W, WEST
 $I, IDLE 
     No direction, stationary.
 $SEEK    
-    The direction toward the player
+    The direction toward the player.
+    Note that, if the player is
+    energized, SEEK will point away from
+    the player.
 $FLOW    
     The direction in which the object is
     currently walking.
+$RND     
+    Any of the four cardinal directions.
+    The probabilities of picking each
+    direction are as follows:
+
+    NORTH   1/6
+    SOUTH   1/6
+    WEST    2/6
+    EAST    2/6
 $RNDNS   
     Either North or South, at random.
 $RNDNE   
@@ -150,10 +162,12 @@ other objects in all rooms.
 :clear;#CLEAR <flag variable>
      Set and clear flag variables.
 
-:if;#IF <flag> [THEN] <message>
+:if;#IF [NOT] <flag> [THEN] <message>
      Tests the condition of a flag.  If
 the flag is SET, the message is sent.
 Otherwise, the instruction is ignored.
+If the flag is prefixed with NOT, the
+condition is inverted.
 
      In addition to user-declared flags,
 several "internal" flags can be accessed
@@ -179,6 +193,11 @@ $ENERGIZED
 has touched an energizer and can not be
 harmed by creatures and bullets.
 
+$ANY <kind>
+     This flag is SET whenever at least
+one of a given kind exists on the board.
+
+!change;What does <kind> mean?
 
 :cmds;Programming commands:
 
@@ -347,7 +366,7 @@ to collide with the player.
 
 :zap;#ZAP <message>
 
-     Disables the first occurance of a
+     Disables the first occurence of a
 label by turning it into a comment.  For
 example, #ZAP TOUCH would turn the label
 TOUCH into the comment 'TOUCH.  Allows a
@@ -370,8 +389,8 @@ first occurence of a label.  For example:
 
 :restore;#RESTORE message
 
-     Changes a ZAPped label back into a
-normal label.  Then, on subsequent calls
+     Changes all ZAPped labels back into
+normal labels. Then, on subsequent calls
 to the label, the original one will be
 called instead of a secondary one.
 
@@ -417,6 +436,7 @@ health, etc.
      TORCHES
      HEALTH
      SCORE
+     TIME (elapsed, not remaining)
 
 Example:  #GIVE AMMO 10  (gives the player
           10 extra shots)
@@ -516,7 +536,7 @@ command.  Examples:
 #PUT SEEK TIGER  'Puts a tiger in the
                  'direction of the player.
 
-!change;What does <Kind> mean?
+!change;What does <kind> mean?
 
 
 :become;#BECOME <kind>
@@ -543,7 +563,7 @@ with a list of ASCII codes for reference.
 
      Sets the speed at which an object is
 updated.  This can range from 1 (fastest)
-to 255 (ridiculusly slow.)  When no CYCLE
+to 255 (ridiculously slow.) When no CYCLE
 speed is specified, it defaults to 3.
 
 
