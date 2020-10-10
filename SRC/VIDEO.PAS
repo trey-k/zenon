@@ -55,6 +55,7 @@ uses Crt, Dos;
 
 {$F+}
 
+{$IFNDEF FPC}
 procedure VideoWriteTextCGA(x, y, color: byte; text: TVideoLine);
 	begin
 		inline(
@@ -127,6 +128,90 @@ procedure VideoWriteTextFast(x, y, color: byte; text: TVideoLine);
 			$07                  { POP ES }
 		);
 	end;
+{$ELSE}
+procedure VideoWriteTextCGA(x, y, color: byte; text: TVideoLine);
+	assembler;
+	label next_char;
+	label cga_snow;
+	label cga_snow2;
+	label write_char;
+	label finish;
+	asm
+		push es
+		mov ax, VideoTextSegment
+		mov es, ax
+		mov al, y
+		mul VideoColumns
+		xor cx, cx
+		mov cl, x
+		add ax, cx
+		shl ax, 1
+		mov di, ax
+		mov bh, color
+		mov dx, 03DAh
+		push ds
+		lds si, [text]
+		mov cl, [si]
+		and cl, cl
+		jz finish
+		cli
+	next_char:
+		inc si
+		mov bl, [si]
+	cga_snow:
+		in al, dx
+		test al, 8
+		jnz write_char
+		shr al, 1
+		jc cga_snow
+	cga_snow2:
+		in al, dx
+		shr al, 1
+		jnc cga_snow2
+	write_char:
+		mov ax, bx
+		stosw
+		loop next_char
+		sti
+	finish:
+		pop ds
+		pop es
+	end ['ax', 'bx', 'cx', 'dx', 'si', 'di'];
+
+procedure VideoWriteTextFast(x, y, color: byte; text: TVideoLine);
+	assembler;
+	label next_char;
+	label finish;
+	asm
+		push es
+		mov ax, VideoTextSegment
+		mov es, ax
+		mov al, y
+		mul VideoColumns
+		xor cx, cx
+		mov cl, x
+		add ax, cx
+		shl ax, 1
+		mov di, ax
+		mov ah, color
+		mov dx, 03DAh
+		push ds
+		lds si, [text]
+		mov cl, [si]
+		and cl, cl
+		jz finish
+		cli
+	next_char:
+		inc si
+		mov al, [si]
+		stosw
+		loop next_char
+		sti
+	finish:
+		pop ds
+		pop es
+	end ['ax', 'cx', 'dx', 'si', 'di'];
+{$ENDIF}
 
 function ColorToBW(color: byte): byte;
 	begin
