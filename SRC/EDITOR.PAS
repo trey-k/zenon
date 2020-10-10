@@ -909,11 +909,11 @@ procedure EditorLoop;
 					KEY_ENTER: begin
 						if GetStatIdAt(cursorX, cursorY) >= 0 then begin
 							EditorEditStat(GetStatIdAt(cursorX, cursorY));
-							EditorDrawSidebar;
 						end else begin
 							copiedHasStat := false;
 							copiedTile := Board.Tiles[cursorX][cursorY];
 						end;
+						EditorDrawSidebar;
 					end;
 					'I': begin
 						EditorEditBoardInfo;
