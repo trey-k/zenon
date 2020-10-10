@@ -1356,6 +1356,7 @@ procedure GameDebugPrompt;
 		input: TString50;
 		i: integer;
 		toggle: boolean;
+		changesFlags: boolean;
 	begin
 		input := '';
 		SidebarClearLine(4);
@@ -1366,7 +1367,8 @@ procedure GameDebugPrompt;
 			input[i] := UpCase(input[i]);
 
 		toggle := true;
-		if (input[1] = '+') or (input[1] = '-') then begin
+		changesFlags := (input[1] = '+') or (input[1] = '-');
+		if changesFlags then begin
 			if input[1] = '-' then
 				toggle := false;
 			input := Copy(input, 2, Length(input) - 1);
@@ -1400,6 +1402,10 @@ procedure GameDebugPrompt;
 				Board.Tiles[Board.Stats[0].X + NeighborDeltaX[i]][Board.Stats[0].Y + NeighborDeltaY[i]].Element := E_EMPTY;
 				BoardDrawTile(Board.Stats[0].X + NeighborDeltaX[i], Board.Stats[0].Y + NeighborDeltaY[i]);
 			end;
+		end else if not changesFlags then begin
+			{ New cheats. They should not activate alongside flags, }
+			{ to preserve compatibility with games which use the }
+			{ flag names now utilizd by said cheats. }
 		end;
 
 		SoundQueue(10, #39#4);
