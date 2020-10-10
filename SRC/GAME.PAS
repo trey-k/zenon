@@ -1406,6 +1406,14 @@ procedure GameDebugPrompt;
 			{ New cheats. They should not activate alongside flags, }
 			{ to preserve compatibility with games which use the }
 			{ flag names now utilizd by said cheats. }
+			if input = 'PASSAGE' then begin
+				if GameStateElement = E_PLAYER then begin
+					BoardChange(EditorSelectBoard('Teleport to', World.Info.CurrentBoard, false));
+					GamePaused := true;
+					TransitionDrawBoardChange;
+					BoardEnter;
+				end;
+			end;
 		end;
 
 		SoundQueue(10, #39#4);
