@@ -50,7 +50,13 @@ procedure OopReadChar(statId: integer; var position: integer);
 	begin
 		with Board.Stats[statId] do begin
 			if (position >= 0) and (position < DataLen) then begin
-				Move(Ptr(Seg(Data^), Ofs(Data^) + position)^, OopChar, 1);
+				{$IFNDEF FPC}
+				{ On Turbo Pascal, the array pointer is actually }
+				{ a poiter to a string. }
+				OopChar := Data^[position];
+				{$ELSE}
+				OopChar := Data[position];
+				{$ENDIF}
 				Inc(position);
 			end else begin
 				OopChar := #0
