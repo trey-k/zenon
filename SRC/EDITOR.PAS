@@ -47,6 +47,8 @@ type
 const
 	NeighborBoardStrs: array[0 .. 3] of string[20] =
 		('       Board '#24, '       Board '#25, '       Board '#27, '       Board '#26);
+	ColorNames: array[0 .. 15] of string[3] =
+		('Blk', 'DBl', 'DGn', 'DCy', 'DRe', 'DMa', 'Bro', 'LGr', 'DGr', 'LBl', 'LGn', 'LCy', 'LRe', 'LMa', 'Yel', 'Wht');
 
 procedure EditorAppendBoard;
 	begin
@@ -77,14 +79,60 @@ procedure EditorLoop;
 		drawMode: TDrawMode;
 		cursorX, cursorY: integer;
 		cursorPattern, cursorColor: integer;
+		colorIgnoreDefaults: boolean;
 		i, iElem: integer;
 		canModify: boolean;
-		unk1: array[0 .. 49] of byte;
 		copiedStat: TStat;
 		copiedHasStat: boolean;
 		copiedTile: TTile;
 		copiedX, copiedY: integer;
 		cursorBlinker: integer;
+
+	function EditorGetDrawingColor(eid: integer): integer;
+		begin
+			if eid = E_PLAYER then
+				EditorGetDrawingColor := ElementDefs[eid].Color
+			else if colorIgnoreDefaults or (ElementDefs[eid].Color = COLOR_CHOICE_ON_BLACK) then
+				EditorGetDrawingColor := cursorColor
+			else if ElementDefs[eid].Color = COLOR_WHITE_ON_CHOICE then
+				EditorGetDrawingColor := ((cursorColor and $07) shl 4) + $0F
+			else if ElementDefs[eid].Color = COLOR_CHOICE_ON_CHOICE then
+				EditorGetDrawingColor := ((cursorColor and $07) * $11) + 8
+			else
+				EditorGetDrawingColor := ElementDefs[eid].Color;
+		end;
+
+	procedure EditorUpdateCursorColor;
+		var
+			colorBg, colorFg: byte;
+		begin
+			VideoWriteText(72, 19, $1E, ColorNames[cursorColor and $0F]);
+			VideoWriteText(75, 19, $1F, #27);
+			VideoWriteText(76, 19, $1E, ColorNames[cursorColor shr 4]);
+
+			VideoWriteText(69, 21, $1F, '        ');
+			VideoWriteText(69, 23, $1F, '        ');
+
+			colorBg := cursorColor shr 4;
+			colorFg := cursorColor and $0F;
+
+			if colorBg = colorFg then begin
+				if (colorBg and $08) <> $00 then
+					VideoWriteText(61 + colorBg, 21, $9F, #31)
+				else
+					VideoWriteText(69 + colorBg, 23, $9F, #30);
+			end else begin
+				if (colorFg and $08) <> $00 then
+					VideoWriteText(61 + colorFg, 21, $1F, #25)
+				else
+					VideoWriteText(69 + colorFg, 23, $1F, #24);
+
+				if (colorBg and $08) <> $00 then
+					VideoWriteText(61 + colorBg, 21, $1F, 'v')
+				else
+					VideoWriteText(69 + colorBg, 23, $1F, '^');
+			end;
+		end;
 
 	procedure EditorDrawSidebar;
 		var
@@ -126,8 +174,9 @@ procedure EditorLoop;
 			VideoWriteText(64, 19, $1F, ' Color:');
 
 			{ Colors }
-			for i := 9 to 15 do
-				VideoWriteText(61 + i, 22, i, #219);
+			for i := 8 to 15 do
+				VideoWriteText(61 + i, 22, (i * $11) - $80, #223);
+			EditorUpdateCursorColor;
 
 			{ Patterns }
 			for i := 1 to EditorPatternCount do
@@ -164,9 +213,12 @@ procedure EditorLoop;
 			else if drawMode = DrawingOff then
 				VideoWriteText(68, 24, $1E, 'Drawing off');
 
-			VideoWriteText(72, 19, $1E, ColorNames[cursorColor - 8]);
 			VideoWriteText(61 + cursorPattern, 21, $1F, #31);
-			VideoWriteText(61 + cursorColor, 21, $1F, #31);
+
+			if colorIgnoreDefaults then
+				VideoWriteText(78, 22, $1F, 'd')
+			else
+				VideoWriteText(78, 22, $1F, 'D')
 		end;
 
 	procedure EditorDrawRefresh;
@@ -630,6 +682,7 @@ procedure EditorLoop;
 		drawMode := DrawingOff;
 		cursorPattern := 1;
 		cursorColor := $0E;
+		colorIgnoreDefaults := false;
 		cursorBlinker := 0;
 		copiedHasStat := false;
 		copiedTile.Element := 0;
@@ -662,7 +715,9 @@ procedure EditorLoop;
 			if drawMode = TextEntry then begin
 				if (InputKeyPressed >= #32) and (InputKeyPressed < #128) then begin
 					if EditorPrepareModifyTile(cursorX, cursorY) then begin
-						Board.Tiles[cursorX][cursorY].Element := (cursorColor - 9) + E_TEXT_MIN;
+						i := (cursorColor and $07) + (E_TEXT_MIN - 1);
+						if i < E_TEXT_MIN then i := E_TEXT_MIN + 6;
+						Board.Tiles[cursorX][cursorY].Element := i;
 						Board.Tiles[cursorX][cursorY].Color := Ord(InputKeyPressed);
 						EditorDrawTileAndNeighborsAt(cursorX, cursorY);
 						InputDeltaX := 1;
@@ -723,12 +778,15 @@ procedure EditorLoop;
 							cursorPattern := 1;
 					end;
 					'C': begin
-						VideoWriteText(72, 19, $1E, '       ');
-						VideoWriteText(69, 21, $1F, '        ');
-						if (cursorColor mod $10) <> $0F then
-							cursorColor := cursorColor + 1
+						if InputKeyPressed = 'C' then
+							cursorColor := (cursorColor and $8F) or ((cursorColor + 16) and $70)
 						else
-							cursorColor := ((cursorColor div $10) * $10) + 9;
+							cursorColor := (cursorColor and $F0) or ((cursorColor + 1) and $0F);
+						EditorUpdateCursorColor;
+					end;
+					'D': begin
+						colorIgnoreDefaults := not colorIgnoreDefaults;
+						EditorUpdateSidebar;
 					end;
 					'L': begin
 						EditorAskSaveChanged;
@@ -825,15 +883,7 @@ procedure EditorLoop;
 
 								VideoWriteText(61, i, ((i mod 2) shl 6) + $30, ' ' + ElementDefs[iElem].EditorShortcut + ' ');
 								VideoWriteText(65, i, $1F, ElementDefs[iElem].Name);
-								if ElementDefs[iElem].Color = COLOR_CHOICE_ON_BLACK then
-									elemMenuColor := (cursorColor and $0F)
-								else if ElementDefs[iElem].Color = COLOR_WHITE_ON_CHOICE then
-									elemMenuColor := (cursorColor shl 4) - $71
-								else if ElementDefs[iElem].Color = COLOR_CHOICE_ON_CHOICE then
-									elemMenuColor := ((cursorColor - 8) * $11) + 8
-								else
-									elemMenuColor := ElementDefs[iElem].Color;
-								VideoWriteText(78, i, elemMenuColor, ElementDefs[iElem].Character);
+								VideoWriteText(78, i, EditorGetDrawingColor(iElem), ElementDefs[iElem].Character);
 
 								i := i + 1;
 							end;
@@ -847,14 +897,7 @@ procedure EditorLoop;
 									if EditorPrepareModifyTile(cursorX, cursorY) then
 										MoveStat(0, cursorX, cursorY);
 								end else begin
-									if ElementDefs[iElem].Color = COLOR_CHOICE_ON_BLACK then
-										elemMenuColor := cursorColor
-									else if ElementDefs[iElem].Color = COLOR_WHITE_ON_CHOICE then
-										elemMenuColor := (cursorColor * $10) - $71
-									else if ElementDefs[iElem].Color = COLOR_CHOICE_ON_CHOICE then
-										elemMenuColor := ((cursorColor - 8) * $11) + 8
-									else
-										elemMenuColor := ElementDefs[iElem].Color;
+									elemMenuColor := EditorGetDrawingColor(iElem);
 
 									if ElementDefs[iElem].Cycle = -1 then begin
 										if EditorPrepareModifyTile(cursorX, cursorY) then
