@@ -826,13 +826,11 @@ procedure EditorLoop;
 								VideoWriteText(61, i, ((i mod 2) shl 6) + $30, ' ' + ElementDefs[iElem].EditorShortcut + ' ');
 								VideoWriteText(65, i, $1F, ElementDefs[iElem].Name);
 								if ElementDefs[iElem].Color = COLOR_CHOICE_ON_BLACK then
-									elemMenuColor := (cursorColor mod $10) + $10
+									elemMenuColor := (cursorColor and $0F)
 								else if ElementDefs[iElem].Color = COLOR_WHITE_ON_CHOICE then
-									elemMenuColor := (cursorColor * $10) - $71
+									elemMenuColor := (cursorColor shl 4) - $71
 								else if ElementDefs[iElem].Color = COLOR_CHOICE_ON_CHOICE then
 									elemMenuColor := ((cursorColor - 8) * $11) + 8
-								else if (ElementDefs[iElem].Color and $70) = $00 then
-									elemMenuColor := (ElementDefs[iElem].Color mod $10) + $10
 								else
 									elemMenuColor := ElementDefs[iElem].Color;
 								VideoWriteText(78, i, elemMenuColor, ElementDefs[iElem].Character);
