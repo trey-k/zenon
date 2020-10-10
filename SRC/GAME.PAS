@@ -1413,6 +1413,11 @@ procedure GameDebugPrompt;
 					TransitionDrawBoardChange;
 					BoardEnter;
 				end;
+			end else if input = 'SPEED' then begin
+				SidebarPromptSlider(true, 63, 3, 'Game speed:;FS', TickSpeed);
+				SidebarClearLine(3);
+				TickTimeDuration := TickSpeed * 2;
+				InputKeyPressed := #0;
 			end;
 		end;
 
