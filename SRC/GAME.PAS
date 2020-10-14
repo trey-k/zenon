@@ -107,7 +107,7 @@ const
 	LineChars: string[16] = #249#208#210#186#181#188#187#185#198#200#201#204#205#202#203#206;
 
 implementation
-uses Dos, Crt, Video, Sounds, Input, Elements, Editor, Oop;
+uses Dos, Crt, FileSel, Video, Sounds, Input, Elements, Editor, Oop;
 
 procedure SidebarClearLine(y: integer);
 	begin
@@ -828,46 +828,20 @@ procedure GameWorldSave(prompt: TString50; var filename: TString50; extension: T
 
 function GameWorldLoad(extension: TString50): boolean;
 	var
-		textWindow: TTextWindowState;
-		fileSearchRec: SearchRec;
+		title: TString50;
 		entryName: string;
-		i: integer;
 	begin
-		TextWindowInitState(textWindow);
 		if extension = '.ZZT' then
-			textWindow.Title := 'ZZT Worlds'
+			title := 'ZZT Worlds'
 		else
-			textWindow.Title := 'Saved Games';
+			title := 'Saved Games';
 		GameWorldLoad := false;
-		textWindow.Selectable := true;
+		entryName := FileSelect(title, extension);
 
-		FindFirst('*' + extension, AnyFile, fileSearchRec);
-		while DosError = 0 do begin
-			entryName := Copy(fileSearchRec.Name, 1, Length(fileSearchRec.name) - 4);
-
-			for i := 1 to WorldFileDescCount do
-				if entryName = WorldFileDescKeys[i] then
-					entryName := WorldFileDescValues[i];
-
-			TextWindowAppend(textWindow, entryName);
-			FindNext(fileSearchRec);
-		end;
-		TextWindowAppend(textWindow, 'Exit');
-
-		TextWindowDrawOpen(textWindow);
-		TextWindowSelect(textWindow, false, false);
-		TextWindowDrawClose(textWindow);
-
-		if (textWindow.LinePos < textWindow.LineCount) and not TextWindowRejected then begin
-			entryName := textWindow.Lines[textWindow.LinePos]^;
-			if Pos(' ', entryName) <> 0 then
-				entryName := Copy(entryName, 1, Pos(' ', entryName) - 1);
-
+		if Length(entryName) > 0 then begin
 			GameWorldLoad := WorldLoad(entryName, extension, false);
 			TransitionDrawToFill(#219, $44);
 		end;
-
-		TextWindowFree(textWindow);
 	end;
 
 procedure CopyStatDataToTextWindow(statId: integer; var state: TTextWindowState);
