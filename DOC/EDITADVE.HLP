@@ -1,0 +1,18 @@
+$Advanced Elements
+
+Advanced elements are not available in
+the traditional ZZT editor. They exist
+only as a result of certain artifacts
+in the engine's behaviour. In essence,
+they're like glitches - ones which the
+ZZT community at large has learned to
+rely on.
+
+!edge;Board edges
+
+:edge;Board edges.
+
+ZZT normally populates its board with a
+border of "board edge" elements. As such,
+these - when touched - act the same way
+as if when crossing a board boundary.

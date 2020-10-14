@@ -166,11 +166,14 @@ procedure EditorLoop;
 		var
 			statId: integer;
 		begin
+			if Board.Tiles[cursorX][cursorY].Element = E_PLAYER then
+				exit;
+
 			statId := GetStatIdAt(x, y);
 
 			with copied do begin
 				tile := Board.Tiles[cursorX][cursorY];
-				hasStat := statId >= 0;
+				hasStat := statId > 0;
 				if hasStat then
 					stat := Board.Stats[statId];
 
@@ -279,15 +282,20 @@ procedure EditorLoop;
 				VideoWriteText(26, 0, $70, ' Untitled ');
 		end;
 
-	procedure EditorSetAndCopyTile(x, y, element, color: byte);
+	procedure EditorSetTile(x, y, element, color: byte);
 		begin
 			Board.Tiles[x][y].Element := element;
 			Board.Tiles[x][y].Color := color;
 
+			EditorDrawTileAndNeighborsAt(x, y);
+		end;
+
+	procedure EditorSetAndCopyTile(x, y, element, color: byte);
+		begin
+			EditorSetTile(x, y, element, color);
+
 			EditorCopyPatternToCurrent(x, y);
 			EditorUpdateCopiedPatterns;
-
-			EditorDrawTileAndNeighborsAt(x, y);
 		end;
 
 	procedure EditorAskSaveChanged;
@@ -813,6 +821,7 @@ procedure EditorLoop;
 						cursorY := BOARD_HEIGHT;
 
 					VideoWriteText(cursorX - 1, cursorY - 1, $0F, #197);
+
 					if (InputKeyPressed = #0) and InputJoystickEnabled then
 						Delay(70);
 					InputShiftAccepted := false;
@@ -931,6 +940,23 @@ procedure EditorLoop;
 							drawMode := DrawingOff;
 						EditorUpdateDrawMode;
 					end;
+					KEY_F5: begin
+						VideoWriteText(cursorX - 1, cursorY - 1, $0F, #197);
+						for i := 3 to 20 do
+							SidebarClearLine(i);
+						VideoWriteText(65, 4, $1E, 'Advanced:');
+						VideoWriteText(61, 5, $70, ' E ');
+						VideoWriteText(65, 5, $1F, 'Board edge');
+						VideoWriteText(78, 5, cursorColor, 'E');
+						InputReadWaitKey;
+						case UpCase(InputKeyPressed) of
+							'E': begin
+								if EditorPrepareModifyTile(cursorX, cursorY) then
+									EditorSetAndCopyTile(cursorX, cursorY, E_BOARD_EDGE, cursorColor);
+							end;
+						end;
+						EditorDrawSidebar;
+					end;
 					KEY_F1, KEY_F2, KEY_F3: begin
 						VideoWriteText(cursorX - 1, cursorY - 1, $0F, #197);
 						for i := 3 to 20 do
@@ -973,6 +999,7 @@ procedure EditorLoop;
 									end else begin
 										if EditorPrepareModifyStatAtCursor then begin
 											AddStat(cursorX, cursorY, iElem, elemMenuColor,
+
 												ElementDefs[iElem].Cycle, StatTemplateDefault);
 											with Board.Stats[Board.StatCount] do begin
 												if Length(ElementDefs[iElem].Param1Name) <> 0 then

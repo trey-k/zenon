@@ -1955,6 +1955,8 @@ procedure InitElementsEditor;
 		InitElementDefs;
 		ElementDefs[28].Character := #176;
 		ElementDefs[28].Color := COLOR_CHOICE_ON_BLACK;
+		ElementDefs[1].Character := 'E';
+		ElementDefs[1].Color := COLOR_CHOICE_ON_BLACK;
 		ForceDarknessOff := true;
 	end;
 
