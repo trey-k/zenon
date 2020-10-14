@@ -60,13 +60,16 @@ effort.
      mode is on, the current pattern will
      automatically be placed wherever the
      cursor is moved.
-[P]  Select pattern.
+[P]  Select pattern. Hold Shift to move
+     backwards.
 [C]  Select foreground color.
 [Shift+C] Select background color.
 
    Some useful commands are not listed on
 the screen.  These are:
 
+[0-9] Pick a memorized pattern slot,
+     from the first to the tenth.
 [Z]  Clear board.
 [X]  Fill in bounded region with
      current pattern - just draw the

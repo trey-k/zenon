@@ -1941,12 +1941,13 @@ procedure InitElementDefs;
 
 		ElementDefs[1].TouchProc := ElementBoardEdgeTouch;
 
-		EditorPatternCount := 5;
+		EditorPatternCount := 6;
 		EditorPatterns[1] := E_SOLID;
 		EditorPatterns[2] := E_NORMAL;
 		EditorPatterns[3] := E_BREAKABLE;
-		EditorPatterns[4] := E_EMPTY;
-		EditorPatterns[5] := E_LINE;
+		EditorPatterns[4] := E_WATER;
+		EditorPatterns[5] := E_EMPTY;
+		EditorPatterns[6] := E_LINE;
 	end;
 
 procedure InitElementsEditor;
