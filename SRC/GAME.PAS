@@ -369,7 +369,7 @@ procedure BoardDrawTile(x, y: integer);
 	begin
 		with Board.Tiles[x][y] do begin
 			if not Board.Info.IsDark
-				or (ElementDefs[Board.Tiles[x][y].Element].VisibleInDark)
+				or (ElementDefs[Element].VisibleInDark)
 				or (
 					(World.Info.TorchTicks > 0)
 					and ((Sqr(Board.Stats[0].X - x) + Sqr(Board.Stats[0].Y - y) * 2) < TORCH_DIST_SQR)
@@ -385,11 +385,11 @@ procedure BoardDrawTile(x, y: integer);
 				else begin
 					{ Text drawing }
 					if Element = E_TEXT_WHITE then
-						VideoWriteText(x - 1, y - 1, $0F, Chr(Board.Tiles[x][y].Color))
+						VideoWriteText(x - 1, y - 1, $0F, Chr(Color))
 					else if VideoMonochrome then
-						VideoWriteText(x - 1, y - 1, ((Element - E_TEXT_MIN) + 1) * 16, Chr(Board.Tiles[x][y].Color))
+						VideoWriteText(x - 1, y - 1, ((Element - E_TEXT_MIN) + 1) shl 4, Chr(Color))
 					else
-						VideoWriteText(x - 1, y - 1, (((Element - E_TEXT_MIN) + 1) * 16) + $F, Chr(Board.Tiles[x][y].Color));
+						VideoWriteText(x - 1, y - 1, (((Element - E_TEXT_MIN) + 1) shl 4) + $F, Chr(Color));
 				end
 			end else begin
 				{ Darkness }
@@ -1013,8 +1013,8 @@ procedure MoveStat(statId: integer; newX, newY: integer);
 		with Board.Stats[statId] do begin
 			oldBgColor := Board.Tiles[newX][newY].Color and $F0;
 
-			iUnder := Board.Stats[statId].Under;
-			Board.Stats[statId].Under := Board.Tiles[newX][newY];
+			iUnder := Under;
+			Under := Board.Tiles[newX][newY];
 
 			if Board.Tiles[X][Y].Element = E_PLAYER then
 				Board.Tiles[newX][newY].Color := Board.Tiles[X][Y].Color
