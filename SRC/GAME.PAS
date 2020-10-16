@@ -646,7 +646,7 @@ procedure SidebarPromptString(prompt: string; extension: TString50; var filename
 procedure PauseOnError;
 	begin
 		SoundQueue(1, SoundParse('s004x114x9'));
-		Delay(2000);
+		AccurateDelay(2000);
 	end;
 
 function DisplayIOError: boolean;
