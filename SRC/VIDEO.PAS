@@ -59,7 +59,6 @@ uses Crt, Dos;
 procedure VideoWriteTextCGA(x, y, color: byte; text: TVideoLine);
 	begin
 		inline(
-			$06/                 { PUSH ES }
 			$8B/$06/VideoTextSegment/{ MOV AX, VideoTextSegment }
 			$8E/$C0/             { MOV ES, AX }
 			$8A/$86/y/           { MOV AL, byte ptr [BP + y] }
@@ -93,16 +92,14 @@ procedure VideoWriteTextCGA(x, y, color: byte; text: TVideoLine);
 			$89/$D8/             { MOV AX, BX }
 			$AB/                 { STOSW }
 			$E2/$E8/             { LOOP next_char }
-			$FB/                 { STI }
+			$FB                  { STI }
 		{ finish: }
-			$07                  { POP ES }
 		);
 	end;
 
 procedure VideoWriteTextFast(x, y, color: byte; text: TVideoLine);
 	begin
 		inline(
-			$06/                 { PUSH ES }
 			$8B/$06/VideoTextSegment/{ MOV AX, VideoTextSegment }
 			$8E/$C0/             { MOV ES, AX }
 			$8A/$86/y/           { MOV AL, byte ptr [BP + y] }
@@ -123,9 +120,8 @@ procedure VideoWriteTextFast(x, y, color: byte; text: TVideoLine);
 			$8A/$82/text/        { MOV AL, byte ptr [BP + SI + text] }
 			$AB/                 { STOSW }
 			$E2/$F8/             { LOOP next_char }
-			$FB/                 { STI }
+			$FB                  { STI }
 		{ finish: }
-			$07                  { POP ES }
 		);
 	end;
 {$ELSE}
