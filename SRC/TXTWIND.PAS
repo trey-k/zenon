@@ -111,7 +111,7 @@ procedure TextWindowDrawOpen(var state: TTextWindowState);
 			for iy := 1 to (TextWindowHeight + 1) do
 				VideoMove(TextWindowX, iy + TextWindowY - 1, TextWindowWidth, @ScreenCopy[iy], false);
 
-			for iy := (TextWindowHeight div 2) downto 0 do begin
+			for iy := (TextWindowHeight shr 1) downto 0 do begin
 				VideoWriteText(TextWindowX, TextWindowY + iy + 1, $0F, TextWindowStrText);
 				VideoWriteText(TextWindowX, TextWindowY + TextWindowHeight - iy - 1, $0F, TextWindowStrText);
 				VideoWriteText(TextWindowX, TextWindowY + iy, $0F, TextWindowStrTop);
@@ -130,7 +130,7 @@ procedure TextWindowDrawClose(var state: TTextWindowState);
 		unk1, unk2: integer;
 	begin
 		with state do begin
-			for iy := 0 to (TextWindowHeight div 2) do begin
+			for iy := 0 to (TextWindowHeight shr 1) do begin
 				VideoWriteText(TextWindowX, TextWindowY + iy, $0F, TextWindowStrTop);
 				VideoWriteText(TextWindowX, TextWindowY + TextWindowHeight - iy, $0F, TextWindowStrBottom);
 				Delay(18);
@@ -148,7 +148,7 @@ procedure TextWindowDrawLine(var state: TTextWindowState; lpos: integer; without
 		textOffset, textColor, textX: integer;
 	begin
 		with state do begin
-			lineY := ((TextWindowY + lpos) - LinePos) + (TextWindowHeight div 2) + 1;
+			lineY := ((TextWindowY + lpos) - LinePos) + (TextWindowHeight shr 1) + 1;
 			if lpos = LinePos then
 				VideoWriteText(TextWindowX + 2, lineY, $1C, TextWindowStrInnerArrows)
 			else
@@ -202,7 +202,7 @@ procedure TextWindowDraw(var state: TTextWindowState; withoutFormatting, viewing
 		unk1: integer;
 	begin
 		for i := 0 to (TextWindowHeight - 4) do
-			TextWindowDrawLine(state, state.LinePos - (TextWindowHeight div 2) + i + 2,
+			TextWindowDrawLine(state, state.LinePos - (TextWindowHeight shr 1) + i + 2,
 				withoutFormatting, viewingFile);
 		TextWindowDrawTitle($1E, state.Title);
 	end;
@@ -408,11 +408,11 @@ procedure TextWindowEdit(var state: TTextWindowState);
 				if charPos >= (Length(Lines[LinePos]^) + 1) then begin
 					charPos := Length(Lines[LinePos]^) + 1;
 					VideoWriteText(charPos + TextWindowX + 3,
-						TextWindowY + (TextWindowHeight div 2) + 1,
+						TextWindowY + (TextWindowHeight shr 1) + 1,
 						$70, ' ');
 				end else begin
 					VideoWriteText(charPos + TextWindowX + 3,
-						TextWindowY + (TextWindowHeight div 2) + 1,
+						TextWindowY + (TextWindowHeight shr 1) + 1,
 						$70, Lines[LinePos]^[charPos]);
 				end;
 				InputReadWaitKey;
@@ -652,7 +652,7 @@ procedure TextWindowInit(x, y, width, height: integer);
 		TextWindowStrInnerArrows[Length(TextWindowStrInnerArrows)] := #174;
 		TextWindowStrInnerSep := TextWindowStrInnerEmpty;
 		for i := 1 to (TextWindowWidth div 5) do
-			TextWindowStrInnerSep[i * 5 + ((TextWindowWidth mod 5) div 2)] := #7;
+			TextWindowStrInnerSep[i * 5 + ((TextWindowWidth mod 5) shr 1)] := #7;
 	end;
 
 begin

@@ -436,7 +436,7 @@ procedure SidebarPromptCharacter(editable: boolean; x, y: integer; prompt: TStri
 
 		repeat
 			for i := (value - 4) to (value + 4) do
-				VideoWriteText(((x + i) - value) + 5, y + 2, $1E, Chr((i + $100) mod $100));
+				VideoWriteText(((x + i) - value) + 5, y + 2, $1E, Chr(i and $FF));
 
 			if editable then begin
 				Delay(25);
@@ -446,7 +446,7 @@ procedure SidebarPromptCharacter(editable: boolean; x, y: integer; prompt: TStri
 
 				newValue := value + InputDeltaX;
 				if value <> newValue then begin
-					value := (newValue + $100) mod $100;
+					value := newValue and $FF;
 					SidebarClearLine(y + 2);
 				end;
 			end;
@@ -571,7 +571,7 @@ procedure PromptString(x, y, arrowColor, color, width: integer; mode: byte; var 
 				VideoWriteText(x + i, y - 1, arrowColor, ' ');
 			end;
 			VideoWriteText(x + width, y - 1, arrowColor, ' ');
-			VideoWriteText(x + Length(buffer), y - 1, (arrowColor div $10) * 16 + $0F, #31);
+			VideoWriteText(x + Length(buffer), y - 1, (arrowColor and $F0) + $0F, #31);
 			VideoWriteText(x, y, color, buffer);
 
 			InputReadWaitKey;
@@ -697,7 +697,7 @@ function WorldLoad(filename, extension: TString50; titleOnly: boolean): boolean;
 	procedure SidebarAnimateLoading;
 		begin
 			VideoWriteText(69, 5, ProgressAnimColors[loadProgress], ProgressAnimStrings[loadProgress]);
-			loadProgress := (loadProgress + 1) mod 8;
+			loadProgress := (loadProgress + 1) and 7;
 		end;
 	begin
 		WorldLoad := false;
@@ -1172,7 +1172,7 @@ procedure DamageStat(attackerStatId: integer);
 					GameUpdateSidebar;
 					DisplayMessage(100, 'Ouch!');
 
-					Board.Tiles[X][Y].Color := $70 + (ElementDefs[E_PLAYER].Color mod $10);
+					Board.Tiles[X][Y].Color := $70 + (ElementDefs[E_PLAYER].Color and $0F);
 
 					if World.Info.Health > 0 then begin
 						World.Info.BoardTimeSec := 0;

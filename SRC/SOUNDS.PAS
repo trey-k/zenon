@@ -96,7 +96,7 @@ procedure SoundInitFreqTable;
 		for octave := 1 to 15 do begin
 			noteBase := Exp(octave * ln2) * freqC1;
 			for note := 0 to 11 do begin
-				SoundFreqTable[octave * 16 + note] := Trunc(noteBase);
+				SoundFreqTable[(octave shl 4) + note] := Trunc(noteBase);
 				noteBase := noteBase * noteStep;
 			end;
 		end;
@@ -113,7 +113,7 @@ procedure SoundInitDrumTable;
 		for i := 1 to 14 do
 			SoundDrumTable[1].Data[i] := i * 100 + 1000;
 		for i := 1 to 16 do
-			SoundDrumTable[2].Data[i] := (i mod 2) * 1600 + 1600 + (i mod 4) * 1600;
+			SoundDrumTable[2].Data[i] := (i and 1) * 1600 + 1600 + (i and 3) * 1600;
 		for i := 1 to 14 do
 			SoundDrumTable[4].Data[i] := Random(5000) + 500;
 		for i := 1 to 8 do begin
@@ -121,7 +121,7 @@ procedure SoundInitDrumTable;
 			SoundDrumTable[5].Data[i * 2] := Random(1600) + 800;
 		end;
 		for i := 1 to 14 do
-			SoundDrumTable[6].Data[i] := ((i mod 2) * 880) + 880 + ((i mod 3) * 440);
+			SoundDrumTable[6].Data[i] := ((i and 1) * 880) + 880 + ((i mod 3) * 440);
 		for i := 1 to 14 do
 			SoundDrumTable[7].Data[i] := 700 - (i * 12);
 		for i := 1 to 14 do
@@ -159,7 +159,7 @@ function SoundHasTimeElapsed(var counter: integer; duration: integer): boolean;
 		hSecsDiff: word;
 		hSecsTotal: integer;
 	begin
-		if (SoundTimeCheckCounter > 0) and ((SoundTimeCheckCounter mod 2) = 1) then begin
+		if (SoundTimeCheckCounter > 0) and ((SoundTimeCheckCounter and 1) = 1) then begin
 			Dec(SoundTimeCheckCounter);
 			SoundCheckTimeIntr;
 		end;
@@ -185,7 +185,7 @@ procedure SoundTimerHandler;
 	interrupt;
 	begin
 		Inc(TimerTicks);
-		if (SoundTimeCheckCounter > 0) and ((SoundTimeCheckCounter mod 2) = 0) then begin
+		if (SoundTimeCheckCounter > 0) and ((SoundTimeCheckCounter and 1) = 0) then begin
 			Dec(SoundTimeCheckCounter);
 		end;
 
@@ -321,7 +321,7 @@ function SoundParse(input: string): string;
 						end;
 					end;
 
-					output := output + Chr(noteOctave * $10 + noteTone) + Chr(noteDuration);
+					output := output + Chr((noteOctave shl 4) + noteTone) + Chr(noteDuration);
 				end;
 				'X': begin
 					output := output + #0 + Chr(noteDuration);

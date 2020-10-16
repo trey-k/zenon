@@ -433,7 +433,7 @@ procedure EditorLoop;
 					if (InputKeyPressed <> KEY_ESCAPE) and
 						(Length(ElementDefs[element].Param2Name) <> 0) then
 					begin
-						promptByte := (P2 mod $80);
+						promptByte := (P2 and $7F);
 						SidebarPromptSlider(selected, 63, iy, ElementDefs[element].Param2Name, promptByte);
 						if selected then begin
 							P2 := (P2 and $80) + promptByte;
@@ -445,11 +445,11 @@ procedure EditorLoop;
 					if (InputKeyPressed <> KEY_ESCAPE) and
 						(Length(ElementDefs[element].ParamBulletTypeName) <> 0) then
 					begin
-						promptByte := (P2) div $80;
+						promptByte := P2 shr 7;
 						SidebarPromptChoice(selected, iy, ElementDefs[element].ParamBulletTypeName,
 							'Bullets Stars', promptByte);
 						if selected then begin
-							P2 := (P2 mod $80) + (promptByte * $80);
+							P2 := (P2 and $7F) + (promptByte shl 7);
 							World.EditorStatSettings[element].P2 := P2;
 						end;
 						iy := iy + 4;
@@ -725,10 +725,10 @@ procedure EditorLoop;
 					'C': begin
 						VideoWriteText(72, 19, $1E, '       ');
 						VideoWriteText(69, 21, $1F, '        ');
-						if (cursorColor mod $10) <> $0F then
+						if (cursorColor and $0F) <> $0F then
 							Inc(cursorColor)
 						else
-							cursorColor := ((cursorColor div $10) * $10) + 9;
+							cursorColor := (cursorColor and $F0) + 9;
 					end;
 					'L': begin
 						EditorAskSaveChanged;
@@ -823,16 +823,16 @@ procedure EditorLoop;
 									Inc(i);
 								end;
 
-								VideoWriteText(61, i, ((i mod 2) shl 6) + $30, ' ' + ElementDefs[iElem].EditorShortcut + ' ');
+								VideoWriteText(61, i, ((i and 1) shl 6) + $30, ' ' + ElementDefs[iElem].EditorShortcut + ' ');
 								VideoWriteText(65, i, $1F, ElementDefs[iElem].Name);
 								if ElementDefs[iElem].Color = COLOR_CHOICE_ON_BLACK then
-									elemMenuColor := (cursorColor mod $10) + $10
+									elemMenuColor := (cursorColor and $0F) + $10
 								else if ElementDefs[iElem].Color = COLOR_WHITE_ON_CHOICE then
-									elemMenuColor := (cursorColor * $10) - $71
+									elemMenuColor := (cursorColor shl 4) - $71
 								else if ElementDefs[iElem].Color = COLOR_CHOICE_ON_CHOICE then
 									elemMenuColor := ((cursorColor - 8) * $11) + 8
 								else if (ElementDefs[iElem].Color and $70) = $00 then
-									elemMenuColor := (ElementDefs[iElem].Color mod $10) + $10
+									elemMenuColor := (ElementDefs[iElem].Color and $0F) + $10
 								else
 									elemMenuColor := ElementDefs[iElem].Color;
 								VideoWriteText(78, i, elemMenuColor, ElementDefs[iElem].Character);
