@@ -92,10 +92,12 @@ procedure ElementLionTick(statId: integer);
 			else
 				CalcDirectionSeek(X, Y, deltaX, deltaY);
 
-			if ElementDefs[Board.Tiles[X + deltaX][Y + deltaY].Element].Walkable then begin
-				MoveStat(statId, X + deltaX, Y + deltaY);
-			end else if Board.Tiles[X + deltaX][Y + deltaY].Element = E_PLAYER then begin
-				BoardAttack(statId, X + deltaX, Y + deltaY)
+			with Board.Tiles[X + deltaX][Y + deltaY] do begin
+				if ElementDefs[Element].Walkable then begin
+					MoveStat(statId, X + deltaX, Y + deltaY);
+				end else if Element = E_PLAYER then begin
+					BoardAttack(statId, X + deltaX, Y + deltaY)
+				end;
 			end;
 		end;
 	end;
@@ -453,6 +455,7 @@ procedure ElementConveyorTick(x, y: integer; direction: integer);
 		tiles: array[0..7] of TTile;
 		iMin, iMax: integer;
 		tmpTile: TTile;
+		tx, ty: integer;
 	begin
 		if direction = 1 then begin
 			iMin := 0;
@@ -465,7 +468,9 @@ procedure ElementConveyorTick(x, y: integer; direction: integer);
 		canMove := true;
 		i := iMin;
 		repeat
-			tiles[i] := Board.Tiles[x + DiagonalDeltaX[i]][y + DiagonalDeltaY[i]];
+			tx := x + DiagonalDeltaX[i];
+			ty := y + DiagonalDeltaY[i];
+			tiles[i] := Board.Tiles[tx][ty];
 			with tiles[i] do begin
 				if Element = E_EMPTY then
 					canMove := true
@@ -482,20 +487,23 @@ procedure ElementConveyorTick(x, y: integer; direction: integer);
 					if ElementDefs[Element].Pushable then begin
 						ix := x + DiagonalDeltaX[(i - direction + 8) mod 8];
 						iy := y + DiagonalDeltaY[(i - direction + 8) mod 8];
+						tx := x + DiagonalDeltaX[i];
+						ty := y + DiagonalDeltaY[i];
+
 						if ElementDefs[Element].Cycle > -1 then begin
-							tmpTile := Board.Tiles[x + DiagonalDeltaX[i]][y + DiagonalDeltaY[i]];
-							iStat := GetStatIdAt(x + DiagonalDeltaX[i], y + DiagonalDeltaY[i]);
-							Board.Tiles[x + DiagonalDeltaX[i]][y + DiagonalDeltaY[i]] := tiles[i];
+							tmpTile := Board.Tiles[tx][ty];
+							iStat := GetStatIdAt(tx, ty);
+							Board.Tiles[tx][ty] := tiles[i];
 							Board.Tiles[ix][iy].Element := E_EMPTY;
 							MoveStat(iStat, ix, iy);
-							Board.Tiles[x + DiagonalDeltaX[i]][y + DiagonalDeltaY[i]] := tmpTile;
+							Board.Tiles[tx][ty] := tmpTile;
 						end else begin
 							Board.Tiles[ix][iy] := tiles[i];
 							BoardDrawTile(ix, iy);
 						end;
 						if not ElementDefs[tiles[(i + direction + 8) mod 8].Element].Pushable then begin
-							Board.Tiles[x + DiagonalDeltaX[i]][y + DiagonalDeltaY[i]].Element := E_EMPTY;
-							BoardDrawTile(x + DiagonalDeltaX[i], y + DiagonalDeltaY[i]);
+							Board.Tiles[tx][ty].Element := E_EMPTY;
+							BoardDrawTile(tx, ty);
 						end;
 					end else begin
 						canMove := false;
@@ -669,9 +677,12 @@ procedure ElementTransporterDraw(x, y: integer; var ch: byte);
 procedure ElementStarDraw(x, y: integer; var ch: byte);
 	begin
 		ch := Ord(StarAnimChars[(CurrentTick mod 4) + 1]);
-		Inc(Board.Tiles[x][y].Color);
-		if Board.Tiles[x][y].Color > 15 then
-			Board.Tiles[x][y].Color := 9;
+		with Board.Tiles[x][y] do begin
+			if Color >= 15 then
+				Color := 9
+			else
+				Inc(Color);
+		end;
 	end;
 
 procedure ElementStarTick(statId: integer);
@@ -725,28 +736,34 @@ procedure ElementEnergizerTouch(x, y: integer; sourceStatId: integer; var deltaX
 
 procedure ElementSlimeTick(statId: integer);
 	var
-		dir, color, changedTiles: integer;
+		dir, colorCopy, changedTiles: integer;
 		startX, startY: integer;
+		tx, ty: integer;
 	begin
 		with Board.Stats[statId] do begin
 			if P1 < P2 then
 				Inc(P1)
 			else begin
-				color := Board.Tiles[X][Y].Color;
+				colorCopy := Board.Tiles[X][Y].Color;
 				P1 := 0;
 				startX := X;
 				startY := Y;
 				changedTiles := 0;
 
 				for dir := 0 to 3 do begin
-					if ElementDefs[Board.Tiles[startX + NeighborDeltaX[dir]][startY + NeighborDeltaY[dir]].Element].Walkable then begin
+					tx := startX + NeighborDeltaX[dir];
+					ty := startY + NeighborDeltaY[dir];
+
+					if ElementDefs[Board.Tiles[tx][ty].Element].Walkable then begin
 						if changedTiles = 0 then begin
-							MoveStat(statId, startX + NeighborDeltaX[dir], startY + NeighborDeltaY[dir]);
-							Board.Tiles[startX][startY].Color := color;
-							Board.Tiles[startX][startY].Element := E_BREAKABLE;
+							MoveStat(statId, tx, ty);
+							with Board.Tiles[startX][startY] do begin
+								Element := E_BREAKABLE;
+								color := colorCopy;
+							end;
 							BoardDrawTile(startX, startY);
 						end else begin
-							AddStat(startX + NeighborDeltaX[dir], startY + NeighborDeltaY[dir], E_SLIME, color,
+							AddStat(tx, ty, E_SLIME, colorCopy,
 								ElementDefs[E_SLIME].Cycle, StatTemplateDefault);
 							Board.Stats[Board.StatCount].P2 := P2;
 						end;
@@ -757,8 +774,10 @@ procedure ElementSlimeTick(statId: integer);
 
 				if changedTiles = 0 then begin
 					RemoveStat(statId);
-					Board.Tiles[startX][startY].Element := E_BREAKABLE;
-					Board.Tiles[startX][startY].Color := color;
+					with Board.Tiles[startX][startY] do begin
+						Element := E_BREAKABLE;
+						color := colorCopy;
+					end;
 					BoardDrawTile(startX, startY);
 				end;
 			end;
@@ -767,12 +786,15 @@ procedure ElementSlimeTick(statId: integer);
 
 procedure ElementSlimeTouch(x, y: integer; sourceStatId: integer; var deltaX, deltaY: integer);
 	var
-		color: integer;
+		colorCopy: integer;
 	begin
-		color := Board.Tiles[x][y].Color;
-		DamageStat(GetStatIdAt(x, y));
-		Board.Tiles[x][y].Element := E_BREAKABLE;
-		Board.Tiles[x][y].Color := color;
+		with Board.Tiles[x][y] do begin
+			colorCopy := Color;
+			DamageStat(GetStatIdAt(x, y));
+			Element := E_BREAKABLE;
+			Color := colorCopy;
+		end;
+
 		BoardDrawTile(x, y);
 		SoundQueue(2, #32#1#35#1);
 	end;
@@ -1010,9 +1032,12 @@ procedure ElementDuplicatorTick(statId: integer);
 procedure ElementScrollTick(statId: integer);
 	begin
 		with Board.Stats[statId] do begin
-			Inc(Board.Tiles[X][Y].Color);
-			if Board.Tiles[X][Y].Color > $0F then
-				Board.Tiles[X][Y].Color := $09;
+			with Board.Tiles[X][Y] do begin
+				if Color >= 15 then
+					Color := 9
+				else
+					Inc(Color);
+			end;
 
 			BoardDrawTile(X, Y);
 		end;
