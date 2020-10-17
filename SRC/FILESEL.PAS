@@ -64,24 +64,28 @@ function FileSelect(title, extension: TString50): string;
 			{ Directories }
 			FindFirst('*', Directory, fileSearchRec);
 			while DosError = 0 do begin
-				entryName := fileSearchRec.Name;
-				if (Length(entryName) > 0) and (entryName <> '.') then
-					if (Length(curPath) > 3) or (entryName <> '..') then
-						TextWindowAppend(textWindow, '!' + entryName + ';[' + entryName + ']');
+				if (fileSearchRec.Attr and Directory) <> 0 then begin
+					entryName := fileSearchRec.Name;
+					if (Length(entryName) > 0) and (entryName <> '.') then
+						if (Length(curPath) > 3) or (entryName <> '..') then
+							TextWindowAppend(textWindow, '!' + entryName + ';[' + entryName + ']');
+				end;
 				FindNext(fileSearchRec);
 			end;
 		
 			{ Files }
 			FindFirst('*' + extension, AnyFile, fileSearchRec);
 			while DosError = 0 do begin
-				entryName := Copy(fileSearchRec.Name, 1, Length(fileSearchRec.name) - 4);
+				if (fileSearchRec.Attr and Directory) = 0 then begin
+					entryName := Copy(fileSearchRec.Name, 1, Length(fileSearchRec.name) - 4);
 
-				if useWorldFileDesc then
-					for i := 1 to WorldFileDescCount do
-						if entryName = WorldFileDescKeys[i] then
-							entryName := WorldFileDescValues[i];
+					if useWorldFileDesc then
+						for i := 1 to WorldFileDescCount do
+							if entryName = WorldFileDescKeys[i] then
+								entryName := WorldFileDescValues[i];
 
-				TextWindowAppend(textWindow, entryName);
+					TextWindowAppend(textWindow, entryName);
+				end;
 				FindNext(fileSearchRec);
 			end;
 
