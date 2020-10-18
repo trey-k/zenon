@@ -51,7 +51,7 @@ type
 		previewColor: byte;
 	end;
 const
-	COPIED_TILES_COUNT = 12;
+	COPIED_TILES_COUNT = 10;
 	NeighborBoardStrs: array[0 .. 3] of string[20] =
 		('       Board '#24, '       Board '#25, '       Board '#27, '       Board '#26);
 {	ColorNames: array[0 .. 15] of string[7] =
@@ -131,7 +131,7 @@ procedure EditorLoop;
 
 	procedure EditorUpdateCursorPattern;
 		begin
-			VideoWriteText(61, 22, $1F, '                  ');
+			VideoWriteText(61, 22, $1F, '                ');
 			VideoWriteText(60 + cursorPattern, 22, $1F, #30);
 		end;
 
