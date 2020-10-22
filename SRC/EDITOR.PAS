@@ -352,10 +352,10 @@ procedure EditorLoop;
 	procedure EditorEditStatText(statId: integer; prompt: string);
 		var
 			state: TTextWindowState;
-			iLine, iChar: integer;
-			unk1: array[0 .. 51] of byte;
+			iLine, iChar, iStat: integer;
 			dataChar: char;
 			dataPtr: pointer;
+			affectedStats: array[0 .. MAX_STAT + 1] of boolean;
 		begin
 			with Board.Stats[statId] do begin
 				state.Title := prompt;
@@ -364,6 +364,10 @@ procedure EditorLoop;
 				CopyStatDataToTextWindow(statId, state);
 
 				if DataLen > 0 then begin
+					{ Mark every other object that uses our data so that
+					  we can update its DataLen afterwards. }
+					for iStat := 0 to Board.StatCount do
+						affectedStats[iStat] := (Board.Stats[iStat].Data = Data);
 					FreeMem(Data, DataLen);
 					DataLen := 0;
 				end;
@@ -373,6 +377,14 @@ procedure EditorLoop;
 				for iLine := 1 to state.LineCount do
 					DataLen := DataLen + Length(state.Lines[iLine]^) + 1;
 				GetMem(Data, DataLen);
+
+				{ Update every bound object to have our possibly new pointer
+					and new DataLen. }
+				for iStat := 0 to Board.StatCount do
+					if (iStat <> statId) and affectedStats[iStat] then begin
+						Board.Stats[iStat].Data := Data;
+						Board.Stats[iStat].DataLen := DataLen;
+					end;
 
 				dataPtr := Data;
 				for iLine := 1 to state.LineCount do begin
