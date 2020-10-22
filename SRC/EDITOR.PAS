@@ -161,22 +161,44 @@ procedure EditorLoop;
 					VideoWriteText(60 + EditorPatternCount + i, 21, previewColor, Chr(previewChar));
 		end;
 
+	procedure EditorClearPattern(var copied: TEditorCopiedTile; first: boolean);
+		begin
+			with copied do begin
+				hasStat := false;
+				tile.Element := 0;
+				tile.Color := $0F;
+				previewChar := 0;
+				previewColor := $0F;
+				if first then stat.Data := nil
+				else if stat.Data <> nil then FreeMem(stat.Data, stat.DataLen);
+			end;
+		end;
+
 	{ TODO: Unify with BoardDrawTile? }
 	procedure EditorCopyPattern(x, y: integer; var copied: TEditorCopiedTile);
 		var
 			statId: integer;
+			statCopy: TStat;
 		begin
 			if Board.Tiles[cursorX][cursorY].Element = E_PLAYER then
 				exit;
 
 			statId := GetStatIdAt(x, y);
 
+			EditorClearPattern(copied, false);
 			with copied do begin
 				tile := Board.Tiles[cursorX][cursorY];
 				hasStat := statId > 0;
-				if hasStat then
-					stat := Board.Stats[statId];
-
+				if hasStat then begin
+					statCopy := Board.Stats[statId];
+					stat := statCopy;
+					if statCopy.DataLen > 0 then begin
+						GetMem(stat.Data, stat.DataLen);
+						Move(statCopy.Data^, stat.Data^, stat.DataLen);
+					end else begin
+						stat.DataLen := 0;
+					end;
+				end;
 				if ElementDefs[tile.Element].HasDrawProc then
 					ElementDefs[tile.Element].DrawProc(x, y, previewChar)
 				else if tile.Element < E_TEXT_MIN then
@@ -734,13 +756,7 @@ procedure EditorLoop;
 		cursorBlinker := 0;
 
 		for i := 1 to COPIED_TILES_COUNT do
-			with copiedTiles[i] do begin
-				hasStat := false;
-				tile.Element := 0;
-				tile.Color := $0F;
-				previewChar := 0;
-				previewColor := $0F;
-			end;
+			EditorClearPattern(copiedTiles[i], true);
 
 		if World.Info.CurrentBoard <> 0 then
 			BoardChange(World.Info.CurrentBoard);
@@ -1069,6 +1085,8 @@ procedure EditorLoop;
 			end;
 		until editorExitRequested;
 
+		for i := 1 to COPIED_TILES_COUNT do
+			EditorClearPattern(copiedTiles[i], false);
 		InputKeyPressed := #0;
 		InitElementsGame;
 	end;
