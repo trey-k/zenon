@@ -892,6 +892,9 @@ procedure CopyStatDataToTextWindow(statId: integer; var state: TTextWindowState)
 				end;
 				AdvancePointer(dataPtr, 1);
 			end;
+
+			if dataStr <> '' then
+				TextWindowAppend(state, dataStr);
 		end;
 	end;
 
