@@ -882,7 +882,7 @@ procedure CopyStatDataToTextWindow(statId: integer; var state: TTextWindowState)
 			dataStr := '';
 			dataPtr := Data;
 
-			for i := 0 to DataLen do begin
+			for i := 1 to DataLen do begin
 				Move(dataPtr^, dataChr, 1);
 				if dataChr = KEY_ENTER then begin
 					TextWindowAppend(state, dataStr);
