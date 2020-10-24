@@ -75,6 +75,8 @@ the screen.  These are:
      current pattern - just draw the
      outline of a shape and use this
      command to fill it in.
+[Delete] Remove the pattern on top
+     of the cursor.
 [D]  Disable ZZT's default coloring
      rules. This allows you to use
      non-standard colors for certain

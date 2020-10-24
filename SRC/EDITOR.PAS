@@ -369,6 +369,19 @@ procedure EditorLoop;
 			end;
 		end;
 
+	procedure EditorRemoveTile(x, y: integer);
+		var
+			statId: integer;
+		begin
+			statId := GetStatIdAt(x, y);
+			if statId > 0 then
+				RemoveStat(statId)
+			else if statId < 0 then
+				Board.Tiles[x][y].Element := E_EMPTY
+			else exit; { statId = 0 (player) cannot be modified }
+			BoardDrawTile(x, y);
+		end;
+
 	procedure EditorEditBoardInfo;
 		var
 			state: TTextWindowState;
@@ -821,6 +834,8 @@ procedure EditorLoop;
 						if canModify then
 							Board.Tiles[cursorX][cursorY].Element := 0;
 					end;
+				end else if (InputKeyPressed = KEY_DELETE) then begin
+					EditorRemoveTile(cursorX, cursorY);
 				end;
 
 				if (InputDeltaX <> 0) or (InputDeltaY <> 0) then begin
