@@ -5,33 +5,44 @@ menu, press [I].  Listed in this menu are
 all of the characteristics unique to the
 room being edited.
 
-$Title
+!title;Title
+!canfire;Can fire (#) shots
+!dark;Board is dark
+!neighbor;Board up/down/left/right
+!reenterzap;Re-enter when zapped
+!timelimit;Time limit
+
+
+:title;Title
 
      Each room has a unique title, which
 you can change as desired.  The title of
 the board you are editing is displayed at
 the top of the screen.
 
-$Can fire (#) shots
+
+:canfire;Can fire (#) shots
 
      This option determines the number of
 bullets that the player can fire at the
 same time.  A value of 1 indicates that
 the player can only have one bullet on the
-screen at any time.  The player can not
+screen at any time.  The player cannot
 fire again until the bullet disappears.
 
      A value of zero indicates that the
 player can fire any shots on the board.
 
-$Board is dark
+
+:dark;Board is dark
 
      Use this option to darken a room.
 The player must use a torch to see in a
 darkened room, and even then only has
 limited visibility.
 
-$Board up/down/left/right
+
+:neighbor;Board up/down/left/right
 
      Use these options to link rooms
 together so that the player can move from
@@ -44,17 +55,19 @@ linked to the first.  You must manually
 switch to the second board and then link
 it to the first.
 
-$Re-enter when zapped
 
-     When this option is on and the player
-is shot or touched by an enemy, he will be
-moved back to the position where he
-entered the room.
+:reenterzap;Re-enter when zapped
+
+     When this option is on and the
+player is shot or touched by an enemy,
+they will be moved back to the position
+where they entered the room.
 
      Otherwise, the player will remain
 the same place when shot.
 
-$Time limit
+
+:timelimit;Time limit
 
      A limit can be imposed on the amount
 of time the player can spend in a room.

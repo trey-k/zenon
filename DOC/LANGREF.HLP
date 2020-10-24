@@ -69,8 +69,8 @@ statement is included among text
 descriptions, it appears to the player
 as a button...
 !;Just like this.
-Then, as the users view the text, he may
-position the cursor on the button and
+Then, as the users view the text, they
+may position the cursor on the button and
 press enter, causing the supplied message
 to be sent.
    
@@ -175,7 +175,7 @@ by any object:
 
 $ALLIGNED
      This flag is SET whenever the object
-is alligned with the player either
+is aligned with the player either
 horizontally or vertically.
 
 $CONTACT
@@ -190,7 +190,7 @@ move in the direction.
 
 $ENERGIZED
      This flag is SET whenever the player
-has touched an energizer and can not be
+has touched an energizer and cannot be
 harmed by creatures and bullets.
 
 $ANY <kind>
@@ -237,7 +237,7 @@ $Descriptions of commands:
 
 :send;#SEND <message>
 
-     Similar to basic's "GOTO" command.
+     Similar to BASIC's "GOTO" command.
 #SEND followed by the name of a label
 within the program will cause program
 execution to continue at that label.
@@ -294,7 +294,7 @@ top and start over.
      Causes an object to move in a
 specified direction.  The object will
 push boulders forward if they are in the
-way.  If the object can not move in the
+way.  If the object cannot move in the
 given direction, it will stand by until
 either it can move, or it is stimulated by
 a message.
@@ -405,7 +405,7 @@ program in a short amount of time.  The
 second message interrupts the program
 before it can finish handling the first
 one.  However, if a program LOCKs itself
-when dealing with messages, it can not be
+when dealing with messages, it cannot be
 disturbed.
 
 :unlock;#UNLOCK
@@ -495,7 +495,7 @@ $Notes & rests:
      #    Sharp
      !    Flat
 
-$Rythmic sound effects:
+$Rhythmic sound effects:
      0    Tick
      1    Tweet
      2    Cowbell
@@ -563,14 +563,14 @@ with a list of ASCII codes for reference.
 
      Sets the speed at which an object is
 updated.  This can range from 1 (fastest)
-to 255 (ridiculously slow.) When no CYCLE
+to 255 (ridiculously slow). When no CYCLE
 speed is specified, it defaults to 3.
 
 
 :bind;#BIND <objectname>
 
     When a Program executes this
-instruction, it's code will be replaced
+instruction, its code will be replaced
 by the code of another object, and it will
 start executing instructions from the
 beginning.
