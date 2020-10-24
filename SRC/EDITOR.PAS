@@ -370,6 +370,9 @@ procedure EditorLoop;
 						affectedStats[iStat] := (Board.Stats[iStat].Data = Data);
 					FreeMem(Data, DataLen);
 					DataLen := 0;
+				end else begin
+					{ No other stats are affected. }
+					FillChar(affectedStats, Board.StatCount + 1, false);
 				end;
 
 				EditorOpenEditTextWindow(state);
