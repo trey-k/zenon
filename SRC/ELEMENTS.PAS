@@ -500,7 +500,10 @@ procedure ElementConveyorTick(x, y: integer; direction: integer);
 							Board.Tiles[tx][ty] := tiles[i];
 							Board.Tiles[ix][iy].Element := E_EMPTY;
 							MoveStat(iStat, ix, iy);
+
 							Board.Tiles[tx][ty] := tmpTile;
+							{ FIX: Add missing BoardDrawTile. }
+							BoardDrawTile(tx, ty);
 						end else begin
 							Board.Tiles[ix][iy] := tiles[i];
 							BoardDrawTile(ix, iy);
