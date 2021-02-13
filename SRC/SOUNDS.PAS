@@ -55,6 +55,9 @@ interface
 implementation
 uses Crt, Dos;
 
+const
+	SoundParseNoteTable: array['A' .. 'G'] of byte = (9, 11, 0, 2, 4, 5, 7);
+
 {$I SNDFREQ.INC}
 
 procedure SoundQueue(priority: integer; pattern: string);
@@ -234,36 +237,8 @@ function SoundParse(input: string): string;
 					Inc(inPos);
 				end;
 				'A'..'G': begin
-					case UpCase(input[inPos]) of
-						'C': begin
-							noteTone := 0;
-							Inc(inPos);
-						end;
-						'D': begin
-							noteTone := 2;
-							Inc(inPos);
-						end;
-						'E': begin
-							noteTone := 4;
-							Inc(inPos);
-						end;
-						'F': begin
-							noteTone := 5;
-							Inc(inPos);
-						end;
-						'G': begin
-							noteTone := 7;
-							Inc(inPos);
-						end;
-						'A': begin
-							noteTone := 9;
-							Inc(inPos);
-						end;
-						'B': begin
-							noteTone := 11;
-							Inc(inPos);
-						end;
-					end;
+					noteTone := SoundParseNoteTable[UpCase(input[inPos])];
+					Inc(inPos);
 
 					if inPos <= Length(input) then case UpCase(input[inPos]) of
 						'!': begin
