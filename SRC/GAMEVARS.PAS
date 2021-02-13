@@ -85,7 +85,12 @@ interface
 			Follower: integer;
 			Leader: integer;
 			Under: TTile;
+			{$IFNDEF FPC}
 			Data: ^string;
+			{$ELSE}
+			{ Free Pascal allows pointers to act as arrays. }
+			Data: ^char;
+			{$ENDIF}
 			DataPos: integer;
 			DataLen: integer;
 			unk1, unk2: pointer;

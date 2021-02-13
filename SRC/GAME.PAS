@@ -130,7 +130,7 @@ procedure GenerateTransitionTable;
 		TransitionTableSize := 0;
 		for iy := 1 to BOARD_HEIGHT do
 			for ix := 1 to BOARD_WIDTH do begin
-				TransitionTableSize := TransitionTableSize + 1;
+				Inc(TransitionTableSize);
 				TransitionTable[TransitionTableSize].X := ix;
 				TransitionTable[TransitionTableSize].Y := iy;
 			end;
@@ -165,16 +165,16 @@ procedure BoardClose;
 		rle.Count := 1;
 		rle.Tile := Board.Tiles[ix][iy];
 		repeat
-			ix := ix + 1;
+			Inc(ix);
 			if ix > BOARD_WIDTH then begin
 				ix := 1;
-				iy := iy + 1;
+				Inc(iy);
 			end;
 			if (Board.Tiles[ix][iy].Color = rle.Tile.Color) and
 				(Board.Tiles[ix][iy].Element = rle.Tile.Element) and
 				(rle.Count < 255) and (iy <= BOARD_HEIGHT) then
 			begin
-				rle.Count := rle.Count + 1;
+				Inc(rle.Count);
 			end else begin
 				Move(rle, ptr^, SizeOf(rle));
 				AdvancePointer(ptr, SizeOf(rle));
@@ -236,12 +236,12 @@ procedure BoardOpen(boardId: integer);
 				AdvancePointer(ptr, SizeOf(rle));
 			end;
 			Board.Tiles[ix][iy] := rle.Tile;
-			ix := ix + 1;
+			Inc(ix);
 			if ix > BOARD_WIDTH then begin
 				ix := 1;
-				iy := iy + 1;
+				Inc(iy);
 			end;
-			rle.Count := rle.Count - 1;
+			Dec(rle.Count);
 		until iy > BOARD_HEIGHT;
 
 		Move(ptr^, Board.Info, SizeOf(Board.Info));
@@ -369,7 +369,7 @@ procedure BoardDrawTile(x, y: integer);
 	begin
 		with Board.Tiles[x][y] do begin
 			if not Board.Info.IsDark
-				or (ElementDefs[Board.Tiles[x][y].Element].VisibleInDark)
+				or (ElementDefs[Element].VisibleInDark)
 				or (
 					(World.Info.TorchTicks > 0)
 					and ((Sqr(Board.Stats[0].X - x) + Sqr(Board.Stats[0].Y - y) * 2) < TORCH_DIST_SQR)
@@ -385,11 +385,11 @@ procedure BoardDrawTile(x, y: integer);
 				else begin
 					{ Text drawing }
 					if Element = E_TEXT_WHITE then
-						VideoWriteText(x - 1, y - 1, $0F, Chr(Board.Tiles[x][y].Color))
+						VideoWriteText(x - 1, y - 1, $0F, Chr(Color))
 					else if VideoMonochrome then
-						VideoWriteText(x - 1, y - 1, ((Element - E_TEXT_MIN) + 1) * 16, Chr(Board.Tiles[x][y].Color))
+						VideoWriteText(x - 1, y - 1, ((Element - E_TEXT_MIN) + 1) shl 4, Chr(Color))
 					else
-						VideoWriteText(x - 1, y - 1, (((Element - E_TEXT_MIN) + 1) * 16) + $F, Chr(Board.Tiles[x][y].Color));
+						VideoWriteText(x - 1, y - 1, (((Element - E_TEXT_MIN) + 1) shl 4) + $F, Chr(Color));
 				end
 			end else begin
 				{ Darkness }
@@ -436,7 +436,7 @@ procedure SidebarPromptCharacter(editable: boolean; x, y: integer; prompt: TStri
 
 		repeat
 			for i := (value - 4) to (value + 4) do
-				VideoWriteText(((x + i) - value) + 5, y + 2, $1E, Chr((i + $100) mod $100));
+				VideoWriteText(((x + i) - value) + 5, y + 2, $1E, Chr(i and $FF));
 
 			if editable then begin
 				Delay(25);
@@ -446,7 +446,7 @@ procedure SidebarPromptCharacter(editable: boolean; x, y: integer; prompt: TStri
 
 				newValue := value + InputDeltaX;
 				if value <> newValue then begin
-					value := (newValue + $100) mod $100;
+					value := newValue and $FF;
 					SidebarClearLine(y + 2);
 				end;
 			end;
@@ -512,15 +512,15 @@ procedure SidebarPromptChoice(editable: boolean; y: integer; prompt, choiceStr: 
 		choiceCount := 1;
 		for i := 1 to Length(choiceStr) do
 			if choiceStr[i] = ' ' then
-				choiceCount := choiceCount + 1;
+				Inc(choiceCount);
 
 		repeat
 			j := 0;
 			i := 1;
 			while (j < result) and (i < Length(choiceStr)) do begin
 				if choiceStr[i] = ' ' then
-					j := j + 1;
-				i := i + 1;
+					Inc(j);	
+				Inc(i);
 			end;
 
 			if editable then begin
@@ -571,7 +571,7 @@ procedure PromptString(x, y, arrowColor, color, width: integer; mode: byte; var 
 				VideoWriteText(x + i, y - 1, arrowColor, ' ');
 			end;
 			VideoWriteText(x + width, y - 1, arrowColor, ' ');
-			VideoWriteText(x + Length(buffer), y - 1, (arrowColor div $10) * 16 + $0F, #31);
+			VideoWriteText(x + Length(buffer), y - 1, (arrowColor and $F0) + $0F, #31);
 			VideoWriteText(x, y, color, buffer);
 
 			InputReadWaitKey;
@@ -697,7 +697,7 @@ function WorldLoad(filename, extension: TString50; titleOnly: boolean): boolean;
 	procedure SidebarAnimateLoading;
 		begin
 			VideoWriteText(69, 5, ProgressAnimColors[loadProgress], ProgressAnimStrings[loadProgress]);
-			loadProgress := (loadProgress + 1) mod 8;
+			loadProgress := (loadProgress + 1) and 7;
 		end;
 	begin
 		WorldLoad := false;
@@ -898,7 +898,7 @@ procedure CopyStatDataToTextWindow(statId: integer; var state: TTextWindowState)
 procedure AddStat(tx, ty: integer; element: byte; color, tcycle: integer; template: TStat);
 	begin
 		if Board.StatCount < MAX_STAT then begin
-			Board.StatCount := Board.StatCount + 1;
+			Inc(Board.StatCount);
 			Board.Stats[Board.StatCount] := template;
 			with Board.Stats[Board.StatCount] do begin
 				X := tx;
@@ -940,7 +940,7 @@ procedure RemoveStat(statId: integer);
 
 		StatDataInUse:
 			if statId < CurrentStatTicked then
-				CurrentStatTicked := CurrentStatTicked - 1;
+				Dec(CurrentStatTicked);
 
 			Board.Tiles[X][Y] := Under;
 			if Y > 0 then
@@ -951,20 +951,20 @@ procedure RemoveStat(statId: integer);
 					if Board.Stats[i].Follower = statId then
 						Board.Stats[i].Follower := -1
 					else
-						Board.Stats[i].Follower := Board.Stats[i].Follower - 1;
+						Dec(Board.Stats[i].Follower);
 				end;
 
 				if Board.Stats[i].Leader >= statId then begin
 					if Board.Stats[i].Leader = statId then
 						Board.Stats[i].Leader := -1
 					else
-						Board.Stats[i].Leader := Board.Stats[i].Leader - 1;
+						Dec(Board.Stats[i].Leader);
 				end;
 			end;
 
 			for i := (statId + 1) to Board.StatCount do
 				Board.Stats[i - 1] := Board.Stats[i];
-			Board.StatCount := Board.StatCount - 1;
+			Dec(Board.StatCount);
 		end;
 	end;
 
@@ -974,7 +974,7 @@ function GetStatIdAt(x, y: integer): integer;
 	begin
 		i := -1;
 		repeat
-			i := i + 1;
+			Inc(i);
 		until ((Board.Stats[i].X = x) and (Board.Stats[i].Y = y)) or (i > Board.StatCount);
 
 		if i > Board.StatCount then
@@ -1013,8 +1013,8 @@ procedure MoveStat(statId: integer; newX, newY: integer);
 		with Board.Stats[statId] do begin
 			oldBgColor := Board.Tiles[newX][newY].Color and $F0;
 
-			iUnder := Board.Stats[statId].Under;
-			Board.Stats[statId].Under := Board.Tiles[newX][newY];
+			iUnder := Under;
+			Under := Board.Tiles[newX][newY];
 
 			if Board.Tiles[X][Y].Element = E_PLAYER then
 				Board.Tiles[newX][newY].Color := Board.Tiles[X][Y].Color
@@ -1172,7 +1172,7 @@ procedure DamageStat(attackerStatId: integer);
 					GameUpdateSidebar;
 					DisplayMessage(100, 'Ouch!');
 
-					Board.Tiles[X][Y].Color := $70 + (ElementDefs[E_PLAYER].Color mod $10);
+					Board.Tiles[X][Y].Color := $70 + (ElementDefs[E_PLAYER].Color and $0F);
 
 					if World.Info.Health > 0 then begin
 						World.Info.BoardTimeSec := 0;
@@ -1231,7 +1231,7 @@ procedure BoardAttack(attackerStatId: integer; x, y: integer);
 		end;
 
 		if (attackerStatId > 0) and (attackerStatId <= CurrentStatTicked) then
-			CurrentStatTicked := CurrentStatTicked - 1;
+			Dec(CurrentStatTicked);
 
 		if (Board.Tiles[x][y].Element = E_PLAYER) and (World.Info.EnergizerTicks > 0) then begin
 			World.Info.Score := ElementDefs[Board.Tiles[Board.Stats[attackerStatId].X][Board.Stats[attackerStatId].Y].Element]
@@ -1572,7 +1572,7 @@ procedure GamePlayLoop(boardChanged: boolean);
 						if (Cycle <> 0) and ((CurrentTick mod Cycle) = (CurrentStatTicked mod Cycle)) then
 							ElementDefs[Board.Tiles[X][Y].Element].TickProc(CurrentStatTicked);
 
-						CurrentStatTicked := CurrentStatTicked + 1;
+						Inc(CurrentStatTicked);
 					end;
 				end;
 			end;
@@ -1581,7 +1581,7 @@ procedure GamePlayLoop(boardChanged: boolean);
 				{ all stats ticked }
 				if SoundHasTimeElapsed(TickTimeCounter, TickTimeDuration) then begin
 					{ next cycle }
-					CurrentTick := CurrentTick + 1;
+					Inc(CurrentTick);
 					if CurrentTick > 420 then
 						CurrentTick := 1;
 					CurrentStatTicked := 0;

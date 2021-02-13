@@ -50,7 +50,13 @@ procedure OopReadChar(statId: integer; var position: integer);
 	begin
 		with Board.Stats[statId] do begin
 			if (position >= 0) and (position < DataLen) then begin
-				Move(Ptr(Seg(Data^), Ofs(Data^) + position)^, OopChar, 1);
+				{$IFNDEF FPC}
+				{ On Turbo Pascal, the array pointer is actually }
+				{ a poiter to a string. }
+				OopChar := Data^[position];
+				{$ELSE}
+				OopChar := Data[position];
+				{$ENDIF}
 				Inc(position);
 			end else begin
 				OopChar := #0
@@ -59,8 +65,10 @@ procedure OopReadChar(statId: integer; var position: integer);
 	end;
 
 procedure OopReadWord(statId: integer; var position: integer);
+	var
+		wordPos: byte;
 	begin
-		OopWord := '';
+		wordPos := 0;
 		repeat
 			OopReadChar(statId, position);
 		until OopChar <> ' ';
@@ -69,11 +77,13 @@ procedure OopReadWord(statId: integer; var position: integer);
 			while ((OopChar >= 'A') and (OopChar <= 'Z')) or (OopChar = ':')
 				or ((OopChar >= '0') and (OopChar <= '9')) or (OopChar = '_') do
 			begin
-				OopWord := OopWord + OopChar;
+				Inc(wordPos);
+				OopWord[wordPos] := OopChar;
 				OopReadChar(statId, position);
 				OopChar := UpCase(OopChar);
 			end;
 		end;
+		OopWord[0] := Chr(wordPos);
 		if position > 0 then
 			Dec(position);
 	end;
@@ -82,21 +92,24 @@ procedure OopReadValue(statId: integer; var position: integer);
 	var
 		s: string[20];
 		code: integer;
+		wordPos: byte;
 	begin
-		s := '';
+		wordPos := 0;
 		repeat
 			OopReadChar(statId, position)
 		until OopChar <> ' ';
 
 		OopChar := UpCase(OopChar);
 		while (OopChar >= '0') and (OopChar <= '9') do begin
-			s := s + OopChar;
+			Inc(wordPos);
+			s[wordPos] := OopChar;
 			OopReadChar(statId, position);
 			OopChar := UpCase(OopChar);
 		end;
 
+		s[0] := Chr(wordPos);
 		if position > 0 then
-			position := position - 1;
+			Dec(position);
 
 		if Length(s) <> 0 then
 			Val(s, OopValue, code)
@@ -184,6 +197,8 @@ function OopFindString(statId: integer; s: string): integer;
 		pos, wordPos, cmpPos: integer;
 	label NoMatch;
 	begin
+		for pos := 1 to Length(s) do
+			s[pos] := UpCase(s[pos]);
 		with Board.Stats[statId] do begin
 			pos := 0;
 			while pos <= DataLen do begin
@@ -191,9 +206,9 @@ function OopFindString(statId: integer; s: string): integer;
 				cmpPos := pos;
 				repeat
 					OopReadChar(statId, cmpPos);
-					if UpCase(s[wordPos]) <> UpCase(OopChar) then
+					if s[wordPos] <> UpCase(OopChar) then
 						goto NoMatch;
-					wordPos := wordPos + 1;
+					Inc(wordPos);
 				until wordPos > Length(s);
 
 				{ string matches }
@@ -208,7 +223,7 @@ function OopFindString(statId: integer; s: string): integer;
 				end;
 
 			NoMatch:
-				pos := pos + 1;
+				Inc(pos);
 			end;
 			OopFindString := -1;
 		end;
@@ -219,7 +234,7 @@ function OopIterateStat(statId: integer; var iStat: integer; lookup: string): bo
 		pos: integer;
 		found: boolean;
 	begin
-		iStat := iStat + 1;
+		Inc(iStat);
 		found := false;
 
 		if lookup = 'ALL' then begin
@@ -230,7 +245,7 @@ function OopIterateStat(statId: integer; var iStat: integer; lookup: string): bo
 				if iStat <> statId then
 					found := true
 				else begin
-					iStat := iStat + 1;
+					Inc(iStat);
 					found := (iStat <= Board.StatCount);
 				end;
 			end;
@@ -252,7 +267,7 @@ function OopIterateStat(statId: integer; var iStat: integer; lookup: string): bo
 				end;
 
 				if not found then
-					iStat := iStat + 1;
+					Inc(iStat);
 			end;
 		end;
 
@@ -318,7 +333,7 @@ procedure WorldSetFlag(name: TString50);
 		if WorldGetFlagPosition(name) < 0 then begin
 			i := 1;
 			while (i < MAX_FLAG) and (Length(World.Info.Flags[i]) <> 0) do
-				i := i + 1;
+				Inc(i);
 			World.Info.Flags[i] := name;
 		end;
 	end;
@@ -335,15 +350,21 @@ function OopStringToWord(input: TString50): TString50;
 	var
 		output: TString50;
 		i: integer;
+		outPos: byte;
 	begin
 		output := '';
+		outPos := 0;
 		for i := 1 to Length(input) do begin
 			if ((input[i] >= 'A') and (input[i] <= 'Z'))
-				or ((input[i] >= '0') and (input[i] <= '9')) then
-				output := output + input[i]
-			else if ((input[i] >= 'a') and (input[i] <= 'z')) then
+				or ((input[i] >= '0') and (input[i] <= '9')) then begin
+				Inc(outPos);
+				output := output + input[i];
+			end else if ((input[i] >= 'a') and (input[i] <= 'z')) then begin
+				Inc(outPos);
 				output := output + Chr(Ord(input[i]) - $20);
+			end;
 		end;
+		output[0] := Chr(outPos);
 		OopStringToWord := output;
 	end;
 
@@ -388,10 +409,10 @@ function FindTileOnBoard(var x, y: integer; tile: TTile): boolean;
 	begin
 		FindTileOnBoard := false;
 		while true do begin
-			x := x + 1;
+			Inc(x);
 			if x > BOARD_WIDTH then begin
 				x := 1;
-				y := y + 1;
+				Inc(y);
 				if y > BOARD_HEIGHT then
 					exit;
 			end;
@@ -474,13 +495,16 @@ function OopCheckCondition(statId: integer; var position: integer): boolean;
 function OopReadLineToEnd(statId: integer; var position: integer) : string;
 	var
 		s: string;
+		sPos: byte;
 	begin
-		s := '';
+		sPos := 0;
 		OopReadChar(statId, position);
 		while (OopChar <> #0) and (OopChar <> #13) do begin
-			s := s + OopChar;
+			Inc(sPos);
+			s[sPos] := OopChar;
 			OopReadChar(statId, position);
 		end;
+		s[0] := Chr(sPos);
 		OopReadLineToEnd := s;
 	end;
 

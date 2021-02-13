@@ -98,7 +98,7 @@ procedure InputJoystickGetCoords(var x, y: integer);
 			x := x + (Port[PORT_JOYSTICK] and 1);
 			y := y + (Port[PORT_JOYSTICK] and 2);
 		until ((Port[PORT_JOYSTICK] and 3) = 0) or ((TimerTicks - startTicks) > 3);
-		y := y div 2;
+		y := y shr 1;
 		if (TimerTicks - startTicks) > 3 then begin
 			x := -1;
 			y := -1;
