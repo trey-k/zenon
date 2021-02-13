@@ -654,17 +654,19 @@ procedure PauseOnError;
 
 function DisplayIOError: boolean;
 	var
+		ioResValue: word;
 		errorNumStr: TString50;
 		textWindow: TTextWindowState;
 	begin
-		if IOResult = 0 then begin
+		ioResValue := IOResult;
+		if ioResValue = 0 then begin
 			DisplayIOError := false;
 			exit;
 		end;
 
 		DisplayIOError := true;
 
-		Str(IOResult, textWindow.Title);
+		Str(ioResValue, textWindow.Title);
 		textWindow.Title := 'Error # ' + textWindow.Title;
 		TextWindowInitState(textWindow);
 		TextWindowAppend(textWindow, '$DOS Error: ');
