@@ -24,7 +24,7 @@
 }
 
 {$I-}
-{$M 24576,163840,655360}
+{$M 20480,163840,655360}
 program ZZT;
 uses Crt, Dos, ExtMem, Video, Keys, Sounds, Input, TxtWind, GameVars, Elements, Editor, Oop, Game;
 

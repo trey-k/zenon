@@ -6,12 +6,13 @@ OUTPUT_ARCHIVE=zoo.zip
 TPC_DEFINES=""
 TEMP_PATH=$(mktemp -d /tmp/zoo.XXXXXXXXXXXX)
 CLEANUP=yes
+DEBUG=
 FREE_PASCAL=
 
 # Parse arguments
 
 OPTIND=1
-while getopts "d:e:fo:p:r" opt; do
+while getopts "d:e:fgo:p:r" opt; do
 	case "$opt" in
 	d)
 		if [ -n "$TPC_DEFINES" ]; then
@@ -25,6 +26,9 @@ while getopts "d:e:fo:p:r" opt; do
 		;;
 	f)
 		FREE_PASCAL=yes
+		;;
+	g)
+		DEBUG=yes
 		;;
 	o)
 		OUTPUT_ARCHIVE=$OPTARG
@@ -41,6 +45,9 @@ shift $((OPTIND - 1))
 
 TPC_ARGS=""
 FPC_ARGS=""
+if [ -z "$DEBUG" ]; then
+	TPC_ARGS='/$D- /$L- /$S-'
+fi
 if [ -n "$TPC_DEFINES" ]; then
 	TPC_ARGS="$TPC_ARGS"' /D'"$TPC_DEFINES"
 	FPC_ARGS="$FPC_ARGS"' -d'"$TPC_DEFINES"
