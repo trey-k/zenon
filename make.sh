@@ -6,11 +6,12 @@ OUTPUT_ARCHIVE=zoo.zip
 TPC_DEFINES=""
 TEMP_PATH=$(mktemp -d /tmp/zoo.XXXXXXXXXXXX)
 CLEANUP=yes
+FREE_PASCAL=
 
 # Parse arguments
 
 OPTIND=1
-while getopts "d:e:o:p:r" opt; do
+while getopts "d:e:fo:p:r" opt; do
 	case "$opt" in
 	d)
 		if [ -n "$TPC_DEFINES" ]; then
@@ -21,6 +22,9 @@ while getopts "d:e:o:p:r" opt; do
 		;;
 	e)
 		EXECUTABLE_NAME=$OPTARG
+		;;
+	f)
+		FREE_PASCAL=yes
 		;;
 	o)
 		OUTPUT_ARCHIVE=$OPTARG
@@ -36,8 +40,10 @@ done
 shift $((OPTIND - 1))
 
 TPC_ARGS=""
+FPC_ARGS=""
 if [ -n "$TPC_DEFINES" ]; then
 	TPC_ARGS="$TPC_ARGS"' /D'"$TPC_DEFINES"
+	FPC_ARGS="$FPC_ARGS"' -d'"$TPC_DEFINES"
 fi
 
 if [ ! -d "OUTPUT" ]; then
@@ -46,9 +52,10 @@ fi
 
 echo "Preparing Pascal code..."
 
-for i in DOC RES SRC SYSTEM TOOLS VENDOR BUILD.BAT LICENSE.TXT; do
+for i in DOC RES SRC SYSTEM TOOLS VENDOR LICENSE.TXT; do
 	cp -R "$i" "$TEMP_PATH"/
 done
+cp -R "$TEMP_PATH"/SYSTEM/*.BAT "$TEMP_PATH"/
 
 for i in BUILD DIST; do
 	mkdir "$TEMP_PATH"/"$i"
@@ -64,15 +71,41 @@ if [ -f "$PROPERTIES_FILE" ]; then
 fi
 
 sed -i -e 's#%COMPARGS%#'"$TPC_ARGS"'#g' "$TEMP_PATH"/BUILD.BAT
-
+sed -i -e 's#%FPC_PATH%#'"$FPC_PATH"'#g' "$TEMP_PATH"/SYSTEM/fpc.cfg
 echo "Compiling Pascal code..."
 
 RETURN_PATH=$(pwd)
 cd "$TEMP_PATH"
 
-touch BUILD.LOG
-SDL_VIDEODRIVER=dummy dosbox -noconsole -conf SYSTEM/dosbox.conf > /dev/null &
-tail --pid $! -n +1 -f BUILD.LOG
+if [ -n "$FREE_PASCAL" ]; then
+	if [ ! -d "$FPC_PATH" ]; then
+		echo "Please set the FPC_PATH environment variable!"
+		exit 1
+	fi
+
+	echo "[ Building DATPACK.EXE ]"
+	cd TOOLS
+	cp ../SYSTEM/fpc.cfg .
+	"$FPC_PATH"/bin/ppcross8086 DATPACK.PAS
+	cp DATPACK.exe ../BUILD/DATPACK.EXE
+	cd ..
+
+	echo "[ Building ZZT.EXE ]"
+	cd SRC
+	cp ../SYSTEM/fpc.cfg .
+	"$FPC_PATH"/bin/ppcross8086 $FPC_ARGS ZZT.PAS
+	cp ZZT.exe ../BUILD/ZZT.EXE
+	cd ..
+
+	sed -i -e "s/^BUILD$/PACKDAT/" SYSTEM/dosbox.conf
+	touch BUILD.LOG
+	SDL_VIDEODRIVER=dummy dosbox -noconsole -conf SYSTEM/dosbox.conf > /dev/null &
+	tail --pid $! -n +1 -f BUILD.LOG
+else
+	touch BUILD.LOG
+	SDL_VIDEODRIVER=dummy dosbox -noconsole -conf SYSTEM/dosbox.conf > /dev/null &
+	tail --pid $! -n +1 -f BUILD.LOG
+fi
 
 if [ ! -f BUILD/ZZT.EXE ]; then
 	cd "$RETURN_PATH"
@@ -92,7 +125,9 @@ else
 	upx --8086 -9 -o DIST/"$EXECUTABLE_NAME" BUILD/ZZT.EXE
 fi
 
-cp BUILD/ZZT.DAT DIST/
+if [ -f BUILD/ZZT.DAT ]; then
+	cp BUILD/ZZT.DAT DIST/
+fi
 cp LICENSE.TXT DIST/
 cp RES/* DIST/
 
