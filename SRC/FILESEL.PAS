@@ -117,6 +117,7 @@ function FileSelect(title, extension: TString50): string;
 				{ Exit }
 				FileSelect := '';
 				searching := false;
+				ChDir(startPath);
 			end else if Length(textWindow.Hyperlink) > 0 then begin
 				{ Directory }
 				ChDir(textWindow.Hyperlink);
@@ -125,14 +126,12 @@ function FileSelect(title, extension: TString50): string;
 				entryName := textWindow.Lines[textWindow.LinePos]^;
 				if Pos(' ', entryName) <> 0 then
 					entryName := Copy(entryName, 1, Pos(' ', entryName) - 1);
-				FileSelect := curPath + '\' + entryName;
+				FileSelect := entryName;
 				searching := false;
 			end;
 		end;
 
 		TextWindowFree(textWindow);
-
-		ChDir(startPath);
 	end;
 
 end.
