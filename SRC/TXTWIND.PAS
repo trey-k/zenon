@@ -522,6 +522,7 @@ procedure TextWindowOpenFile(filename: TTextWindowLine; var state: TTextWindowSt
 		retVal: boolean;
 		line: ^string;
 		lineLen: byte;
+	label EntryPosFoundResData;
 	begin
 		with state do begin
 			retVal := true;
@@ -551,10 +552,14 @@ procedure TextWindowOpenFile(filename: TTextWindowLine; var state: TTextWindowSt
 
 			if entryPos = 0 then begin
 				for i := 1 to ResourceDataHeader.EntryCount do begin
-					if UpCaseString(ResourceDataHeader.Name[i]) = UpCaseString(filename) then
+					{ assumption: LoadedFilename is UpCaseString(filename) }
+					if UpCaseString(ResourceDataHeader.Name[i]) = LoadedFilename then begin
 						entryPos := i;
+						goto EntryPosFoundResData;
+					end;
 				end;
 			end;
+			EntryPosFoundResData:
 
 			if entryPos <= 0 then begin
 				Assign(tf, filename);
