@@ -40,7 +40,7 @@ interface
 	function EditorSelectBoard(title: string; currentBoard: integer; titleScreenIsNone: boolean): integer;
 
 implementation
-uses Dos, Crt, Video, Sounds, Input, Elements, Oop, Game;
+uses Dos, Crt, ExtMem, Video, Sounds, Input, Elements, Oop, Game;
 
 type
 	TDrawMode = (DrawingOff, DrawingOn, TextEntry);
@@ -529,9 +529,11 @@ procedure EditorLoop;
 		var
 			i: byte;
 			f: file;
+			memoryError: boolean;
 		label TransferEnd;
 		begin
 			i := 1;
+			memoryError := false;
 			SidebarPromptChoice(true, 3, 'Transfer board:', 'Import Export', i);
 			if InputKeyPressed <> KEY_ESCAPE then begin
 				if i = 0 then begin
@@ -542,15 +544,18 @@ procedure EditorLoop;
 						if DisplayIOError then goto TransferEnd;
 
 						BoardClose;
-						FreeMem(World.BoardData[World.Info.CurrentBoard], World.BoardLen[World.Info.CurrentBoard]);
+						ExtMemFree(World.BoardData[World.Info.CurrentBoard], World.BoardLen[World.Info.CurrentBoard]);
 						BlockRead(f, World.BoardLen[World.Info.CurrentBoard], 2);
 						if not DisplayIOError then begin
-							GetMem(World.BoardData[World.Info.CurrentBoard], World.BoardLen[World.Info.CurrentBoard]);
-							BlockRead(f, World.BoardData[World.Info.CurrentBoard]^,
-								World.BoardLen[World.Info.CurrentBoard]);
+							if ExtMemGet(World.BoardData[World.Info.CurrentBoard], World.BoardLen[World.Info.CurrentBoard]) then begin
+								BlockRead(f, IoTmpBuf^,
+									  World.BoardLen[World.Info.CurrentBoard]);
+								ExtMemWrite(World.BoardData[World.Info.CurrentBoard], IoTmpBuf^,
+									  World.BoardLen[World.Info.CurrentBoard]);
+							end else memoryError := true;
 						end;
 
-						if DisplayIOError then begin
+						if DisplayIOError or memoryError then begin
 							World.BoardLen[World.Info.CurrentBoard] := 0;
 							BoardCreate;
 							EditorDrawRefresh;
@@ -570,7 +575,9 @@ procedure EditorLoop;
 
 						BoardClose;
 						BlockWrite(f, World.BoardLen[World.Info.CurrentBoard], 2);
-						BlockWrite(f, World.BoardData[World.Info.CurrentBoard]^,
+						ExtMemRead(World.BoardData[World.Info.CurrentBoard], IoTmpBuf^,
+							World.BoardLen[World.Info.CurrentBoard]);
+						BlockWrite(f, IoTmpBuf^,
 							World.BoardLen[World.Info.CurrentBoard]);
 						BoardOpen(World.Info.CurrentBoard);
 
@@ -1070,7 +1077,6 @@ procedure HighScoresAdd(score: integer);
 
 function EditorGetBoardName(boardId: integer; titleScreenIsNone: boolean): TString50;
 	var
-		boardData: pointer;
 		copiedName: TString50;
 	begin
 		if (boardId = 0) and titleScreenIsNone then
@@ -1078,8 +1084,7 @@ function EditorGetBoardName(boardId: integer; titleScreenIsNone: boolean): TStri
 		else if (boardId = World.Info.CurrentBoard) then
 			EditorGetBoardName := Board.Name
 		else begin
-			boardData := World.BoardData[boardId];
-			Move(boardData^, copiedName, SizeOf(copiedName));
+			ExtMemRead(World.BoardData[boardId], copiedName, SizeOf(copiedName));
 			EditorGetBoardName := copiedName;
 		end;
 	end;
