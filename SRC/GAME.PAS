@@ -833,6 +833,11 @@ function GameWorldLoad(extension: TString50): boolean;
 		entryName: string;
 		i: integer;
 	begin
+		{ As directory listings can take up a lot of memory, }
+		{ free IoTmpBuf for the duration - the data will be }
+		{ unloaded later anyway. - asie }
+		Dispose(IoTmpBuf);
+
 		TextWindowInitState(textWindow);
 		if extension = '.ZZT' then
 			textWindow.Title := 'ZZT Worlds'
@@ -862,12 +867,15 @@ function GameWorldLoad(extension: TString50): boolean;
 			entryName := textWindow.Lines[textWindow.LinePos]^;
 			if Pos(' ', entryName) <> 0 then
 				entryName := Copy(entryName, 1, Pos(' ', entryName) - 1);
+		end else entryName := '';
 
+		TextWindowFree(textWindow);
+		New(IoTmpBuf);
+
+		if Length(entryName) > 0 then begin
 			GameWorldLoad := WorldLoad(entryName, extension, false);
 			TransitionDrawToFill(#219, $44);
 		end;
-
-		TextWindowFree(textWindow);
 	end;
 
 procedure CopyStatDataToTextWindow(statId: integer; var state: TTextWindowState);
