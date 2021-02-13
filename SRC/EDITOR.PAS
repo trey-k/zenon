@@ -1296,5 +1296,4 @@ function EditorSelectBoard(title: string; currentBoard: integer; titleScreenIsNo
 			EditorSelectBoard := textWindow.LinePos - 1;
 	end;
 
-begin
 end.

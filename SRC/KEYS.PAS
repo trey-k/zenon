@@ -52,5 +52,4 @@ procedure KeysUpdateModifiers;
 		KeysShiftHeld := KeysRightShiftHeld or KeysLeftShiftHeld;
 	end;
 
-begin
 end.

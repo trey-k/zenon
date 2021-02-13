@@ -1719,5 +1719,4 @@ procedure GameTitleLoop;
 		until GameTitleExitRequested;
 	end;
 
-begin
 end.

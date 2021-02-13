@@ -882,5 +882,4 @@ procedure OopExecute(statId: integer; var position: integer; name: TString50);
 		end;
 	end;
 
-begin
 end.
