@@ -24,7 +24,7 @@
 }
 
 {$I-}
-{$M 49152,163840,655360}
+{$M 24576,163840,655360}
 program ZZT;
 uses Crt, Dos, Video, Keys, Sounds, Input, TxtWind, GameVars, Elements, Editor, Oop, Game;
 
@@ -178,7 +178,6 @@ begin
 		DebugEnabled := false;
 		SavedGameFileName := 'SAVED';
 		SavedBoardFileName := 'TEMP';
-		GenerateTransitionTable;
 		WorldCreate;
 
 		GameTitleLoop;
