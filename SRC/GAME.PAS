@@ -1420,6 +1420,23 @@ procedure GameAboutScreen;
 		TextWindowDisplayFile('ABOUT.HLP', 'About ZZT...');
 	end;
 
+procedure GameOnStart;
+	var
+		f: file;
+	begin
+		GameAboutScreen;
+		if Length(StartupWorldFileName) <> 0 then begin
+			if FileExists(StartupWorldFileName + '.ZZT') and WorldLoad(StartupWorldFileName, '.ZZT', true) then begin
+				SidebarClearLine(8);
+				VideoWriteText(69, 8, $1F, StartupWorldFileName);
+			end else begin
+				WorldCreate;
+			end;
+		end;
+		ReturnBoardId := World.Info.CurrentBoard;
+		BoardChange(0);
+	end;
+
 procedure GamePlayLoop(boardChanged: boolean);
 	var
 		exitLoop: boolean;
@@ -1495,14 +1512,7 @@ procedure GamePlayLoop(boardChanged: boolean);
 		GameUpdateSidebar;
 
 		if JustStarted then begin
-			GameAboutScreen;
-			if Length(StartupWorldFileName) <> 0 then begin
-				SidebarClearLine(8);
-				VideoWriteText(69, 8, $1F, StartupWorldFileName);
-				if not WorldLoad(StartupWorldFileName, '.ZZT', true) then WorldCreate;
-			end;
-			ReturnBoardId := World.Info.CurrentBoard;
-			BoardChange(0);
+			GameOnStart;
 			JustStarted := false;
 		end;
 

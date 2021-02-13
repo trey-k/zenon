@@ -29,12 +29,27 @@ unit FileSel;
 
 interface
 	uses GameVars;
+	function FileExists(name: string): boolean;
 	function FileSelect(title, extension: TString50): string;
 
 implementation
 uses Dos, TxtWind;
 const
 	PATH_PREVIEW_LENGTH = 24;
+
+function FileExists(name: string): boolean;
+	var
+		f: file;
+	begin
+		Assign(f, name);
+		Reset(f);
+		if IOResult = 0 then begin
+			Close(f);
+			FileExists := true;
+		end else begin
+			FileExists := false;
+		end;
+	end;
 
 function FileSelect(title, extension: TString50): string;
 	var
