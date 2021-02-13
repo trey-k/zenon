@@ -486,9 +486,7 @@ procedure EditorLoop;
 	procedure EditorEditStatText(statId: integer; prompt: string);
 		var
 			state: TTextWindowState;
-			iLine, iChar, iStat: integer;
-			dataChar: char;
-			dataPtr: pointer;
+			i, iLine, iChar, iStat: integer;
 			affectedStats: array[0 .. MAX_STAT + 1] of boolean;
 		begin
 			with Board.Stats[statId] do begin
@@ -523,17 +521,28 @@ procedure EditorLoop;
 						Board.Stats[iStat].DataLen := DataLen;
 					end;
 
-				dataPtr := Data;
+				i := 0;
 				for iLine := 1 to state.LineCount do begin
 					for iChar := 1 to Length(state.Lines[iLine]^) do begin
-						dataChar := state.Lines[iLine]^[iChar];
-						Move(dataChar, dataPtr^, 1);
-						AdvancePointer(dataPtr, 1);
+						{$IFNDEF FPC}
+						{ On Turbo Pascal, the array pointer is actually }
+						{ a poiter to a string. }
+						Data^[i] := state.Lines[iLine]^[iChar];
+						{$ELSE}
+						Data[i] := state.Lines[iLine]^[iChar];
+						{$ENDIF}
+						Inc(i);
 					end;
 
-					dataChar := #13;
-					Move(dataChar, dataPtr^, 1);
-					AdvancePointer(dataPtr, 1);
+
+					{$IFNDEF FPC}
+					{ On Turbo Pascal, the array pointer is actually }
+					{ a poiter to a string. }
+					Data^[i] := #13;
+					{$ELSE}
+					Data[i] := #13;
+					{$ENDIF}
+					Inc(i);
 				end;
 
 				TextWindowFree(state);

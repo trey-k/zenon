@@ -862,28 +862,36 @@ function GameWorldLoad(extension: TString50): boolean;
 procedure CopyStatDataToTextWindow(statId: integer; var state: TTextWindowState);
 	var
 		dataStr: string;
-		dataPtr: pointer;
 		dataChr: char;
 		i: integer;
+		dataStrLen: byte;
 	begin
 		with Board.Stats[statId] do begin
 			TextWindowInitState(state);
-			dataStr := '';
-			dataPtr := Data;
+			dataStrLen := 0;
 
-			for i := 1 to DataLen do begin
-				Move(dataPtr^, dataChr, 1);
+			for i := 0 to (DataLen - 1) do begin
+				{$IFNDEF FPC}
+				{ On Turbo Pascal, the array pointer is actually }
+				{ a poiter to a string. }
+				dataChr := Data^[i];
+				{$ELSE}
+				dataChr := Data[i];
+				{$ENDIF}
 				if dataChr = KEY_ENTER then begin
+					dataStr[0] := Chr(dataStrLen);
 					TextWindowAppend(state, dataStr);
-					dataStr := '';
+					dataStrLen := 0;
 				end else begin
-					dataStr := dataStr + dataChr;
+					Inc(dataStrLen);
+					dataStr[dataStrLen] := dataChr;
 				end;
-				AdvancePointer(dataPtr, 1);
 			end;
 
-			if dataStr <> '' then
+			if dataStrLen > 0 then begin
+				dataStr[0] := Chr(dataStrLen);
 				TextWindowAppend(state, dataStr);
+			end;
 		end;
 	end;
 
