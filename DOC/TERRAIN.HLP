@@ -5,14 +5,27 @@ of any ZZT board because they form the
 foundation upon which the game's action
 is based.
 
-     Walls, Boulders, Forest, and other
+     Walls, Boulders, Forest and other
 terrains can be arranged to form puzzles,
 mazes, and scenery.  Each type of terrain
 has unique properties.
 
-$Water
+!water;Water
+!forest;Forest
+!walls;Solid and Normal walls
+!breakable;Breakable walls
+!boulder;Boulders
+!slider;Sliders
+!fake;Fake walls
+!invisible;Invisible walls
+!blinking;Blinking walls
+!transporter;Transporter
+!ricochet;Ricochet
 
-     Neither players nor creatues can
+
+:water;Water
+
+     Neither players nor creatures can
 travel through water, but bullets pass
 freely over it.  The player must
 maneuver around water, taking care to
@@ -20,22 +33,25 @@ avoid bullets passing over it.
 
      Sharks are the only kind of creature
 that can travel through water, but they
-can not move through land.
+cannot move through land.
 
-$Forest
+
+:forest;Forest
 
      The player can move through forest,
-clearing a path behind him.  Creatures
-can not move through forest, but readily
+clearing a path behind them.  Creatures
+cannot move through forest, but readily
 follow the player through cleared paths.
 
-$Solid and Normal Walls
+
+:walls;Solid and Normal walls
 
      These walls form a barrier that is
 always impenetrable.  Nobody walks through
 walls.  Period.
 
-$Breakable Walls
+
+:breakable;Breakable walls
 
      These walls also block the player and
 all creatures, but can be destroyed.
@@ -46,7 +62,8 @@ Also, when a bomb explodes, all breakable
 walls in the vicinity of the bomb are
 destroyed.
 
-$Boulders
+
+:boulder;Boulders
 
      Boulders are solid objects that can
 be pushed around by the player.
@@ -56,7 +73,8 @@ walls, and other objects, a variety of
 challenging thought puzzles can be
 created.
 
-$Sliders
+
+:slider;Sliders
 
      Sliders are similar to boulders, but
 are confined to move in a line.  A slider
@@ -64,7 +82,8 @@ looks like a line with two arrows at
 opposite ends, and can only move in the
 direction of the arrows.
 
-$Fake walls
+
+:fake;Fake walls
 
      Fake walls look exactly like normal
 walls, but have no effect on the player.
@@ -72,7 +91,8 @@ The player can walk over fake walls just
 as if they were empty space.  Fake walls
 are meant for creating secret passages.
 
-$Invisible walls
+
+:invisible;Invisible walls
 
      Invisible walls look like empty space
 to the player, but prevent the player
@@ -81,7 +101,8 @@ touches an invisible wall, it suddenly
 appears as a normal wall.  Creatures can
 not pass through invisible walls either.
 
-$Blinking walls
+
+:blinking;Blinking walls
 
      A blinking wall placed on the board
 emitts a ray pointing in a specified
@@ -95,18 +116,26 @@ a duration.  By creating a line of
 walls with the same duration but varying
 start times, a moving wave appears.
 
-$Transporter
+
+:transporter;Transporter
 
      When the player enters a transporter,
-he is magically moved to another area of
-the board.
+they are magically moved to another area
+of the board.
 
      Each transporter points in a given
 direction, and the player can only enter
-the transporter from behind.  He is
+the transporter from behind.  They are
 then moved along a line, in the direction
 of the transporter, to the nearest
 transporter that points in the opposite
 direction.
 
-$- - -
+
+:ricochet;Ricochet
+
+    Ricochets can be used to reverse the
+direction of bullets hitting them. In
+addition, if a bullet hits a wall with a
+ricochet to the side, it will turn left
+or right depending on its location.

@@ -1,15 +1,16 @@
 $The ZZT Editor
 
 Help is available on the following topics:
-!start;Getting Started
-!cmds;Editor Commands
+
+!start;Getting started
+!cmds;Editor commands
 !-creature;Creatures
 !-terrain;Terrains
 !-item;Items
 !-lang;ZZT-OOP Programming Language
 !-info;Board information menu
 
-:start;Getting started:
+:start;Getting started
 
    The ZZT Editor is a tool for
 creating silly ZZT game worlds.
@@ -35,7 +36,7 @@ pace.  The results will be well worth the
 effort.
 
 
-:cmds;Editing commands:
+:cmds;Editor commands
 
 [L]  Load a world from disk.
 [S]  Save a world to disk.

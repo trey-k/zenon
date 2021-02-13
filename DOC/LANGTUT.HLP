@@ -10,7 +10,7 @@ F2 O.  After picking a character to
 represent the object,  you can enter a
 program to control it.
 
-$Here is an example program
+$Here is an example program:
 
  Commands    Comments
  ----------  ---------------------------
@@ -31,7 +31,7 @@ $Here is an example program
  :touch      ' Do the following when we
              '    receive a "TOUCH" msg.
  Ouch! Stop touching me.
-             ' Put the preceeding text
+             ' Put the preceding text
              '    on the screen.
  #send shot  ' Next, send ourselves the
              '    message "SHOT".

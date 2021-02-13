@@ -18,7 +18,7 @@ The following items are available:
 :ammo;Ammunition
 
      When the player touches a unit of
-ammo, he receives five bullets.
+ammo, they receive five bullets.
 
 
 :torches;Torches.
@@ -57,8 +57,8 @@ are color-coded, so there are seven colors
 of keys.  To unlock a door, the player
 must posess a key of the same color.
 
-     The player can not hold two keys of
-the same color, though he can hold all
+     The player cannot hold two keys of
+the same color, though they can hold all
 seven different-colored keys at the same
 time.
 
@@ -95,7 +95,7 @@ board, you must specify which room is
 through the passage.
 
      Whenever the player touches a
-passage, he is transported to a new
+passage, they are transported to a new
 room.  The player will be placed in the
 new room as follows:
 
@@ -105,9 +105,10 @@ new room as follows:
    match, the exit and entrance passages
    must be the same color.
 
-*  Otherwise, the player will be arrive
-   in the destination board on the spot
-   where he appears in the board editor.
+*  Otherwise, the player will arrive in
+   the destination board on the spot
+   where they were placed in the board
+   editor.
 
 
 :dupes;Duplicators.

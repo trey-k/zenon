@@ -68,7 +68,7 @@ represent it.  Then, you enter commands
 to control the creature during game play.
 
      If you want to modify the program of
-an already-existing Object, position the
+an already existing Object, position the
 cursor above it and press [ENTER].
 
 !-lang;Programming instructions.
@@ -114,7 +114,7 @@ player, but do not pose a direct threat.
 
      Lions move quickly about the board,
 attracted to the player according to their
-intelligence.  Lions can not shoot.
+intelligence.  Lions cannot shoot.
 
 
 :tigers;Tigers:
