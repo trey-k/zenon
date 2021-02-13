@@ -113,10 +113,7 @@ procedure GameConfigure;
 		Writeln;
 		WritelnCentered('<=-  %NAME%  -=>');
 		TextColor(Yellow);
-		if Length(ConfigRegistration) = 0 then
-			WritelnCentered('Shareware version %VERSION%')
-		else
-			WritelnCentered('Version %VERSION%');
+		WritelnCentered('Version %VERSION%');
 		WritelnCentered('%CONFIG_SUBTITLE%');
 		GotoXY(1, 7);
 		TextColor(Blue);
@@ -205,14 +202,6 @@ begin
 	Port[PORT_CGA_PALETTE] := 0;
 	TextAttr := InitialTextAttr;
 	ClrScr;
-
-	if Length(ConfigRegistration) = 0 then begin
-		GamePrintRegisterMessage;
-	end else begin
-		Writeln;
-		Writeln('  Registered version -- Thank you for playing %NAME%.');
-		Writeln;
-	end;
 
 	VideoShowCursor;
 end.
