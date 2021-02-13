@@ -1743,5 +1743,4 @@ procedure GamePrintRegisterMessage;
 		end;
 	end;
 
-begin
 end.

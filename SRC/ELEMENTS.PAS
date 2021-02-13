@@ -1983,5 +1983,4 @@ procedure InitEditorStatSettings;
 		World.EditorStatSettings[E_BEAR].P1 := 8;
 	end;
 
-begin
 end.
