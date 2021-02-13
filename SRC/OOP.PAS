@@ -623,7 +623,7 @@ procedure OopExecute(statId: integer; var position: integer; name: TString50);
 					if Length(OopWord) = 0 then
 						goto ReadInstruction;
 					Inc(insCount);
-					if Length(OopWord) <> 0 then begin
+					{ if Length(OopWord) <> 0 then begin // already checked above }
 						if OopWord = 'GO' then begin
 							OopReadDirection(statId, position, deltaX, deltaY);
 
@@ -828,7 +828,7 @@ procedure OopExecute(statId: integer; var position: integer; name: TString50);
 								end;
 							end;
 						end;
-					end;
+					{ end; }
 
 					if lineFinished then
 						OopSkipLine(statId, position);
