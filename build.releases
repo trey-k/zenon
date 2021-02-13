@@ -1,1 +1,2 @@
--o zzt.zip -p build.properties
+-d EDITOR -o zzt.zip -p build.properties
+-e ZZT_NOED.EXE -o zzt.zip -p build.properties
