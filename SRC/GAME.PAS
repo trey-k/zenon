@@ -1355,18 +1355,24 @@ procedure GameDebugPrompt;
 	var
 		input: TString50;
 		i: integer;
-		toggle: boolean;
-		changesFlags: boolean;
+		toggle: boolean; { True if not '-[cheat]' or 'NO[cheat]' }
+		changesFlags: boolean; { True if starts with + or - }
+		isYes: boolean; { True if not 'NO[cheat]' }
+		isYesMultiplier: integer; { -1 if 'NO[cheat]', 1 otherwise }
 	begin
 		input := '';
 		SidebarClearLine(4);
 		SidebarClearLine(5);
 
 		PromptString(63, 5, $1E, $0F, 11, PROMPT_ANY, input);
+		if Length(input) <= 0 then exit;
+
 		for i := 1 to Length(input) do
 			input[i] := UpCase(input[i]);
 
 		toggle := true;
+		isYes := true;
+		isYesMultiplier := 1;
 		changesFlags := (input[1] = '+') or (input[1] = '-');
 		if changesFlags then begin
 			if input[1] = '-' then
@@ -1377,26 +1383,31 @@ procedure GameDebugPrompt;
 				WorldSetFlag(input)
 			else
 				WorldClearFlag(input);
+		end else if (Length(input) >= 2) and (input[1] = 'N') and (input[2] = 'O') then begin
+			input := Copy(input, 3, Length(input) - 2);
+			toggle := false;
+			isYes := false;
+			isYesMultiplier := -1;
 		end;
 
 		DebugEnabled := WorldGetFlagPosition('DEBUG') >= 0;
 
 		if input = 'HEALTH' then
-			World.Info.Health := World.Info.Health + 50
+			World.Info.Health := World.Info.Health + 50 * isYesMultiplier
 		else if input = 'AMMO' then
-			World.Info.Ammo := World.Info.Ammo + 5
+			World.Info.Ammo := World.Info.Ammo + 5 * isYesMultiplier
 		else if input = 'KEYS' then
-			for i := 1 to 7 do World.Info.Keys[i] := true
+			for i := 1 to 7 do World.Info.Keys[i] := isYes
 		else if input = 'TORCHES' then
-			World.Info.Torches := World.Info.Torches + 3
+			World.Info.Torches := World.Info.Torches + 3 * isYesMultiplier
 		else if input = 'TIME' then
-			World.Info.BoardTimeSec := World.Info.BoardTimeSec - 30
+			World.Info.BoardTimeSec := World.Info.BoardTimeSec - 30 * isYesMultiplier
 		else if input = 'GEMS' then
-			World.Info.Gems := World.Info.Gems + 5
+			World.Info.Gems := World.Info.Gems + 5 * isYesMultiplier
 		else if input = 'DARK' then begin
 			Board.Info.IsDark := toggle;
 			TransitionDrawToBoard;
-		end else if input = 'ZAP' then begin
+		end else if (input = 'ZAP') and (isYes) then begin
 			for i := 0 to 3 do begin
 				BoardDamageTile(Board.Stats[0].X + NeighborDeltaX[i], Board.Stats[0].Y + NeighborDeltaY[i]);
 				Board.Tiles[Board.Stats[0].X + NeighborDeltaX[i]][Board.Stats[0].Y + NeighborDeltaY[i]].Element := E_EMPTY;
@@ -1406,18 +1417,35 @@ procedure GameDebugPrompt;
 			{ New cheats. They should not activate alongside flags, }
 			{ to preserve compatibility with games which use the }
 			{ flag names now utilizd by said cheats. }
-			if input = 'PASSAGE' then begin
-				if GameStateElement = E_PLAYER then begin
-					BoardChange(EditorSelectBoard('Teleport to', World.Info.CurrentBoard, false));
-					GamePaused := true;
-					TransitionDrawBoardChange;
-					BoardEnter;
+			if input = 'BLINK' then begin
+				VideoSetBlink(isYes);
+			end else if input = 'SHOWI' then begin
+				if isYes then
+					ElementDefs[E_INVISIBLE].Character := #176
+				else
+					ElementDefs[E_INVISIBLE].Character := ' ';
+				TransitionDrawToBoard;
+			end else if input = 'SHOWF' then begin
+				if isYes then
+					ElementDefs[E_FAKE].Character := #176
+				else
+					ElementDefs[E_FAKE].Character := #178;
+				TransitionDrawToBoard;
+			end else if isYes then begin
+				{ Non-toggleables. }
+				if input = 'PASSAGE' then begin
+					if GameStateElement = E_PLAYER then begin
+						BoardChange(EditorSelectBoard('Teleport to', World.Info.CurrentBoard, false));
+						GamePaused := true;
+						TransitionDrawBoardChange;
+						BoardEnter;
+					end;
+				end else if input = 'SPEED' then begin
+					SidebarPromptSlider(true, 63, 3, 'Game speed:;FS', TickSpeed);
+					SidebarClearLine(3);
+					TickTimeDuration := TickSpeed * 2;
+					InputKeyPressed := #0;
 				end;
-			end else if input = 'SPEED' then begin
-				SidebarPromptSlider(true, 63, 3, 'Game speed:;FS', TickSpeed);
-				SidebarClearLine(3);
-				TickTimeDuration := TickSpeed * 2;
-				InputKeyPressed := #0;
 			end;
 		end;
 
