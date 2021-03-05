@@ -174,6 +174,11 @@ begin
 	GameConfigure;
 	ParseArguments;
 
+{$IFDEF EXTCHEAT}
+	CheatNoClip := false;
+	CheatFreeze := false;
+{$ENDIF}
+
 	if not GameTitleExitRequested then begin
 		VideoInstall(80, Blue);
 		OrderPrintId := @GameVersion;

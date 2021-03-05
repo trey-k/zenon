@@ -219,6 +219,12 @@ interface
 		WorldFileDescCount: integer;
 		WorldFileDescKeys: array[1 .. 10] of TString50;
 		WorldFileDescValues: array[1 .. 10] of TString50;
+{$IFDEF EXTCHEAT}
+		CheatColorModifiers: array[0 .. MAX_ELEMENT] of byte;
+		CheatCharModifiers: array[0 .. MAX_ELEMENT] of char;
+		CheatNoClip: boolean;
+		CheatFreeze: boolean;
+{$ENDIF}
 	const
 		E_EMPTY = 0;
 		E_BOARD_EDGE = 1;

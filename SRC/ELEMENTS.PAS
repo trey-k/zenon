@@ -1453,7 +1453,11 @@ procedure ElementPlayerTick(statId: integer);
 					if SoundEnabled and not SoundIsPlaying then
 						Sound(110);
 					{$ENDIF}
-					if ElementDefs[Board.Tiles[X + InputDeltaX][Y + InputDeltaY].Element].Walkable then begin
+					if (ElementDefs[Board.Tiles[X + InputDeltaX][Y + InputDeltaY].Element].Walkable)
+{$IFDEF EXTCHEAT}
+					or (CheatNoClip and (Board.Tiles[X + InputDeltaX][Y + InputDeltaY].Element <> E_BOARD_EDGE))
+{$ENDIF}
+					then begin
 						{$IFDEF PLRSOUND}
 						if SoundEnabled and not SoundIsPlaying then
 							NoSound;
@@ -2012,6 +2016,15 @@ procedure InitElementDefs;
 		EditorPatterns[4] := E_WATER;
 		EditorPatterns[5] := E_EMPTY;
 		EditorPatterns[6] := E_LINE;
+
+{$IFDEF EXTCHEAT}
+		for i := 0 to MAX_ELEMENT do begin
+			CheatColorModifiers[i] := 0;
+			CheatCharModifiers[i] := ElementDefs[i].Character;
+		end;
+		CheatCharModifiers[E_INVISIBLE] := #176;
+		CheatCharModifiers[E_FAKE] := #178;
+{$ENDIF}
 	end;
 
 procedure InitElementsEditor;
