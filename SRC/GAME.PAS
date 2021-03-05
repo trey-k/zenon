@@ -1451,6 +1451,25 @@ function DebugPromptStarts(input: TString50; cmp: TString50): boolean;
 		end;
 	end;
 
+procedure DebugPromptFlagWindow;
+	var
+		i: integer;
+		flagId: string[11];
+		textWindow: TTextWindowState;
+	begin
+		textWindow.Title := 'Flags';
+		TextWindowInitState(textWindow);
+		for i := 1 to MAX_FLAG do begin
+			Str(i, flagId);
+			TextWindowAppend(textWindow, flagId + ': ' + World.Info.Flags[i]);
+		end;
+
+		TextWindowDrawOpen(textWindow);
+		TextWindowSelect(textWindow, false, false);
+		TextWindowDrawClose(textWindow);
+		TextWindowFree(textWindow);
+	end;
+
 procedure GameDebugPrompt;
 	var
 		input: TString50;
@@ -1541,6 +1560,8 @@ procedure GameDebugPrompt;
 				CheatNoClip := not isYes;
 			end else if input = 'FREEZE' then begin
 				CheatFreeze := isYes;
+			end else if input = 'FLAGS' then begin
+				DebugPromptFlagWindow;
 {$ENDIF}
 			end else if isYes then begin
 				{ Non-toggleables. }
