@@ -1465,7 +1465,7 @@ procedure GamePlayLoop(boardChanged: boolean);
 			SidebarClearLine(1);
 			SidebarClearLine(2);
 			VideoWriteText(61, 0, $1F, '    - - - - -      ');
-			VideoWriteText(62, 1, $70, '      ZZT      ');
+			VideoWriteText(62, 1, $70, '      ZZT*     ');
 			VideoWriteText(61, 2, $1F, '    - - - - -      ');
 			if GameStateElement = E_PLAYER then begin
 				VideoWriteText(64, 7, $1E, ' Health:');

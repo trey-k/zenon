@@ -1,0 +1,77 @@
+$Changelog
+
+Legend:
+
++ Additions         * Changes
+- Removals          / Bugfixes
+
+$< ClassicZoo 4.0 >
+
+The first public release of ClassicZoo
+contains the effects of the past year
+of research into patches following the
+release of the Reconstruction of ZZT.
+
++ EMS/XMS extended memory support. This
+  effectively ends the ~350-400KB world
+  size limit for anyone with extended
+  memory. (Mr_Alert)
++ New file selector, with support for
+  directory traversal.
++ Enhanced editor:
+  + New color picker - allows picking
+    all 8 BG and all 16 FG colors.
+  + D toggle - as in KevEdit, this will
+    force usage of the user-picked color
+    even if the ZZT default differs.
+  + Added water to the default pattern
+    list.
+  + Added support for multiple pattern
+    slots, complete with hotkeys.
+  + Added F5 tab for advanced elements.
+    Currently, this exposes board edges.
+  * The Transfer -> Import option now
+    uses the file selector to choose
+    a board.
+- Removed the shareware/registered
+  distinction and order messages.
+* Many documentation improvements.
+* Tons of CPU optimizations and memory
+  usage improvements have been made.
+* Tweaked video color handling for the
+  monochrome mode.
+/ Fixed the following ZZT 3.2 bugs.
+  (Note that, in ClassicZoo, fixes are
+  only done for game behaviour which
+  leads to a crash or soft-lock - this
+  is to preserve compatibility with
+  existing games.)
+  . Gameplay
+    . Fixed conveyors swapping stats in
+      some scenarios, which could lead
+      to a game soft-lock (no player).
+    . Fixed conveyors not rendering an
+      item in some edge cases.
+    . Fixed crash when a stat recursively
+      pushed itself. (GreaseMonkey)
+    . Fixed crash when a scroll executes
+      #become or /dir. (GreaseMonkey)
+    . Fixed 0-cycle transporter crash.
+      (zzo38)
+    . Fixed various centipede edge cases.
+      (Tim Sweeney - from Super ZZT)
+    . Fixed double free in #BIND.
+  . Editor
+    . Fixed ENTER-picked items not being
+      shown in the sidebar.
+    . Fixed memory leak when editing
+      board information.
+    . Fixed copying object code between
+      boards.
+    . Fixed editing pre-bound object
+      code. (kristomu)
+  . General
+    . Fixed text window memory corruption
+      for texts longer than 1024 lines.
+/ Fixed an I/O error being shown if the
+  startup world was not found.

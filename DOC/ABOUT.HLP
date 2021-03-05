@@ -1,5 +1,31 @@
-$- - - - -
-$The Reconstruction of ZZT
-$- - - - -
+$ _            __                         
+$/ `| _  _ _. _ / _  _     March 5th, 2021
+$\_,|(_|_\_\|(_/_(_)(_)        Version 4.0
+
+!-changes;Changelog
+
+$Distribute this program!
+
+   ClassicZoo is licensed under the terms
+of the MIT license - for details, see:
 
 !-license;License information
+
+$About ClassicZoo...
+
+   ClassicZoo is a fork of ZZT, the game
+creation system from 1991 originally made
+by Tim Sweeney. Thanks to its built-in
+and freely available editor, it managed
+to gain an unlikely following of fans,
+who used it to create thousands of varied
+game worlds and build a community lasting
+to this day.
+
+   The fork's goal is to stay compatible
+with ZZT 3.2 in terms of gameplay and
+supported systems, while providing a more
+robust, optimized and user-friendly
+experience.
+
+$https://zeta.asie.pl/
