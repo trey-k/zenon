@@ -210,6 +210,7 @@ procedure TextWindowDraw(var state: TTextWindowState; withoutFormatting, viewing
 procedure TextWindowAppend(var state: TTextWindowState; line: TTextWindowLine);
 	begin
 		with state do begin
+			if LineCount >= MAX_TEXT_WINDOW_LINES then exit;
 			Inc(LineCount);
 			New(Lines[LineCount]);
 			Lines[LineCount]^ := line;
