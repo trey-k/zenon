@@ -61,7 +61,7 @@ interface
 	function GameWorldLoad(extension: TString50): boolean;
 	procedure CopyStatDataToTextWindow(statId: integer; var state: TTextWindowState);
 	procedure AddStat(tx, ty: integer; element: byte; color, tcycle: integer; template: TStat);
-	procedure FreeStatDataMem(statId: integer);
+	procedure FreeStatDataMem(statId: integer; showError: boolean);
 	procedure RemoveStat(statId: integer);
 	function GetStatIdAt(x, y: integer): integer;
 	function BoardPrepareTileForPlacement(x, y: integer): boolean;
@@ -107,7 +107,11 @@ const
 	LineChars: string[16] = #249#208#210#186#181#188#187#185#198#200#201#204#205#202#203#206;
 
 implementation
-uses Dos, Crt, FileSel, ExtMem, Video, Sounds, Input, Elements, Editor, Oop;
+uses
+{$IFDEF DEBUGWND}
+DebugWnd,
+{$ENDIF}
+Dos, Crt, FileSel, ExtMem, Video, Sounds, Input, Elements, Editor, Oop;
 
 function LFSR11UpdateSeed(var seed: word; var tx, ty: byte): boolean;
 	begin
@@ -924,15 +928,20 @@ procedure AddStat(tx, ty: integer; element: byte; color, tcycle: integer; templa
 		end;
 	end;
 
-procedure FreeStatDataMem(statId: integer);
+procedure FreeStatDataMem(statId: integer; showError: boolean);
 	var
 		i: integer;
 	begin
 		with Board.Stats[statId] do begin
 			if DataLen <> 0 then begin
 				for i := 1 to Board.StatCount do begin
-					if (Board.Stats[i].Data = Data) and (i <> statId) then
+					if (Board.Stats[i].Data = Data) and (i <> statId) then begin
+{$IFDEF DEBUGWND}
+						if (showError) and (DebugEnabled) then
+							DebugShowElementMessage('Illegal double free', x, y);
+{$ENDIF}
 						exit;
+					end;
 				end;
 				FreeMem(Data, DataLen);
 			end;
@@ -943,7 +952,7 @@ procedure RemoveStat(statId: integer);
 	var
 		i: integer;
 	begin
-		FreeStatDataMem(statId);
+		FreeStatDataMem(statId, false);
 
 		with Board.Stats[statId] do begin
 			if statId < CurrentStatTicked then

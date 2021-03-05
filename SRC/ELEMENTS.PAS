@@ -39,7 +39,11 @@ interface
 	procedure InitEditorStatSettings;
 
 implementation
-uses Crt, Video, Sounds, Input, TxtWind, Editor, Oop, Game;
+uses
+{$IFDEF DEBUGWND}
+DebugWnd,
+{$ENDIF}
+Crt, Video, Sounds, Input, TxtWind, Editor, Oop, Game;
 
 const
 	TransporterNSChars: string = '^~^-v_v-';
@@ -939,6 +943,11 @@ procedure ElementPushablePush(x, y: integer; deltaX, deltaY: integer);
 				end else if Board.Tiles[x + deltaX][y + deltaY].Element <> E_EMPTY then begin
 					if (deltaX <> 0) or (deltaY <> 0) then begin
 						ElementPushablePush(x + deltaX, y + deltaY, deltaX, deltaY);
+{$IFDEF DEBUGWND}
+					end else begin
+						if DebugEnabled then
+							DebugShowElementMessage('Illegal pushable movement', x, y);
+{$ENDIF}
 					end;
 				end;
 
@@ -1080,6 +1089,11 @@ procedure ElementScrollTouch(x, y: integer; sourceStatId: integer; var deltaX, d
 		statId := GetStatIdAt(x, y);
 		if statId <> -1 then begin
 			RemoveStat(statId);
+{$IFDEF DEBUGWND}
+		end else begin
+			if DebugEnabled then
+				DebugShowElementMessage('Illegal scroll deletion', x, y);
+{$ENDIF}
 		end;
 	end;
 

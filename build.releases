@@ -1,3 +1,2 @@
--d EDITOR -g -e ZZT_DEBG.EXE -o zzt.zip -p build.properties
--d EDITOR -o zzt.zip -p build.properties
--e ZZT_NOED.EXE -o zzt.zip -p build.properties
+-d DEBUGWND -d EDITOR -g -e ZZT.EXE -o zzt.zip -p build.properties
+-e ZZTRUN.EXE -o zzt.zip -p build.properties
