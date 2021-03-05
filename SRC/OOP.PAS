@@ -28,6 +28,7 @@ unit Oop;
 
 interface
 	uses GameVars;
+	function OopStringToWord(input: TString50): TString50;
 	function WorldGetFlagPosition(name: TString50): integer;
 	procedure WorldSetFlag(name: TString50);
 	procedure WorldClearFlag(name: TString50);
