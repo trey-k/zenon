@@ -2022,6 +2022,7 @@ procedure InitElementDefs;
 			CheatColorModifiers[i] := 0;
 			CheatCharModifiers[i] := ElementDefs[i].Character;
 		end;
+		CheatCharModifiers[E_BOARD_EDGE] := 'E';
 		CheatCharModifiers[E_INVISIBLE] := #176;
 		CheatCharModifiers[E_FAKE] := #178;
 {$ENDIF}

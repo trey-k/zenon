@@ -1408,13 +1408,17 @@ function DebugPromptParseElem(input: TString50; offset: integer): integer;
 		substr := '';
 		for i := offset + 2 to Length(input) do
 			substr := substr + UpCase(input[i]);
+		if substr = 'ALL' then begin
+			DebugPromptParseElem := -1;
+			exit;
+		end;
 		for i := 0 to MAX_ELEMENT do begin
 			if substr = OopStringToWord(ElementDefs[i].Name) then begin
 				DebugPromptParseElem := i;
 				exit;
 			end;
 		end;
-		DebugPromptParseElem := -1;
+		DebugPromptParseElem := E_BOARD_EDGE;
 	end;
 
 function DebugPromptParseColor(input: TString50; offset: integer): integer;
@@ -1450,7 +1454,7 @@ function DebugPromptStarts(input: TString50; cmp: TString50): boolean;
 procedure GameDebugPrompt;
 	var
 		input: TString50;
-		i: integer;
+		i, iMin, iMax: integer;
 		btmp: byte;
 		isYes: boolean; { True if not 'NO[cheat]' }
 		isYesMultiplier: integer; { -1 if 'NO[cheat]', 1 otherwise }
@@ -1514,15 +1518,25 @@ procedure GameDebugPrompt;
 			end else if DebugPromptStarts(input, 'SHOW') then begin
 				i := DebugPromptParseElem(input, 4);
 				if i >= 0 then begin
+					iMin := i;
+					iMax := i;
+				end else begin
+					iMin := 0;
+					if isYes then
+						iMax := -1 { Block SHOW ALL }
+					else
+						iMax := MAX_ELEMENT;
+				end;
+				for i := iMin to iMax do begin
 					btmp := Byte(isYes) shl 7;
 					if btmp <> CheatColorModifiers[i] then begin
 						CheatColorModifiers[i] := btmp;
 						btmp := Byte(CheatCharModifiers[i]);
 						CheatCharModifiers[i] := ElementDefs[i].Character;
 						ElementDefs[i].Character := Char(btmp);
-						TransitionDrawToBoard;
 					end;
 				end;
+				TransitionDrawToBoard;
 			end else if input = 'CLIP' then begin
 				CheatNoClip := not isYes;
 			end else if input = 'FREEZE' then begin
