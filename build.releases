@@ -1,2 +1,2 @@
--d DEBUGWND -d EDITOR -g -e ZZT.EXE -o zzt.zip -p build.properties
+-d EXTCHEAT -d DEBUGWND -d EDITOR -g -e ZZT.EXE -o zzt.zip -p build.properties
 -e ZZTRUN.EXE -o zzt.zip -p build.properties

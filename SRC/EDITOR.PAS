@@ -229,7 +229,7 @@ procedure EditorLoop;
 			SidebarClear;
 			SidebarClearLine(1);
 			VideoWriteText(61, 0, $1F, '     - - - -       ');
-			VideoWriteText(62, 1, $70, '  ZZT Editor   ');
+			VideoWriteText(62, 1, $70, '  ZZT* Editor  ');
 			VideoWriteText(61, 2, $1F, '     - - - -       ');
 			VideoWriteText(61, 4, $70, ' L ');
 			VideoWriteText(64, 4, $1F, ' Load');

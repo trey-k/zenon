@@ -33,6 +33,11 @@ release of the Reconstruction of ZZT.
   * The Transfer -> Import option now
     uses the file selector to choose
     a board.
++ Revamped debug console handling. Many
+  new commands! Use the newly added
+  documentation ("?" command).
+- Removed the slightly glitchy-on-more-
+  modern-platforms player step sound.
 - Removed the shareware/registered
   distinction and order messages.
 * Many documentation improvements.
@@ -61,6 +66,8 @@ release of the Reconstruction of ZZT.
     . Fixed various centipede edge cases.
       (Tim Sweeney - from Super ZZT)
     . Fixed double free in #BIND.
+    . Fixed being unable to exit the game
+      while paused by pressing Q.
   . Editor
     . Fixed ENTER-picked items not being
       shown in the sidebar.
