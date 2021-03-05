@@ -1563,6 +1563,7 @@ procedure GameDebugPrompt;
 						SidebarClearLine(3);
 					end;
 					TickTimeDuration := TickSpeed * 2;
+					SoundBlockQueueing := false;
 					InputKeyPressed := #0;
 				end else if (input = 'ZAP') then begin
 					for i := 0 to 3 do begin
