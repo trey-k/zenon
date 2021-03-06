@@ -81,7 +81,9 @@ procedure GameConfigure;
 	begin
 		ParsingConfigFile := true;
 		EditorEnabled := true;
+{$IFDEF CONFREGI}
 		ConfigRegistration := '';
+{$ENDIF}
 		ConfigWorldFile := '';
 		GameVersion := '%VERSION%';
 
@@ -89,7 +91,9 @@ procedure GameConfigure;
 		Reset(cfgFile);
 		if IOResult = 0 then begin
 			Readln(cfgFile, ConfigWorldFile);
+{$IFDEF CONFREGI}
 			Readln(cfgFile, ConfigRegistration);
+{$ENDIF}
 		end;
 		if ConfigWorldFile[1] = '*' then begin
 			EditorEnabled := false;
@@ -179,7 +183,7 @@ begin
 
 	if not GameTitleExitRequested then begin
 		VideoInstall(80, Blue);
-		OrderPrintId := @GameVersion;
+		{ OrderPrintId := @GameVersion; }
 		TextWindowInit(5, 3, 50, 18);
 		GetMem(IoTmpBuf, IoTmpBufSize);
 

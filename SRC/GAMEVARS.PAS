@@ -215,7 +215,9 @@ interface
 		DebugEnabled: boolean;
 
 		HighScoreList: THighScoreList;
+{$IFDEF CONFREGI}
 		ConfigRegistration: string;
+{$ENDIF}
 		ConfigWorldFile: TString50;
 		EditorEnabled: boolean;
 		GameVersion: TString50;

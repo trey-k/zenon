@@ -62,7 +62,7 @@ interface
 		TextWindowRejected: boolean;
 		ResourceDataFileName: string[50];
 		ResourceDataHeader: TResourceDataHeader;
-		OrderPrintId: ^string;
+		{ OrderPrintId: ^string; }
 	procedure TextWindowInitState(var state: TTextWindowState);
 	procedure TextWindowDrawOpen(var state: TTextWindowState);
 	procedure TextWindowDrawClose(var state: TTextWindowState);
@@ -260,9 +260,6 @@ procedure TextWindowPrint(var state: TTextWindowState);
 					Close(Lst);
 					exit;
 				end;
-			end;
-			if LoadedFilename = 'ORDER.HLP' then begin
-				WriteLn(Lst, OrderPrintId^);
 			end;
 			Write(Lst, Chr(12) { form feed });
 			Close(Lst);
