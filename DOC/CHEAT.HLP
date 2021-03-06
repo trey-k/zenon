@@ -20,6 +20,8 @@ effect by prepending "NO" - for example,
 "KEYS" grants the player all keys, while
 "NOKEYS" removes them.
 
+$General cheats
+
 Name        | Functionality
 ------------+----------------------------
 HEALTH [x]  | Add [x] health. (Def. 50)
@@ -32,8 +34,17 @@ GEMS [x]    | Add [x] gems. (Def. 5)
 ZAP         | Remove neighboring tiles.
 (NO)DARK    | Toggle board darkness.
 (NO)BLINK   | Toggle video card blink.
-DEBUG       | Enable debug mode. (Error
-(NODEBUG)   | checking, opening saves)
+SPEED [x]   | Change player speed. If
+            | [x] (0-8), set speed.
+
+$Editor build-specific cheats
+
+Name        | Functionality
+------------+----------------------------
+DEBUG       | Enable debug mode.
+(NODEBUG)   |
+DCOMPAT     | Enable ZZT 3.2 compat-
+            | related errors.
 SHOW [el]   | Make all tiles of type
 (NOSHOW)    | [el] blink.
 NOSHOW ALL  | Undo all SHOW commands.
@@ -42,6 +53,4 @@ NOCLIP      | Enable walking through
 (NO)FREEZE  | Freeze non-player tiles.
 PASSAGE     | Teleport to any selected
             | board.
-SPEED [x]   | Change player speed. If
-            | [x] (0-8), set speed.
 FLAGS       | Print all set flags.
