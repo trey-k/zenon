@@ -4,6 +4,7 @@ PROPERTIES_FILE=build.properties
 EXECUTABLE_NAME=ZZT.EXE
 OUTPUT_ARCHIVE=zoo.zip
 TPC_DEFINES=""
+FPC_DEFINES=""
 TEMP_PATH=$(mktemp -d /tmp/zoo.XXXXXXXXXXXX)
 CLEANUP=yes
 DEBUG=
@@ -20,6 +21,7 @@ while getopts "d:e:fgo:p:r" opt; do
 		else
 			TPC_DEFINES=$OPTARG
 		fi
+		FPC_DEFINES=$FPC_DEFINES" -d"$OPTARG
 		;;
 	e)
 		EXECUTABLE_NAME=$OPTARG
@@ -50,7 +52,7 @@ if [ -z "$DEBUG" ]; then
 fi
 if [ -n "$TPC_DEFINES" ]; then
 	TPC_ARGS="$TPC_ARGS"' /D'"$TPC_DEFINES"
-	FPC_ARGS="$FPC_ARGS"' -d'"$TPC_DEFINES"
+	FPC_ARGS="$FPC_ARGS"' '"$FPC_DEFINES"
 fi
 
 if [ ! -d "OUTPUT" ]; then
