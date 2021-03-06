@@ -829,9 +829,11 @@ procedure OopExecute(statId: integer; var position: integer; name: TString50);
 							OopReadWord(statId, position);
 							bindStatId := 0;
 							if OopIterateStat(statId, bindStatId, OopWord) then begin
-								FreeStatDataMem(statId, true);
-								Data := Board.Stats[bindStatId].Data;
-								DataLen := Board.Stats[bindStatId].DataLen;
+								if statId <> bindStatId then begin
+									FreeStatDataMem(statId, true);
+									Data := Board.Stats[bindStatId].Data;
+									DataLen := Board.Stats[bindStatId].DataLen;
+								end;
 								position := 0;
 							end;
 						end else begin
