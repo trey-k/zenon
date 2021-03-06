@@ -1,3 +1,4 @@
 -d EXTCHEAT -d DEBUGWND -d EDITOR -g -e ZZT.EXE -o zzt.zip -p build.properties
 -e ZZTRUN.EXE -o zzt.zip -p build.properties
--f -d EXTCHEAT -d DEBUGWND -d EDITOR -g -e ZZT_LBRE.EXE -o zztlibre.zip -p build.properties
+-f -d EXTCHEAT -d DEBUGWND -d EDITOR -g -e ZZTL.EXE -o zztlibre.zip -p build.properties
+-f -e ZZTLRUN.EXE -o zztlibre.zip -p build.properties
