@@ -909,7 +909,7 @@ procedure AddStat(tx, ty: integer; element: byte; color, tcycle: integer; templa
 				DataPos := 0;
 			end;
 
-			if template.Data <> nil then begin
+			if (template.Data <> nil) and (template.DataLen > 0) then begin
 				GetMem(Board.Stats[Board.StatCount].Data, template.DataLen);
 				Move(template.Data^, Board.Stats[Board.StatCount].Data^, template.DataLen);
 			end;
