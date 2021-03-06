@@ -833,6 +833,10 @@ procedure OopExecute(statId: integer; var position: integer; name: TString50);
 									FreeStatDataMem(statId, true);
 									Data := Board.Stats[bindStatId].Data;
 									DataLen := Board.Stats[bindStatId].DataLen;
+{$IFDEF DEBUGWND}
+								end else if DebugCompatEnabled then begin
+									DebugShowElementMessage('Illegal double free (self-#BIND)', X, Y);
+{$ENDIF}
 								end;
 								position := 0;
 							end;

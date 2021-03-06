@@ -65,7 +65,7 @@ release of the Reconstruction of ZZT.
       (zzo38)
     . Fixed various centipede edge cases.
       (Tim Sweeney - from Super ZZT)
-    . Fixed double free in #BIND.
+    . Fixed double frees in #BIND.
     . Fixed being unable to exit the game
       while paused by pressing Q.
   . Editor
