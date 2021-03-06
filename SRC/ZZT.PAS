@@ -168,7 +168,7 @@ begin
 	InitialTextAttr := TextAttr;
 
 	StartupWorldFileName := 'TOWN';
-	ResourceDataFileName := 'ZZT.DAT';
+	ResourceDataFileName := FExpand('ZZT.DAT');
 	ResetConfig := false;
 	GameTitleExitRequested := false;
 	IoTmpBufSize := IO_BUFFER_DEFAULT_SIZE;
