@@ -223,9 +223,11 @@ interface
 		ResetConfig: boolean; { This flag is a remnant from ZZT 3.0. }
 		JustStarted: boolean;
 
+{$IFDEF WORLDDSC}
 		WorldFileDescCount: integer;
 		WorldFileDescKeys: array[1 .. 10] of TString50;
 		WorldFileDescValues: array[1 .. 10] of TString50;
+{$ENDIF}
 
 {$IFDEF EXTCHEAT}
 		CheatColorModifiers: array[0 .. MAX_ELEMENT] of byte;

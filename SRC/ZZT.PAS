@@ -147,6 +147,7 @@ procedure GameConfigure;
 	end;
 
 begin
+{$IFDEF WORLDDSC}
 	WorldFileDescCount := 7;
 	WorldFileDescKeys[1] := 'TOWN';
 	WorldFileDescValues[1] := 'TOWN       The Town of ZZT';
@@ -162,6 +163,7 @@ begin
 	WorldFileDescValues[6] := 'BEST       The Best of ZZT';
 	WorldFileDescKeys[7] := 'TOUR';
 	WorldFileDescValues[7] := 'TOUR       Guided Tour ZZT'#39's Other Worlds';
+{$ENDIF}
 
 	Randomize;
 	SetCBreak(false);

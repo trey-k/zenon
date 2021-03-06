@@ -56,14 +56,18 @@ function FileSelect(title, extension: TString50): string;
 		textWindow: TTextWindowState;
 		fileSearchRec: SearchRec;
 		entryName: string;
+{$IFDEF WORLDDSC}
 		useWorldFileDesc: boolean;
+{$ENDIF}
 		searching: boolean;
 		i: integer;
 		curPath: string;
 		startPath: string;
 		previewPath: string[PATH_PREVIEW_LENGTH + 4];
 	begin
+{$IFDEF WORLDDSC}
 		useWorldFileDesc := extension = '.ZZT';
+{$ENDIF}
 		searching := true;
 		GetDir(0, startPath);
 
@@ -97,10 +101,12 @@ function FileSelect(title, extension: TString50): string;
 				if (fileSearchRec.Attr and Directory) = 0 then begin
 					entryName := Copy(fileSearchRec.Name, 1, Length(fileSearchRec.name) - 4);
 
+{$IFDEF WORLDDSC}
 					if useWorldFileDesc then
 						for i := 1 to WorldFileDescCount do
 							if entryName = WorldFileDescKeys[i] then
 								entryName := WorldFileDescValues[i];
+{$ENDIF}
 
 					TextWindowAppend(textWindow, entryName);
 				end;
