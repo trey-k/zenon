@@ -48,22 +48,27 @@ function FileSelect(title, extension: TString50): string;
 		startPath: string;
 		previewPath: string[PATH_PREVIEW_LENGTH + 4];
 	begin
-		useWorldFileDesc := extension = '.ZZT';
 		searching := true;
+		useWorldFileDesc := extension = '.ZZT';
+{$IFDEF SUBDIRS}
 		GetDir(0, startPath);
+{$ENDIF}
 
 		while searching do begin
+{$IFDEF SUBDIRS}
 			GetDir(0, curPath);
 			if Length(curPath) > PATH_PREVIEW_LENGTH then
 				previewPath := '...' + Copy(curPath, Length(curPath) - PATH_PREVIEW_LENGTH + 1, PATH_PREVIEW_LENGTH)
 			else
 				previewPath := curPath;
-
-			TextWindowInitState(textWindow);
 			textWindow.Title := title + ': ' + previewPath;
+{$ELSE}
+			textWindow.Title := title;
+{$ENDIF}
 			textWindow.Selectable := true;
 			textWIndow.Hyperlink := '';
 
+{$IFDEF SUBDIRS}
 			{ Directories }
 			FindFirst('*', Directory, fileSearchRec);
 			while DosError = 0 do begin
@@ -75,6 +80,7 @@ function FileSelect(title, extension: TString50): string;
 				end;
 				FindNext(fileSearchRec);
 			end;
+{$ENDIF}
 		
 			{ Files }
 			FindFirst('*' + extension, AnyFile, fileSearchRec);
@@ -102,10 +108,12 @@ function FileSelect(title, extension: TString50): string;
 				{ Exit }
 				FileSelect := '';
 				searching := false;
+{$IFDEF SUBDIRS}
 				ChDir(startPath);
 			end else if Length(textWindow.Hyperlink) > 0 then begin
 				{ Directory }
 				ChDir(textWindow.Hyperlink);
+{$ENDIF}
 			end else begin
 				{ File }
 				entryName := textWindow.Lines[textWindow.LinePos]^;
