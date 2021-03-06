@@ -41,6 +41,9 @@ interface
 		TORCH_DY = 5;
 		TORCH_DIST_SQR = 50;
 		OOP_TOKEN_LENGTH = 20;
+		IO_BUFFER_DEFAULT_SIZE = 20000;
+		IO_BUFFER_MAXIMUM_SIZE = 65500;
+		IO_BUFFER_SIZE_INCREMENT = 500;
 	type
 		TString50 = string[50];
 		TCoord = record
@@ -143,8 +146,9 @@ interface
 		end;
 		TWorld = record
 			BoardCount: integer;
+			{ TODO: This shifts the memory layout. Can we make this pointer-sized again? }
 			BoardData: array[0 .. MAX_BOARD] of TExtMemBlock;
-			BoardLen: array[0 .. MAX_BOARD] of integer;
+			BoardLen: array[0 .. MAX_BOARD] of word;
 			Info: TWorldInfo;
 			EditorStatSettings: array[0 .. MAX_ELEMENT] of TEditorStatSetting;
 		end;
@@ -153,7 +157,6 @@ interface
 			Score: integer;
 		end;
 		THighScoreList = array[1 .. HIGH_SCORE_COUNT] of THighScoreEntry;
-		TIoTmpBuf = array[0 .. 19999] of byte;
 	var
 		PlayerDirX: integer;
 		PlayerDirY: integer;
@@ -177,7 +180,9 @@ interface
 		MessageFakeNotShown: boolean;
 		MessageGemNotShown: boolean;
 		MessageEnergizerNotShown: boolean;
-		unkVar_4ABA: array[0 .. 14] of byte;
+
+		IoTmpBufSize: integer; { Borrowed: unkVar_4ABA[0..1] }
+		unkVar_4ABA: array[2 .. 14] of byte;
 
 		GameTitleExitRequested: boolean;
 		GamePlayExitRequested: boolean;
@@ -186,9 +191,11 @@ interface
 
 		TickSpeed: byte;
 
-		IoTmpBuf: ^TIoTmpBuf;
+		IoTmpBuf: pointer;
 
 		ElementDefs: array[0 .. MAX_ELEMENT] of TElementDef;
+		{ Anything after ElementDefs cannot be reached by the die-move trick. }
+
 		EditorPatternCount: integer;
 		EditorPatterns: array[1 .. 10] of byte;
 
@@ -219,11 +226,15 @@ interface
 		WorldFileDescCount: integer;
 		WorldFileDescKeys: array[1 .. 10] of TString50;
 		WorldFileDescValues: array[1 .. 10] of TString50;
+
 {$IFDEF EXTCHEAT}
 		CheatColorModifiers: array[0 .. MAX_ELEMENT] of byte;
 		CheatCharModifiers: array[0 .. MAX_ELEMENT] of char;
 		CheatNoClip: boolean;
 		CheatFreeze: boolean;
+{$ENDIF}
+{$IFDEF DEBUGWND}
+		DebugCompatEnabled: boolean;
 {$ENDIF}
 	const
 		E_EMPTY = 0;

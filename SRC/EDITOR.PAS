@@ -702,15 +702,22 @@ procedure EditorLoop;
 						ExtMemFree(World.BoardData[World.Info.CurrentBoard], World.BoardLen[World.Info.CurrentBoard]);
 						BlockRead(f, World.BoardLen[World.Info.CurrentBoard], 2);
 						if not DisplayIOError then begin
-							if ExtMemGet(World.BoardData[World.Info.CurrentBoard], World.BoardLen[World.Info.CurrentBoard]) then begin
-								BlockRead(f, IoTmpBuf^,
-									  World.BoardLen[World.Info.CurrentBoard]);
-								ExtMemWrite(World.BoardData[World.Info.CurrentBoard], IoTmpBuf^,
-									  World.BoardLen[World.Info.CurrentBoard]);
-							end else memoryError := true;
+							case EnsureIoTmpBufSize(World.BoardLen[World.Info.CurrentBoard]) of
+								2: memoryError := true;
+								0, 1: begin
+									if ExtMemGet(World.BoardData[World.Info.CurrentBoard],
+									World.BoardLen[World.Info.CurrentBoard]) then begin
+										BlockRead(f, IoTmpBuf^,
+											  World.BoardLen[World.Info.CurrentBoard]);
+										ExtMemWrite(World.BoardData[World.Info.CurrentBoard], IoTmpBuf^,
+											  World.BoardLen[World.Info.CurrentBoard]);
+									end else memoryError := true;
+								end;
+							end;
 						end;
 
 						if DisplayIOError or memoryError then begin
+							{ TODO: Show out of memory error. }
 							World.BoardLen[World.Info.CurrentBoard] := 0;
 							BoardCreate;
 							EditorDrawRefresh;
@@ -724,21 +731,26 @@ procedure EditorLoop;
 				end else if i = 1 then begin
 					SidebarPromptString('Export board', '.BRD', SavedBoardFileName, PROMPT_ALPHANUM);
 					if (InputKeyPressed <> KEY_ESCAPE) and (Length(SavedBoardFileName) <> 0) then begin
-						Assign(f, SavedBoardFileName + '.BRD');
-						Rewrite(f, 1);
-						if DisplayIOError then goto TransferEnd;
+						case EnsureIoTmpBufSize(World.BoardLen[World.Info.CurrentBoard]) of
+							0, 1: begin
+								Assign(f, SavedBoardFileName + '.BRD');
+								Rewrite(f, 1);
+								if DisplayIOError then goto TransferEnd;
 
-						BoardClose;
-						BlockWrite(f, World.BoardLen[World.Info.CurrentBoard], 2);
-						ExtMemRead(World.BoardData[World.Info.CurrentBoard], IoTmpBuf^,
-							World.BoardLen[World.Info.CurrentBoard]);
-						BlockWrite(f, IoTmpBuf^,
-							World.BoardLen[World.Info.CurrentBoard]);
-						BoardOpen(World.Info.CurrentBoard);
+								BoardClose;
+								BlockWrite(f, World.BoardLen[World.Info.CurrentBoard], 2);
+								ExtMemRead(World.BoardData[World.Info.CurrentBoard], IoTmpBuf^,
+									World.BoardLen[World.Info.CurrentBoard]);
+								BlockWrite(f, IoTmpBuf^,
+									World.BoardLen[World.Info.CurrentBoard]);
+								BoardOpen(World.Info.CurrentBoard);
 
-						if DisplayIOError then begin
-						end else begin
-							Close(f);
+								if DisplayIOError then begin
+								end else begin
+									Close(f);
+								end;
+							end;
+							2: begin end; { TODO: Show out of memory error. }
 						end;
 					end;
 				end;

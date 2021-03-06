@@ -1,7 +1,7 @@
 {
 	Copyright (c) 2021 Adrian Siekierka
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
+	Permission is hereby granted, free of charge, to any person obtaining a copy
 	of this software and associated documentation files (the "Software"), to deal
 	in the Software without restriction, including without limitation the rights
 	to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
@@ -25,10 +25,12 @@ Permission is hereby granted, free of charge, to any person obtaining a copy
 unit DebugWnd;
 
 interface
+	uses GameVars;
 	procedure DebugShowElementMessage(msg: string; x, y: integer);
+	procedure DebugShowSizeTooLarge(expected, actual: word; id: integer; name, desc: TString50);
 
 implementation
-uses GameVars, Game, Sounds, TxtWind;
+uses Game, Sounds, TxtWind;
 
 procedure DebugShowElementMessage(msg: string; x, y: integer);
 var
@@ -77,6 +79,26 @@ begin
 	end;
 
 	SoundQueue(5, #80#10);
+	TextWindowDrawOpen(textWindow);
+	TextWindowSelect(textWindow, false, false);
+	TextWindowDrawClose(textWindow);
+	TextWindowFree(textWindow);
+end;
+
+procedure DebugShowSizeTooLarge(expected, actual: word; id: integer; name, desc: TString50);
+var
+	xStr, yStr: string[11];
+	textWindow: TTextWindowState;
+begin
+	textWindow.Title := '[Debug] ' + name + ' size too large';
+	TextWindowInitState(textWindow);
+	Str(id, xStr);
+	TextWindowAppend(textWindow, '$The size of ' + name + ' ' + xStr);
+	TextWindowAppend(textWindow, '$' + desc);
+	Str(expected, xStr);
+	Str(actual, yStr);
+	TextWindowAppend(textWindow, '$(' + yStr + '/' + xStr + ' bytes)');
+
 	TextWindowDrawOpen(textWindow);
 	TextWindowSelect(textWindow, false, false);
 	TextWindowDrawClose(textWindow);

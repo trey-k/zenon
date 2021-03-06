@@ -171,32 +171,35 @@ begin
 	ResourceDataFileName := 'ZZT.DAT';
 	ResetConfig := false;
 	GameTitleExitRequested := false;
+	IoTmpBufSize := IO_BUFFER_DEFAULT_SIZE;
 	GameConfigure;
 	ParseArguments;
-
-{$IFDEF EXTCHEAT}
-	CheatNoClip := false;
-	CheatFreeze := false;
-{$ENDIF}
 
 	if not GameTitleExitRequested then begin
 		VideoInstall(80, Blue);
 		OrderPrintId := @GameVersion;
 		TextWindowInit(5, 3, 50, 18);
-		New(IoTmpBuf);
+		GetMem(IoTmpBuf, IoTmpBufSize);
 
 		VideoHideCursor;
 		ClrScr;
 
 		TickSpeed := 4;
 		DebugEnabled := false;
+{$IFDEF EXTCHEAT}
+		CheatNoClip := false;
+		CheatFreeze := false;
+{$ENDIF}
+{$IFDEF DEBUGWND}
+		DebugCompatEnabled := false;
+{$ENDIF}
 		SavedGameFileName := 'SAVED';
 		SavedBoardFileName := 'TEMP';
 		WorldCreate;
 
 		GameTitleLoop;
 
-		Dispose(IoTmpBuf);
+		FreeMem(IoTmpBuf, IoTmpBufSize);
 		ExtMemUninstall;
 	end;
 

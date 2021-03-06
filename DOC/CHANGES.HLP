@@ -82,3 +82,5 @@ release of the Reconstruction of ZZT.
       for texts longer than 1024 lines.
 / Fixed an I/O error being shown if the
   startup world was not found.
+
+!-about;Return

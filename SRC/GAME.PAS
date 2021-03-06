@@ -35,6 +35,7 @@ interface
 		PROMPT_ANY = 2;
 	procedure SidebarClearLine(y: integer);
 	procedure SidebarClear;
+	function EnsureIoTmpBufSize(size: integer): integer; { 1 if IoTmpBuf was wiped, 2 if the size is too large. }
 	procedure AdvancePointer(var address: pointer; count: integer);
 	procedure BoardClose;
 	procedure BoardOpen(boardId: integer);
@@ -129,9 +130,31 @@ procedure SidebarClearLine(y: integer);
 procedure SidebarClear;
 	var
 		i: integer;
+
 	begin
 		for i := 3 to 24 do
 			SidebarClearLine(i);
+	end;
+
+function EnsureIoTmpBufSize(size: integer): integer;
+	var
+		oldSize: integer;
+	begin
+		if size > IO_BUFFER_MAXIMUM_SIZE then begin
+			EnsureIoTmpBufSize := 2;
+			exit;
+		end;
+		oldSize := IoTmpBufSize;
+		EnsureIoTmpBufSize := 0;
+		while IoTmpBufSize < size do
+			IoTmpBufSize := IoTmpBufSize + IO_BUFFER_SIZE_INCREMENT;
+		if oldSize <> IoTmpBufSize then begin
+			FreeMem(IoTmpBuf, oldSize);
+			oldSize := IoTmpBufSize;
+			IoTmpBufSize := 0;
+			GetMem(IoTmpBuf, oldSize);
+			EnsureIoTmpBufSize := 1;
+		end;
 	end;
 
 procedure AdvancePointer(var address: pointer; count: integer);
@@ -144,7 +167,21 @@ procedure BoardClose;
 		ix, iy: integer;
 		ptr: pointer;
 		rle: TRleTile;
+	label RestartWrite;
 	begin
+		{ Bind stats early. }
+		for ix := 0 to Board.StatCount do begin
+			with Board.Stats[ix] do begin
+				if DataLen > 0 then begin
+					for iy := 1 to (ix - 1) do begin
+						if Board.Stats[iy].Data = Data then
+							DataLen := -iy;
+					end;
+				end;
+			end;
+		end;
+
+	RestartWrite:
 		ptr := IoTmpBuf;
 
 		Move(Board.Name, ptr^, SizeOf(Board.Name));
@@ -179,14 +216,31 @@ procedure BoardClose;
 		Move(Board.StatCount, ptr^, SizeOf(Board.StatCount));
 		AdvancePointer(ptr, SizeOf(Board.StatCount));
 
+		{ We will always have enough size to store the above in the default IoTmpBuf. }
+		{ From here, do size estimation. }
+		iy := (Ofs(ptr^) - Ofs(IoTmpBuf^)) + ((Board.StatCount + 1) * SizeOf(TStat));
+
 		for ix := 0 to Board.StatCount do begin
 			with Board.Stats[ix] do begin
-				if DataLen > 0 then begin
-					for iy := 1 to (ix - 1) do begin
-						if Board.Stats[iy].Data = Data then
-							DataLen := -iy;
-					end;
-				end;
+				if DataLen > 0 then
+					iy := iy + DataLen;
+			end;
+		end;
+
+		case EnsureIoTmpBufSize(iy) of
+			0: begin end; { We good. }
+			1: goto RestartWrite; { Not so good. }
+			2: begin end; { TODO: Throw out of memory error. }
+		end;
+
+{$IFDEF DEBUGWND}
+		if DebugCompatEnabled and (iy > IO_BUFFER_DEFAULT_SIZE) then
+			DebugShowSizeTooLarge(IO_BUFFER_DEFAULT_SIZE, iy, World.Info.CurrentBoard,
+				'Board', 'is above the ZZT 3.2 limit!');
+{$ENDIF}
+
+		for ix := 0 to Board.StatCount do begin
+			with Board.Stats[ix] do begin
 				Move(Board.Stats[ix], ptr^, SizeOf(TStat));
 				AdvancePointer(ptr, SizeOf(TStat));
 				if DataLen > 0 then begin
@@ -204,6 +258,38 @@ procedure BoardClose;
 		end else RunError(203);
 	end;
 
+procedure DebugBoardIllegalElements;
+	var
+		textWindow: TTextWindowState;
+		xStr, yStr, zStr: string[11];
+		count, ix, iy: integer;
+	begin
+		count := 0;
+		for iy := 1 to BOARD_HEIGHT do
+			for ix := 1 to BOARD_WIDTH do
+				with Board.Tiles[ix][iy] do
+					if (Element > MAX_ELEMENT) and (not
+					(Element in [238, 239, 240, 241, 244, 246, 248, 250, 252, 254])) then begin
+						if count = 0 then begin
+							textWindow.Title := '[Debug] Illegal Elements';
+							TextWindowInitState(textWindow);
+							TextWindowAppend(textWindow, 'Illegal elements detected on board at:');
+							TextWindowAppend(textWindow, '');
+						end;
+						Str(ix, xStr);
+						Str(iy, yStr);
+						Str(Element, zStr);
+						TextWindowAppend(textWindow, xStr + ', ' + yStr + ': ID ' + zStr);
+						Inc(count);
+					end;
+		if count > 0 then begin
+			TextWindowDrawOpen(textWindow);
+			TextWindowSelect(textWindow, false, false);
+			TextWindowDrawClose(textWindow);
+			TextWindowFree(textWindow);
+		end;
+	end;
+
 procedure BoardOpen(boardId: integer);
 	var
 		ptr: pointer;
@@ -212,6 +298,11 @@ procedure BoardOpen(boardId: integer);
 	begin
 		if boardId > World.BoardCount then
 			boardId := World.Info.CurrentBoard;
+
+		case EnsureIoTmpBufSize(World.BoardLen[boardId]) of
+			0, 1: begin end;
+			2: begin end; { TODO: Throw out of memory error. }
+		end;
 
 		ExtMemRead(World.BoardData[boardId], IoTmpBuf^, World.BoardLen[boardId]);
 
@@ -377,7 +468,7 @@ procedure BoardDrawTile(x, y: integer);
 			begin
 				if Element = E_EMPTY then
 					VideoWriteText(x - 1, y - 1, $0F, ' ')
-				else if ElementDefs[Element].HasDrawProc then begin
+				else if (Element <= MAX_ELEMENT) and ElementDefs[Element].HasDrawProc then begin
 					ElementDefs[Element].DrawProc(x, y, ch);
 {$IFDEF EXTCHEAT}
 					VideoWriteText(x - 1, y - 1, Color xor CheatColorModifiers[Element], Chr(ch));
@@ -764,6 +855,11 @@ function WorldLoad(filename, extension: TString50; titleOnly: boolean): boolean;
 					SidebarAnimateLoading;
 					BlockRead(f, World.BoardLen[boardId], 2);
 					if ExtMemGet(World.BoardData[boardId], World.BoardLen[boardId]) then begin
+						case EnsureIoTmpBufSize(World.BoardLen[boardId]) of
+							0, 1: begin end;
+							2: begin end; { TODO: Throw out of memory error. }
+						end;
+
 						BlockRead(f, IoTmpBuf^, World.BoardLen[boardId]);
 						ExtMemWrite(World.BoardData[boardId], IoTmpBuf^, World.BoardLen[boardId]);
 					end else RunError(203);
@@ -776,7 +872,11 @@ function WorldLoad(filename, extension: TString50; titleOnly: boolean): boolean;
 				WorldLoad := true;
 
 				HighScoresLoad;
-
+{$IFDEF DEBUGWND}
+				{ BoardEnter is only called for play-boards, not title-boards. }
+				if titleOnly and DebugCompatEnabled then
+					DebugBoardIllegalElements;
+{$ENDIF}
 				SidebarClearLine(5);
 			end;
 		end;
@@ -857,7 +957,7 @@ function GameWorldLoad(extension: TString50): boolean;
 		{ As directory listings can take up a lot of memory, }
 		{ free IoTmpBuf for the duration - the data will be }
 		{ unloaded later anyway. - asie }
-		Dispose(IoTmpBuf);
+		FreeMem(IoTmpBuf, IoTmpBufSize);
 
 		if extension = '.ZZT' then
 			title := 'ZZT Worlds'
@@ -866,7 +966,7 @@ function GameWorldLoad(extension: TString50): boolean;
 		GameWorldLoad := false;
 
 		entryName := FileSelect(title, extension);
-		New(IoTmpBuf);
+		GetMem(IoTmpBuf, IoTmpBufSize);
 
 		if Length(entryName) > 0 then begin
 			GameWorldLoad := WorldLoad(entryName, extension, false);
@@ -948,7 +1048,7 @@ procedure FreeStatDataMem(statId: integer; showError: boolean);
 				for i := 1 to Board.StatCount do begin
 					if (Board.Stats[i].Data = Data) and (i <> statId) then begin
 {$IFDEF DEBUGWND}
-						if (showError) and (DebugEnabled) then
+						if (showError) and (DebugCompatEnabled) then
 							DebugShowElementMessage('Illegal double free', x, y);
 {$ENDIF}
 						exit;
@@ -1351,6 +1451,11 @@ procedure BoardEnter;
 
 		World.Info.BoardTimeSec := 0;
 		GameUpdateSidebar;
+
+{$IFDEF DEBUGWND}
+		if DebugCompatEnabled then
+			DebugBoardIllegalElements;
+{$ENDIF}
 	end;
 
 procedure BoardPassageTeleport(x, y: integer);
@@ -1533,6 +1638,10 @@ procedure GameDebugPrompt;
 				VideoSetBlink(isYes);
 			end else if input = 'DEBUG' then begin
 				DebugEnabled := isYes;
+{$IFDEF DEBUGWND}
+			end else if input = 'DCOMPAT' then begin
+				DebugCompatEnabled := isYes;
+{$ENDIF}
 {$IFDEF EXTCHEAT}
 			end else if DebugPromptStarts(input, 'SHOW') then begin
 				i := DebugPromptParseElem(input, 4);

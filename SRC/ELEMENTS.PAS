@@ -945,7 +945,7 @@ procedure ElementPushablePush(x, y: integer; deltaX, deltaY: integer);
 						ElementPushablePush(x + deltaX, y + deltaY, deltaX, deltaY);
 {$IFDEF DEBUGWND}
 					end else begin
-						if DebugEnabled then
+						if DebugCompatEnabled then
 							DebugShowElementMessage('Illegal pushable movement', x, y);
 {$ENDIF}
 					end;
@@ -1091,7 +1091,7 @@ procedure ElementScrollTouch(x, y: integer; sourceStatId: integer; var deltaX, d
 			RemoveStat(statId);
 {$IFDEF DEBUGWND}
 		end else begin
-			if DebugEnabled then
+			if DebugCompatEnabled then
 				DebugShowElementMessage('Illegal scroll deletion', x, y);
 {$ENDIF}
 		end;
