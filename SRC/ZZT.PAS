@@ -24,7 +24,10 @@
 }
 
 {$I-}
+{$IFNDEF FPC}
 {$M 20480,163840,655360}
+{$M 49152,163840,655360}
+{$ENDIF}
 program ZZT;
 uses Crt, Dos, ExtMem, Video, Keys, Sounds, Input, TxtWind, GameVars, Elements, Editor, Oop, Game;
 
