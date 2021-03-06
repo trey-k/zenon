@@ -16,6 +16,12 @@ release of the Reconstruction of ZZT.
   effectively ends the ~350-400KB world
   size limit for anyone with extended
   memory. (Mr_Alert)
++ Dynamic IoTmpBuf size scaling. This
+  effectively ends the 20000-byte board
+  size limit. (If you want to keep your
+  game ZZT 3.2-friendly, you can use
+  DCOMPAT in the debug console to guard
+  against oversized boards.)
 + New file selector, with support for
   directory traversal.
 + Enhanced editor:
