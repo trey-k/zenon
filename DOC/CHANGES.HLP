@@ -5,6 +5,14 @@ Legend:
 + Additions         * Changes
 - Removals          / Bugfixes
 
+$< ClassicZoo dev >
+
+/ ClassicZoo will no longer load worlds
+  with more boards than the engine
+  supports.
+/ Fixed issues regarding handling errors
+  while loading a world.
+
 $< ClassicZoo 4.0 >
 
 The first public release of ClassicZoo

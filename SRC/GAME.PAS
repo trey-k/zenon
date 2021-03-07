@@ -230,7 +230,7 @@ procedure BoardClose;
 		case EnsureIoTmpBufSize(iy) of
 			0: begin end; { We good. }
 			1: goto RestartWrite; { Not so good. }
-			2: begin end; { TODO: Throw out of memory error. }
+			2: RunError(203);
 		end;
 
 {$IFDEF DEBUGWND}
@@ -301,7 +301,7 @@ procedure BoardOpen(boardId: integer);
 
 		case EnsureIoTmpBufSize(World.BoardLen[boardId]) of
 			0, 1: begin end;
-			2: begin end; { TODO: Throw out of memory error. }
+			2: RunError(203);
 		end;
 
 		ExtMemRead(World.BoardData[boardId], IoTmpBuf^, World.BoardLen[boardId]);
@@ -833,13 +833,19 @@ function WorldLoad(filename, extension: TString50; titleOnly: boolean): boolean;
 
 				if World.BoardCount < 0 then begin
 					if World.BoardCount <> -1 then begin
-						VideoWriteText(63, 5, $1E, 'You need a newer');
-						VideoWriteText(63, 6, $1E, ' version of ZZT!');
+						VideoWriteText(62, 5, $1E, 'You need a newer');
+						VideoWriteText(63, 6, $1E, 'version of ZZT!');
 						exit;
 					end else begin
 						Move(ptr^, World.BoardCount, SizeOf(World.BoardCount));
 						AdvancePointer(ptr, SizeOf(World.BoardCount));
 					end;
+				end;
+
+				if (World.BoardCount > MAX_BOARD) or (World.BoardCount < 0) then begin
+					VideoWriteText(62, 5, $1E, 'Too many boards!');
+					World.BoardCount := 0;
+					exit;
 				end;
 
 				Move(ptr^, World.Info, SizeOf(World.Info));
@@ -857,7 +863,7 @@ function WorldLoad(filename, extension: TString50; titleOnly: boolean): boolean;
 					if ExtMemGet(World.BoardData[boardId], World.BoardLen[boardId]) then begin
 						case EnsureIoTmpBufSize(World.BoardLen[boardId]) of
 							0, 1: begin end;
-							2: begin end; { TODO: Throw out of memory error. }
+							2: RunError(203);
 						end;
 
 						BlockRead(f, IoTmpBuf^, World.BoardLen[boardId]);
@@ -969,7 +975,12 @@ function GameWorldLoad(extension: TString50): boolean;
 		GetMem(IoTmpBuf, IoTmpBufSize);
 
 		if Length(entryName) > 0 then begin
-			GameWorldLoad := WorldLoad(entryName, extension, false);
+			if WorldLoad(entryName, extension, false) then
+				GameWorldLoad := true
+			else begin
+				WorldCreate;
+				PauseOnError;
+			end;
 			TransitionDrawToFill(#219, $44);
 		end;
 	end;
