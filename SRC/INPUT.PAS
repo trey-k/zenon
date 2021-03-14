@@ -328,12 +328,16 @@ procedure InputUpdate;
 
 function InputInitMouse: boolean;
 	var
+		vec: pointer;
 		regs: Registers;
 	begin
-		regs.AX := 0;
-		Intr($33, regs);
-		InputInitMouse := (regs.AX = 0);
-		InputInitMouse := true;
+		InputInitMouse := false;
+		GetIntVec($33, vec);
+		if Seg(vec) <> $0000 then begin
+			regs.AX := 0;
+			Intr($33, regs);
+			InputInitMouse := (regs.AX <> 0);
+		end;
 	end;
 
 procedure InputInitDevices;
