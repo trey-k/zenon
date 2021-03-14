@@ -1173,7 +1173,7 @@ procedure DamageStat(attackerStatId: integer);
 		with Board.Stats[attackerStatId] do begin
 			if attackerStatId = 0 then begin
 				if World.Info.Health > 0 then begin
-					World.Info.Health := World.Info.Health - 10;
+					Dec(World.Info.Health, 10);
 
 					GameUpdateSidebar;
 					DisplayMessage(100, 'Ouch!');
@@ -1386,17 +1386,17 @@ procedure GameDebugPrompt;
 		DebugEnabled := WorldGetFlagPosition('DEBUG') >= 0;
 
 		if input = 'HEALTH' then
-			World.Info.Health := World.Info.Health + 50
+			Inc(World.Info.Health, 50)
 		else if input = 'AMMO' then
-			World.Info.Ammo := World.Info.Ammo + 5
+			Inc(World.Info.Ammo, 5)
 		else if input = 'KEYS' then
 			for i := 1 to 7 do World.Info.Keys[i] := true
 		else if input = 'TORCHES' then
-			World.Info.Torches := World.Info.Torches + 3
+			Inc(World.Info.Torches, 3)
 		else if input = 'TIME' then
-			World.Info.BoardTimeSec := World.Info.BoardTimeSec - 30
+			Dec(World.Info.BoardTimeSec, 30)
 		else if input = 'GEMS' then
-			World.Info.Gems := World.Info.Gems + 5
+			Inc(World.Info.Gems, 5)
 		else if input = 'DARK' then begin
 			Board.Info.IsDark := toggle;
 			TransitionDrawToBoard;

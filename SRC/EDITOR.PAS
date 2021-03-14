@@ -429,7 +429,7 @@ procedure EditorLoop;
 						end;
 						if selected then
 							World.EditorStatSettings[element].P1 := P1;
-						iy := iy + 4;
+						Inc(iy, 4);
 					end;
 
 					if (InputKeyPressed <> KEY_ESCAPE) and
@@ -448,7 +448,7 @@ procedure EditorLoop;
 							P2 := (P2 and $80) + promptByte;
 							World.EditorStatSettings[element].P2 := P2;
 						end;
-						iy := iy + 4;
+						Inc(iy, 4);
 					end;
 
 					if (InputKeyPressed <> KEY_ESCAPE) and
@@ -461,7 +461,7 @@ procedure EditorLoop;
 							P2 := (P2 and $7F) + (promptByte shl 7);
 							World.EditorStatSettings[element].P2 := P2;
 						end;
-						iy := iy + 4;
+						Inc(iy, 4);
 					end;
 
 					if (InputKeyPressed <> KEY_ESCAPE) and
@@ -473,7 +473,7 @@ procedure EditorLoop;
 							World.EditorStatSettings[element].StepX := StepX;
 							World.EditorStatSettings[element].StepY := StepY;
 						end;
-						iy := iy + 4;
+						Inc(iy, 4);
 					end;
 
 					if (InputKeyPressed <> KEY_ESCAPE) and
@@ -494,7 +494,7 @@ procedure EditorLoop;
 							end else begin
 								InputKeyPressed := KEY_ESCAPE;
 							end;
-							iy := iy + 4;
+							Inc(iy, 4);
 						end else begin
 							VideoWriteText(63, iy, $1F, 'Room: ' + Copy(EditorGetBoardName(P3, true), 1, 10));
 						end;
@@ -704,13 +704,13 @@ procedure EditorLoop;
 				end;
 
 				if (InputDeltaX <> 0) or (InputDeltaY <> 0) then begin
-					cursorX := cursorX + InputDeltaX;
+					Inc(cursorX, InputDeltaX);
 					if cursorX < 1 then
 						cursorX := 1;
 					if cursorX > BOARD_WIDTH then
 						cursorX := BOARD_WIDTH;
 
-					cursorY := cursorY + InputDeltaY;
+					Inc(cursorY, InputDeltaY);
 					if cursorY < 1 then
 						cursorY := 1;
 					if cursorY > BOARD_HEIGHT then

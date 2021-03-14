@@ -170,10 +170,10 @@ procedure InputCalibrateJoystick;
 			JoystickXMax, JoystickYMax
 		) then exit;
 
-		JoystickXMin := JoystickXMin - JoystickXCenter;
-		JoystickXMax := JoystickXMax - JoystickXCenter;
-		JoystickYMin := JoystickYMin - JoystickYCenter;
-		JoystickYMax := JoystickYMax - JoystickYCenter;
+		Dec(JoystickXMin, JoystickXCenter);
+		Dec(JoystickXMax, JoystickXCenter);
+		Dec(JoystickYMin, JoystickYCenter);
+		Dec(JoystickYMax, JoystickYCenter);
 
 		{ if calibration valid range -> successful }
 		if (JoystickXMin < 1) and (JoystickXMax > 1)
@@ -273,8 +273,8 @@ procedure InputUpdate;
 		end else if InputMouseEnabled then begin
 			regs.AX := $0B;
 			Intr($33, regs);
-			InputMouseX := InputMouseX + Integer(regs.CX);
-			InputMouseY := InputMouseY + Integer(regs.DX);
+			Inc(InputMouseX, Integer(regs.CX));
+			Inc(InputMouseY, Integer(regs.DX));
 
 			if Abs(InputMouseX) > Abs(InputMouseY) then begin
 				if Abs(InputMouseX) > InputMouseActivationX then begin

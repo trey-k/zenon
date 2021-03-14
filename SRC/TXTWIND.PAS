@@ -165,7 +165,7 @@ procedure TextWindowDrawLine(var state: TTextWindowState; lpos: integer; without
 							'!': begin
 								textOffset := Pos(';', Lines[lpos]^) + 1;
 								VideoWriteText(textX + 2, lineY, $1D, #16);
-								textX := textX + 5;
+								Inc(textX, 5);
 								textColor := $1F;
 							end;
 							':': begin
@@ -285,7 +285,7 @@ procedure TextWindowSelect(var state: TTextWindowState; hyperlinkAsSelect, viewi
 				InputUpdate;
 				newLinePos := LinePos;
 				if InputDeltaY <> 0 then begin
-					newLinePos := newLinePos + InputDeltaY;
+					Inc(newLinePos, InputDeltaY);
 				end else if InputShiftPressed or (InputKeyPressed = KEY_ENTER) then begin
 					InputShiftAccepted := true;
 					if (Lines[LinePos]^[1]) = '!' then begin
