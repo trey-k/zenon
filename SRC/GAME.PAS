@@ -147,7 +147,7 @@ function EnsureIoTmpBufSize(size: integer): integer;
 		oldSize := IoTmpBufSize;
 		EnsureIoTmpBufSize := 0;
 		while IoTmpBufSize < size do
-			IoTmpBufSize := IoTmpBufSize + IO_BUFFER_SIZE_INCREMENT;
+			Inc(IoTmpBufSize, IO_BUFFER_SIZE_INCREMENT);
 		if oldSize <> IoTmpBufSize then begin
 			FreeMem(IoTmpBuf, oldSize);
 			oldSize := IoTmpBufSize;
@@ -223,7 +223,7 @@ procedure BoardClose;
 		for ix := 0 to Board.StatCount do begin
 			with Board.Stats[ix] do begin
 				if DataLen > 0 then
-					iy := iy + DataLen;
+					Inc(iy, DataLen);
 			end;
 		end;
 
@@ -1313,7 +1313,7 @@ procedure DamageStat(attackerStatId: integer);
 		with Board.Stats[attackerStatId] do begin
 			if attackerStatId = 0 then begin
 				if World.Info.Health > 0 then begin
-					World.Info.Health := World.Info.Health - 10;
+					Dec(World.Info.Health, 10);
 
 					GameUpdateSidebar;
 					DisplayMessage(100, 'Ouch!');
@@ -1370,7 +1370,7 @@ procedure BoardDamageTile(x, y: integer);
 procedure BoardAttack(attackerStatId: integer; x, y: integer);
 	begin
 		if (attackerStatId = 0) and (World.Info.EnergizerTicks > 0) then begin
-			World.Info.Score := ElementDefs[Board.Tiles[x][y].Element].ScoreValue + World.Info.Score;
+			Inc(World.Info.Score, ElementDefs[Board.Tiles[x][y].Element].ScoreValue);
 			GameUpdateSidebar;
 		end else begin
 			DamageStat(attackerStatId);
@@ -1629,19 +1629,19 @@ procedure GameDebugPrompt;
 			end;
 
 			if DebugPromptStarts(input, 'HEALTH') then
-				World.Info.Health := World.Info.Health + DebugPromptParseInt(input, 6, 50) * isYesMultiplier
+				Inc(World.Info.Health, DebugPromptParseInt(input, 6, 50) * isYesMultiplier)
 			else if DebugPromptStarts(input, 'AMMO') then
-				World.Info.Ammo := World.Info.Ammo + DebugPromptParseInt(input, 4, 5) * isYesMultiplier
+				Inc(World.Info.Ammo, DebugPromptParseInt(input, 4, 5) * isYesMultiplier)
 			else if DebugPromptStarts(input, 'KEYS') then begin
 				i := DebugPromptParseColor(input, 4);
 				if i > 0 then World.Info.Keys[i] := isYes
 				else for i := 1 to 7 do World.Info.Keys[i] := isYes;
 			end else if DebugPromptStarts(input, 'TORCHES') then
-				World.Info.Torches := World.Info.Torches + DebugPromptParseInt(input, 7, 3) * isYesMultiplier
+				Inc(World.Info.Torches, DebugPromptParseInt(input, 7, 3) * isYesMultiplier)
 			else if DebugPromptStarts(input, 'TIME') then
-				World.Info.BoardTimeSec := World.Info.BoardTimeSec - DebugPromptParseInt(input, 4, 30) * isYesMultiplier
+				Dec(World.Info.BoardTimeSec, DebugPromptParseInt(input, 4, 30) * isYesMultiplier)
 			else if DebugPromptStarts(input, 'GEMS') then
-				World.Info.Gems := World.Info.Gems + DebugPromptParseInt(input, 4, 5) * isYesMultiplier
+				Inc(World.Info.Gems, DebugPromptParseInt(input, 4, 5) * isYesMultiplier)
 			else if input = 'DARK' then begin
 				Board.Info.IsDark := isYes;
 				TransitionDrawToBoard;

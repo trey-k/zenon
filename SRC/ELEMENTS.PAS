@@ -355,7 +355,7 @@ procedure ElementBulletTick(statId: integer);
 				or (ElementDefs[iElem].Destructible and ((iElem = E_PLAYER) or (P1 = 0))) then
 			begin
 				if ElementDefs[iElem].ScoreValue <> 0 then begin
-					World.Info.Score := World.Info.Score + ElementDefs[iElem].ScoreValue;
+					Inc(World.Info.Score, ElementDefs[iElem].ScoreValue);
 					GameUpdateSidebar;
 				end;
 				BoardAttack(statId, ix, iy);
@@ -408,7 +408,7 @@ procedure ElementLineDraw(x, y: integer; var ch: byte);
 		shift := 1;
 		for i := 0 to 3 do begin
 			case Board.Tiles[x + NeighborDeltaX[i]][y + NeighborDeltaY[i]].Element of
-				E_LINE, E_BOARD_EDGE: v := v + shift;
+				E_LINE, E_BOARD_EDGE: Inc(v, shift);
 			end;
 			shift := shift shl 1;
 		end;
@@ -485,7 +485,7 @@ procedure ElementConveyorTick(x, y: integer; direction: integer);
 				if ElementDefs[Element].Cycle > -1 then
 					statIds[i] := GetStatIdAt(x + DiagonalDeltaX[i], y + DiagonalDeltaY[i])
 			end;
-			i := i + direction;
+			Inc(i, direction);
 		until i = iMax;
 
 		i := iMin;
@@ -524,7 +524,7 @@ procedure ElementConveyorTick(x, y: integer; direction: integer);
 				else if not ElementDefs[Element].Pushable then
 					canMove := false;
 			end;
-			i := i + direction;
+			Inc(i, direction);
 		until i = iMax;
 	end;
 
@@ -628,8 +628,8 @@ procedure ElementTransporterMove(x, y, deltaX, deltaY: integer);
 				finishSearch := false;
 				isValidDest := true;
 				repeat
-					ix := ix + deltaX;
-					iy := iy + deltaY;
+					Inc(ix, deltaX);
+					Inc(iy, deltaY);
 					with Board.Tiles[ix][iy] do begin
 						if Element = E_BOARD_EDGE then
 							finishSearch := true
@@ -826,10 +826,10 @@ procedure ElementSharkTick(statId: integer);
 			else
 				CalcDirectionSeek(X, Y, deltaX, deltaY);
 
-			if Board.Tiles[X + deltaX][Y + deltaY].Element = E_WATER then
-				MoveStat(statId, X + deltaX, Y + deltaY)
-			else if Board.Tiles[X + deltaX][Y + deltaY].Element = E_PLAYER then
-				BoardAttack(statId, X + deltaX, Y + deltaY);
+			case Board.Tiles[X + deltaX][Y + deltaY].Element of
+				E_WATER: MoveStat(statId, X + deltaX, Y + deltaY);
+				E_PLAYER: BoardAttack(statId, X + deltaX, Y + deltaY);
+			end;
 		end;
 	end;
 
@@ -862,8 +862,8 @@ procedure ElementBlinkWallTick(statId: integer);
 				begin
 					Board.Tiles[ix][iy].Element := E_EMPTY;
 					BoardDrawTile(ix, iy);
-					ix := ix + StepX;
-					iy := iy + StepY;
+					Inc(ix, StepX);
+					Inc(iy, StepY);
 					P3 := (P2) * 2 + 1;
 				end;
 
@@ -902,8 +902,8 @@ procedure ElementBlinkWallTick(statId: integer);
 							hitBoundary := true;
 						end;
 
-						ix := ix + StepX;
-						iy := iy + StepY;
+						Inc(ix, StepX);
+						Inc(iy, StepY);
 					until hitBoundary;
 
 					P3 := (P2 * 2) + 1;
@@ -1117,7 +1117,7 @@ procedure ElementKeyTouch(x, y: integer; sourceStatId: integer; var deltaX, delt
 
 procedure ElementAmmoTouch(x, y: integer; sourceStatId: integer; var deltaX, deltaY: integer);
 	begin
-		World.Info.Ammo := World.Info.Ammo + 5;
+		Inc(World.Info.Ammo, 5);
 
 		Board.Tiles[x][y].Element := E_EMPTY;
 		GameUpdateSidebar;
@@ -1133,7 +1133,7 @@ procedure ElementGemTouch(x, y: integer; sourceStatId: integer; var deltaX, delt
 	begin
 		Inc(World.Info.Gems);
 		Inc(World.Info.Health);
-		World.Info.Score := World.Info.Score + 10;
+		Inc(World.Info.Score, 10);
 
 		Board.Tiles[x][y].Element := E_EMPTY;
 		GameUpdateSidebar;
