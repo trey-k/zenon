@@ -7,11 +7,16 @@ Legend:
 
 $< ClassicZoo dev >
 
+* Minor optimizations have been made.
 / ClassicZoo will no longer load worlds
   with more boards than the engine
   supports.
 / Fixed issues regarding handling errors
   while loading a world.
+/ Fixed the mouse driver detection logic.
+  This has the side effect of no longer
+  displaying the "keyboard/mouse?" prompt
+  on machines without a mouse driver.
 
 $< ClassicZoo 4.0 >
 
