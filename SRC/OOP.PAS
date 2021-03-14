@@ -504,8 +504,10 @@ function OopReadLineToEnd(statId: integer; var position: integer) : string;
 		sPos := 0;
 		OopReadChar(statId, position);
 		while (OopChar <> #0) and (OopChar <> #13) do begin
-			Inc(sPos);
-			s[sPos] := OopChar;
+			if sPos < 255 then begin
+				Inc(sPos);
+				s[sPos] := OopChar;
+			end;
 			OopReadChar(statId, position);
 		end;
 		s[0] := Chr(sPos);

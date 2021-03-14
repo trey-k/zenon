@@ -477,7 +477,7 @@ procedure ElementConveyorTick(x, y: integer; direction: integer);
 				else if not ElementDefs[Element].Pushable then
 					canMove := false;
 			end;
-			i := i + direction;
+			Inc(i, direction);
 		until i = iMax;
 
 		i := iMin;
@@ -513,7 +513,7 @@ procedure ElementConveyorTick(x, y: integer; direction: integer);
 				else if not ElementDefs[Element].Pushable then
 					canMove := false;
 			end;
-			i := i + direction;
+			Inc(i, direction);
 		until i = iMax;
 	end;
 
@@ -809,10 +809,10 @@ procedure ElementSharkTick(statId: integer);
 			else
 				CalcDirectionSeek(X, Y, deltaX, deltaY);
 
-			if Board.Tiles[X + deltaX][Y + deltaY].Element = E_WATER then
-				MoveStat(statId, X + deltaX, Y + deltaY)
-			else if Board.Tiles[X + deltaX][Y + deltaY].Element = E_PLAYER then
-				BoardAttack(statId, X + deltaX, Y + deltaY);
+			case Board.Tiles[X + deltaX][Y + deltaY].Element of
+				E_WATER: MoveStat(statId, X + deltaX, Y + deltaY);
+				E_PLAYER: BoardAttack(statId, X + deltaX, Y + deltaY);
+			end;
 		end;
 	end;
 
