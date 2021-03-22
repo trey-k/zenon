@@ -1515,9 +1515,6 @@ procedure ElementPlayerTick(statId: integer);
 				'H': begin
 					TextWindowDisplayFile('GAME.HLP', 'Playing ZZT');
 				end;
-				'F': begin
-					TextWindowDisplayFile('ORDER.HLP', 'Order form');
-				end;
 				'?': begin
 					GameDebugPrompt;
 					InputKeyPressed := #0;
