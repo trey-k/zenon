@@ -64,7 +64,7 @@ interface
 	procedure AddStat(tx, ty: integer; element: byte; color, tcycle: integer; template: TStat);
 	procedure FreeStatDataMem(statId: integer; showError: boolean);
 	procedure RemoveStat(statId: integer);
-	function GetStatIdAt(x, y: integer): integer;
+	function GetStatIdAt(tx, ty: integer): integer;
 	function BoardPrepareTileForPlacement(x, y: integer): boolean;
 	procedure MoveStat(statId: integer; newX, newY: integer);
 	procedure PopupPromptString(question: string; var buffer: TString50);
@@ -1105,20 +1105,96 @@ procedure RemoveStat(statId: integer);
 		end;
 	end;
 
-function GetStatIdAt(x, y: integer): integer;
+{$IFDEF CPU86}
+{ GetStatIdAt - hand-rolled ASM version }
+{$IFNDEF FPC}
+function GetStatIdAt(tx, ty: integer): integer;
+	var
+		sc: integer;
+		st: word;
+	begin
+		{ Work around TP 5.5 flaw }
+		sc := Board.StatCount;
+		st := Ofs(Board.Stats);
+
+		inline(
+			$8B/$46/<tx/ { MOV AX, tx }
+			$0B/$46/<ty/ { OR AX, ty }
+			$25/$00/$FF/ { AND AX, 0xFF00 }
+			$74/$02/ { JZ func_valid_range }
+			$EB/$1E/ { JMP func_notfound }
+			{ func_valid_range: }
+			$8B/$5E/<ty/ { MOV BX, ty }
+			$B1/$08/ { MOV CL, 0x8 }
+			$D3/$E3/ { SHL BX, CL }
+			$0B/$5E/<tx/ { OR BX, tx }
+			$8B/$7E/<st/ { MOV DI, Board.Stats }
+			$8B/$4E/<sc/ { MOV CX, [Board.StatCount] }
+			$31/$C0/ { XOR AX, AX }
+			{ func_loop: }
+			$39/$1D/ { CMP [DI], BX }
+			$74/$0B/ { JZ func_exit }
+			$83/$C7/SizeOf(TStat)/ { ADD DI, SizeOf(TStat) }
+			$40/ { INC AX }
+			$39/$C8/ { CMP AX, CX }
+			$7E/$F4/ { JLE func_loop }
+			{ func_notfound: }
+			$B8/$FF/$FF/ { MOV AX, 0xFFFF }
+			{ func_finish: }
+			{ Another TP 5.5 workaround... }
+			$89/$46/$FE { MOV [return value], AX }
+		);
+	end;
+{$ELSE}
+function GetStatIdAt(tx, ty: integer): integer;
+	assembler;
+	label func_valid_range;
+	label func_loop;
+	label func_notfound;
+	label func_finish;
+	asm
+		mov ax, tx
+		or ax, ty
+		and ax, 0FF00h
+		jz func_valid_range
+		jmp func_notfound
+	func_valid_range:
+		mov bx, ty
+		mov cl, 8
+		shl bx, cl
+		or bx, tx
+		mov di, offset Board.Stats
+		mov cx, [Board.StatCount]
+		xor ax, ax
+	func_loop:
+		cmp [di], bx
+		je func_finish
+		add di, SizeOf(TStat)
+		inc ax
+		cmp ax, cx
+		jle func_loop
+	func_notfound:
+		mov ax, 0FFFFh
+	func_finish:
+	end ['ax', 'bx', 'cx', 'di'];
+{$ENDIF}
+
+{$ELSE}
+function GetStatIdAt(tx, ty: integer): integer;
 	var
 		i: integer;
 	begin
 		i := -1;
 		repeat
 			Inc(i);
-		until ((Board.Stats[i].X = x) and (Board.Stats[i].Y = y)) or (i > Board.StatCount);
+		until ((Board.Stats[i].X = tx) and (Board.Stats[i].Y = ty)) or (i > Board.StatCount);
 
 		if i > Board.StatCount then
 			GetStatIdAt := -1
 		else
 			GetStatIdAt := i;
 	end;
+{$ENDIF}
 
 function BoardPrepareTileForPlacement(x, y: integer): boolean;
 	var

@@ -411,11 +411,14 @@ function OopParseTile(var statId, position: integer; var tile: TTile): boolean;
 		end;
 	end;
 
-function GetColorForTileMatch(var tile: TTile): byte;
+function GetColorForTileMatch(tile: TTile): byte;
+	var
+		defColor: byte;
 	begin
-		if ElementDefs[tile.Element].Color < COLOR_SPECIAL_MIN then
-			GetColorForTileMatch := ElementDefs[tile.Element].Color and $07
-		else if ElementDefs[tile.Element].Color = COLOR_WHITE_ON_CHOICE then
+		defColor := ElementDefs[tile.Element].Color;
+		if defColor < COLOR_SPECIAL_MIN then
+			GetColorForTileMatch := defColor and $07
+		else if defColor = COLOR_WHITE_ON_CHOICE then
 			GetColorForTileMatch := ((tile.Color shr 4) and $0F) + 8
 		else
 			GetColorForTileMatch := (tile.Color and $0F);
@@ -441,38 +444,42 @@ function FindTileOnBoard(var x, y: integer; tile: TTile): boolean;
 		end;
 	end;
 
-procedure OopPlaceTile(x, y: integer; var tile: TTile);
+procedure OopPlaceTile(x, y: integer; tile: TTile);
 	var
-		color: byte;
+		dstColor: byte;
 	begin
-		if Board.Tiles[x][y].Element <> E_PLAYER then begin
-			color := tile.Color;
-			if ElementDefs[tile.Element].Color < COLOR_SPECIAL_MIN then
-				color := ElementDefs[tile.Element].Color
-			else begin
-				if color = 0 then
-					color := Board.Tiles[x][y].Color;
+		with Board.Tiles[x][y] do begin
+			if Element <> E_PLAYER then begin
+				dstColor := ElementDefs[tile.Element].Color;
+				if dstColor >= COLOR_SPECIAL_MIN then begin
+					dstColor := tile.Color;
 
-				if color = 0 then
-					color := $0F;
+					if dstColor = 0 then begin
+						dstColor := Color;
 
-				if ElementDefs[tile.Element].Color = COLOR_WHITE_ON_CHOICE then
-					color := ((color - 8) * $10) + $0F;
-			end;
+						if dstColor = 0 then begin
+							dstColor := $0F;
+						end;
+					end;
 
-			if Board.Tiles[x][y].Element = tile.Element then
-				Board.Tiles[x][y].Color := color
-			else begin
-				BoardDamageTile(x, y);
-				if ElementDefs[tile.Element].Cycle >= 0 then begin
-					AddStat(x, y, tile.Element, color, ElementDefs[tile.Element].Cycle, StatTemplateDefault);
-				end else begin
-					Board.Tiles[x][y].Element := tile.Element;
-					Board.Tiles[x][y].Color := color;
+					if ElementDefs[tile.Element].Color = COLOR_WHITE_ON_CHOICE then
+						dstColor := ((dstColor - 8) * $10) + $0F;
 				end;
-			end;
 
-			BoardDrawTile(x, y);
+				if Element = tile.Element then
+					Color := dstColor
+				else begin
+					BoardDamageTile(x, y);
+					if ElementDefs[tile.Element].Cycle >= 0 then begin
+						AddStat(x, y, tile.Element, dstColor, ElementDefs[tile.Element].Cycle, StatTemplateDefault);
+					end else begin
+						Element := tile.Element;
+						Color := dstColor;
+					end;
+				end;
+
+				BoardDrawTile(x, y);
+			end;
 		end;
 	end;
 
@@ -772,8 +779,7 @@ procedure OopExecute(statId: integer; var position: integer; name: TString50);
 						end else if OopWord = 'BECOME' then begin
 							if OopParseTile(statId, position, argTile) then begin
 								replaceStat := true;
-								replaceTile.Element := argTile.Element;
-								replaceTile.Color := argTile.Color;
+								replaceTile := argTile;
 							end else begin
 								OopError(statId, 'Bad #BECOME');
 							end;
