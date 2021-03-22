@@ -705,7 +705,6 @@ function WorldLoad(filename, extension: TString50; titleOnly: boolean): boolean;
 
 		SidebarClearLine(4);
 		SidebarClearLine(5);
-		SidebarClearLine(5);
 		VideoWriteText(62, 5, $1F, 'Loading.....');
 
 		Assign(f, filename + extension);
