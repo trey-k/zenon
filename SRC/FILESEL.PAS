@@ -74,6 +74,8 @@ function FileSelect(title, extension: TString50): string;
 {$ENDIF}
 
 		while searching do begin
+			TextWindowInitState(textWindow);
+
 {$IFDEF SUBDIRS}
 			GetDir(0, curPath);
 			if Length(curPath) > PATH_PREVIEW_LENGTH then
@@ -143,9 +145,9 @@ function FileSelect(title, extension: TString50): string;
 				FileSelect := entryName;
 				searching := false;
 			end;
-		end;
 
-		TextWindowFree(textWindow);
+			TextWindowFree(textWindow);
+		end;
 	end;
 
 end.
