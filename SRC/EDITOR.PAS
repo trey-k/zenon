@@ -429,9 +429,8 @@ procedure EditorLoop;
 				state.Lines[10]^ := '          Quit!';
 
 				TextWindowSelect(state, false, false);
-				if (InputKeyPressed = KEY_ENTER) and (state.LinePos >= 1) and (state.LinePos <= 8) then
+				if (InputKeyPressed = KEY_ENTER) and (state.LinePos <> 10) then begin
 					wasModified := true;
-				if (InputKeyPressed = KEY_ENTER) then
 					case state.LinePos of
 						1: begin
 							PopupPromptString('New title for board:', Board.Name);
@@ -469,12 +468,8 @@ procedure EditorLoop;
 								Val(numStr, Board.Info.TimeLimitSec, i);
 							EditorDrawSidebar;
 						end;
-						10: begin
-							exitRequested := true;
-							TextWindowDrawClose(state);
-						end;
 					end
-				else begin
+				end else begin
 					exitRequested := true;
 					TextWindowDrawClose(state);
 				end;
@@ -1294,9 +1289,7 @@ function EditorGetBoardName(boardId: integer; titleScreenIsNone: boolean): TStri
 
 function EditorSelectBoard(title: string; currentBoard: integer; titleScreenIsNone: boolean): integer;
 	var
-		unk1: string;
 		i: integer;
-		unk2: integer;
 		textWindow: TTextWindowState;
 	begin
 		textWindow.Title := title;
