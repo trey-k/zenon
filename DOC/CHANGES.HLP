@@ -11,12 +11,17 @@ $< ClassicZoo dev >
 / ClassicZoo will no longer load worlds
   with more boards than the engine
   supports.
-/ Fixed issues regarding handling errors
+/ Fixed bugs related to handling errors
   while loading a world.
+/ Fixed bugs related to memory corruption
+  in the file selector menu.
 / Fixed the mouse driver detection logic.
   This has the side effect of no longer
   displaying the "keyboard/mouse?" prompt
   on machines without a mouse driver.
+/ Fixed the editor not marking a world as
+  edited when the time limit was edited
+  on the board information menu.
 
 $< ClassicZoo 4.0 >
 
