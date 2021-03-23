@@ -196,23 +196,32 @@ procedure OopReadDirection(statId: integer; var position: integer; var dx, dy: i
 			OopError(statId, 'Bad direction');
 	end;
 
-function OopFindString(statId: integer; s: string): integer;
+function OopFindString(statId: integer; startPos: integer; s: string): integer;
 	var
 		pos, wordPos, cmpPos: integer;
+		maxPos: integer;
 	label NoMatch;
 	begin
 		for pos := 1 to Length(s) do
 			s[pos] := UpCase(s[pos]);
 		with Board.Stats[statId] do begin
-			pos := 0;
-			while pos <= DataLen do begin
+			pos := startPos;
+			maxPos := DataLen - Length(s);
+			while pos <= maxPos do begin
 				wordPos := 1;
 				cmpPos := pos;
 				repeat
-					OopReadChar(statId, cmpPos);
+					{$IFNDEF FPC}
+					{ On Turbo Pascal, the array pointer is actually }
+					{ a poiter to a string. }
+					OopChar := Data^[cmpPos];
+					{$ELSE}
+					OopChar := Data[cmpPos];
+					{$ENDIF}
 					if s[wordPos] <> UpCase(OopChar) then
 						goto NoMatch;
 					Inc(wordPos);
+					Inc(cmpPos);
 				until wordPos > Length(s);
 
 				{ string matches }
@@ -308,7 +317,7 @@ function OopFindLabel(statId: integer; sendLabel: string; var iStat, iDataPos: i
 			if objectMessage = 'RESTART' then begin
 				iDataPos := 0;
 			end else begin
-				iDataPos := OopFindString(iStat, labelPrefix + objectMessage);
+				iDataPos := OopFindString(iStat, 0, labelPrefix + objectMessage);
 				{ if lookup target exists, there may be more stats }
 				if (iDataPos < 0) and (targetSplitPos > 0) then
 					goto FindNextStat;
@@ -754,7 +763,7 @@ procedure OopExecute(statId: integer; var position: integer; name: TString50);
 
 									Char(labelPtr^) := ':';
 
-									labelDataPos := OopFindString(labelStatId, #13#39 + OopWord + #13);
+									labelDataPos := OopFindString(labelStatId, labelDataPos + 1, #13#39 + OopWord + #13);
 								until labelDataPos <= 0;
 						end else if OopWord = 'LOCK' then begin
 							P2 := 1;
