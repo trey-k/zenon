@@ -46,6 +46,9 @@ interface
 		UseSystemTimeForElapsed: boolean;
 		TimerTicks: word;
 		SoundTimeCheckHsec: integer;
+{$IFDEF ZETAEMU}
+		ZetaDetected: boolean;
+{$ENDIF}
 	procedure AccurateDelayCalibrate;
 	procedure AccurateDelay(ms: word);
 	procedure SoundQueue(priority: integer; pattern: string);
@@ -55,7 +58,11 @@ interface
 	function SoundParse(input: string): string;
 
 implementation
-uses Crt, Dos;
+uses
+{$IFDEF ZETAEMU}
+ZetaSupp,
+{$ENDIF}
+Crt, Dos;
 
 const
 	DELAY_LOOP_MAX_ITERATIONS = $7FFFFFFF;
@@ -105,6 +112,12 @@ procedure AccurateDelay(ms: word);
 		iterations: longint;
 		unchanged: word;
 	begin
+{$IFDEF ZETAEMU}
+		if ZetaDetected then begin
+			ZetaDelay(ms);
+			exit;
+		end;
+{$ENDIF}
 		iterations := DelayLoopIterations * ms;
 		if iterations <> 0 then
 			iterations := AccurateDelayLoop(iterations, unchanged);
@@ -118,6 +131,12 @@ procedure AccurateDelayCalibrate;
 procedure AccurateDelay(ms: word);
 	begin
 		{ Free Pascal contains properly calibrated delay logic. }
+{$IFDEF ZETAEMU}
+		if ZetaDetected then begin
+			ZetaDelay(ms);
+			exit;
+		end;
+{$ENDIF}
 		Delay(ms);
 	end;
 {$ENDIF}
@@ -156,6 +175,9 @@ procedure SoundPlayDrum(var drum: TDrumData);
 	begin
 		for i := 1 to drum.Len do begin
 			Sound(drum.Data[i]);
+{$IFDEF ZETAEMU}
+			if ZetaDetected then Delay(1) else
+{$ENDIF}
 			AccurateDelay(1);
 		end;
 		NoSound;
@@ -350,5 +372,8 @@ begin
 {$IFNDEF FPC}
 	DelayLoopIterations := 0;
 	AccurateDelayCalibrate;
+{$ENDIF}
+{$IFDEF ZETAEMU}
+	ZetaDetected := ZetaDetect;
 {$ENDIF}
 end.
