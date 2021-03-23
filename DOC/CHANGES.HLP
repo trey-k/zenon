@@ -5,9 +5,14 @@ Legend:
 + Additions         * Changes
 - Removals          / Bugfixes
 
-$< ClassicZoo dev >
+$< ClassicZoo 4.01 >
 
-* Minor optimizations have been made.
++ Added rudimentary support for Zeta's
+  delay extension.
+* Many minor optimizations have been
+  made to the engine.
+/ Fixed overly fast delay logic on fast
+  (>=386-class) machines.
 / ClassicZoo will no longer load worlds
   with more boards than the engine
   supports.

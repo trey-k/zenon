@@ -1,4 +1,4 @@
 -d EXTCHEAT -d DEBUGWND -d EDITOR -d SUBDIRS -d ZETAEMU -g -e ZZT.EXE -o zzt.zip -p build.properties
--d SUBDIRS -e ZZTRUN.EXE -o zzt.zip -p build.properties
--f -d EXTCHEAT -d DEBUGWND -d EDITOR -d SUBDIRS -g -e ZZTL.EXE -o zztlibre.zip -p build.properties
--f -d SUBDIRS -e ZZTLRUN.EXE -o zztlibre.zip -p build.properties
+-d SUBDIRS -d ZETAEMU -e ZZTRUN.EXE -o zzt.zip -p build.properties
+-f -d EXTCHEAT -d DEBUGWND -d EDITOR -d SUBDIRS -d ZETAEMU -g -e ZZTL.EXE -o zztlibre.zip -p build.properties
+-f -d SUBDIRS -d ZETAEMU -e ZZTLRUN.EXE -o zztlibre.zip -p build.properties
