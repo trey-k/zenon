@@ -46,6 +46,8 @@ interface
 		UseSystemTimeForElapsed: boolean;
 		TimerTicks: word;
 		SoundTimeCheckHsec: integer;
+	procedure AccurateDelayCalibrate;
+	procedure AccurateDelay(ms: word);
 	procedure SoundQueue(priority: integer; pattern: string);
 	procedure SoundClearQueue;
 	function SoundHasTimeElapsed(var counter: integer; duration: integer): boolean;
@@ -56,9 +58,69 @@ implementation
 uses Crt, Dos;
 
 const
+	DELAY_LOOP_MAX_ITERATIONS = $7FFFFFFF;
 	SoundParseNoteTable: array['A' .. 'G'] of byte = (9, 11, 0, 2, 4, 5, 7);
 
 {$I SNDFREQ.INC}
+
+{$IFNDEF FPC}
+var
+	DelayLoopIterations: longint;
+
+function AccurateDelayLoop(iterations: longint; var monitor: word): longint;
+	begin
+		inline(
+			$8B/$BE/monitor/ { MOV DI, SS:[monitor] }
+			$8B/$86/monitor+2/ { MOV AX, SS:[monitor+2] }
+			$8E/$C0/ { MOV ES, AX }
+			$8B/$86/iterations/ { MOV AX, SS:[iterations] }
+			$8B/$96/iterations+2/ { MOV DX, SS:[iterations+2] }
+			$8B/$1D/ { MOV BX, [ES:DI] }
+		{ loop: }
+			$90/$90/ { NOP x 2 }
+			$83/$E8/$01/ { SUB AX, 1 }
+			$83/$DA/$00/ { SBB DX, 0 }
+			$72/$04/ { JC done }
+			$3B/$1D/ { CMP BX, [ES:DI] }
+			$74/$F2/ { JE loop }
+		{ done: }
+			$89/$86/AccurateDelayLoop/ { MOV AX, SS:[AccurateDelayLoop] }
+			$89/$96/AccurateDelayLoop+2 { MOV DX, SS:[AccurateDelayLoop+2] }
+		);
+	end;
+
+procedure AccurateDelayCalibrate;
+	var
+		iterations: longint;
+		ticks: word;
+	begin
+		ticks := TimerTicks;
+		repeat until TimerTicks <> ticks;
+		iterations := AccurateDelayLoop(DELAY_LOOP_MAX_ITERATIONS, TimerTicks);
+		DelayLoopIterations := (DELAY_LOOP_MAX_ITERATIONS - iterations) div 55;
+	end;
+
+procedure AccurateDelay(ms: word);
+	var
+		iterations: longint;
+		unchanged: word;
+	begin
+		iterations := DelayLoopIterations * ms;
+		if iterations <> 0 then
+			iterations := AccurateDelayLoop(iterations, unchanged);
+	end;
+{$ELSE}
+procedure AccurateDelayCalibrate;
+	begin
+		{ I'm not sure if Free Pascal lets you do this, though. }
+	end;
+
+procedure AccurateDelay(ms: word);
+	begin
+		{ Free Pascal contains properly calibrated delay logic. }
+		Delay(ms);
+	end;
+{$ENDIF}
 
 procedure SoundQueue(priority: integer; pattern: string);
 	begin
@@ -94,7 +156,7 @@ procedure SoundPlayDrum(var drum: TDrumData);
 	begin
 		for i := 1 to drum.Len do begin
 			Sound(drum.Data[i]);
-			Delay(1);
+			AccurateDelay(1);
 		end;
 		NoSound;
 	end;
@@ -285,4 +347,8 @@ begin
 	SoundNewVector := @SoundTimerHandler;
 	GetIntVec($1C, SoundOldVector);
 	SetIntVec($1C, SoundNewVector);
+{$IFNDEF FPC}
+	DelayLoopIterations := 0;
+	AccurateDelayCalibrate;
+{$ENDIF}
 end.
