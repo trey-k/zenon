@@ -539,7 +539,10 @@ procedure EditorLoop;
 					if (InputKeyPressed <> KEY_ESCAPE) and (Length(SavedBoardFileName) <> 0) then begin
 						Assign(f, SavedBoardFileName + '.BRD');
 						Reset(f, 1);
-						if DisplayIOError then goto TransferEnd;
+						if DisplayIOError then begin
+							Close(f);
+							goto TransferEnd;
+						end;
 
 						BoardClose;
 						FreeMem(World.BoardData[World.Info.CurrentBoard], World.BoardLen[World.Info.CurrentBoard]);
@@ -549,6 +552,8 @@ procedure EditorLoop;
 							BlockRead(f, World.BoardData[World.Info.CurrentBoard]^,
 								World.BoardLen[World.Info.CurrentBoard]);
 						end;
+
+						Close(f);
 
 						if DisplayIOError then begin
 							World.BoardLen[World.Info.CurrentBoard] := 0;
@@ -566,7 +571,10 @@ procedure EditorLoop;
 					if (InputKeyPressed <> KEY_ESCAPE) and (Length(SavedBoardFileName) <> 0) then begin
 						Assign(f, SavedBoardFileName + '.BRD');
 						Rewrite(f, 1);
-						if DisplayIOError then goto TransferEnd;
+						if DisplayIOError then begin
+							Close(f);
+							goto TransferEnd;
+						end;
 
 						BoardClose;
 						BlockWrite(f, World.BoardLen[World.Info.CurrentBoard], 2);
@@ -574,10 +582,9 @@ procedure EditorLoop;
 							World.BoardLen[World.Info.CurrentBoard]);
 						BoardOpen(World.Info.CurrentBoard);
 
-						if DisplayIOError then begin
-						end else begin
-							Close(f);
-						end;
+						Close(f);
+
+						if DisplayIOError then begin end;
 					end;
 				end;
 			end;
@@ -962,9 +969,7 @@ procedure HighScoresSave;
 		Rewrite(f);
 		Write(f, HighScoreList);
 		Close(f);
-		if DisplayIOError then begin
-		end else begin
-		end;
+		if DisplayIOError then begin end;
 	end;
 
 {$F+}

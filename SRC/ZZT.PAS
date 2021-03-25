@@ -70,6 +70,8 @@ procedure GameConfigure;
 			Readln(cfgFile, ConfigWorldFile);
 			Readln(cfgFile, ConfigRegistration);
 		end;
+		Close(cfgFile);
+
 		if ConfigWorldFile[1] = '*' then begin
 			EditorEnabled := false;
 			ConfigWorldFile := Copy(ConfigWorldFile, 2, Length(ConfigWorldFile) - 1);
