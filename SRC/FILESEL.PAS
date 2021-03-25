@@ -126,6 +126,9 @@ function FileSelect(title, extension: TString50): string;
 			end;
 
 			TextWindowFree(textWindow);
+
+			{ Clear IOResult }
+			if IOResult <> 0 then begin end;
 		end;
 	end;
 
