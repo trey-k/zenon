@@ -805,6 +805,7 @@ function WorldLoad(filename, extension: TString50; titleOnly: boolean): boolean;
 		ptr: pointer;
 		boardId: integer;
 		loadProgress: integer;
+	label OnError;
 	procedure SidebarAnimateLoading;
 		begin
 			VideoWriteText(69, 5, ProgressAnimColors[loadProgress], ProgressAnimStrings[loadProgress]);
@@ -834,7 +835,7 @@ function WorldLoad(filename, extension: TString50; titleOnly: boolean): boolean;
 					if World.BoardCount <> -1 then begin
 						VideoWriteText(62, 5, $1E, 'You need a newer');
 						VideoWriteText(63, 6, $1E, 'version of ZZT!');
-						exit;
+						goto OnError;
 					end else begin
 						Move(ptr^, World.BoardCount, SizeOf(World.BoardCount));
 						AdvancePointer(ptr, SizeOf(World.BoardCount));
@@ -870,8 +871,6 @@ function WorldLoad(filename, extension: TString50; titleOnly: boolean): boolean;
 					end else RunError(203);
 				end;
 
-				Close(f);
-
 				BoardOpen(World.Info.CurrentBoard);
 				LoadedGameFileName := filename;
 				WorldLoad := true;
@@ -885,6 +884,9 @@ function WorldLoad(filename, extension: TString50; titleOnly: boolean): boolean;
 				SidebarClearLine(5);
 			end;
 		end;
+
+	OnError:
+		Close(f);
 	end;
 
 procedure WorldSave(filename, extension: TString50);
