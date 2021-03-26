@@ -304,11 +304,12 @@ procedure EditorLoop;
 				VideoWriteText(26, 0, $70, ' Untitled ');
 		end;
 
-	procedure EditorSetTile(x, y, element, color: byte);
+	procedure EditorSetTile(x, y, newElement, newColor: byte);
 		begin
-			Board.Tiles[x][y].Element := element;
-			Board.Tiles[x][y].Color := color;
-
+			with Board.Tiles[x][y] do begin
+				Element := newElement;
+				Color := newColor;
+			end;
 			EditorDrawTileAndNeighborsAt(x, y);
 		end;
 
@@ -717,7 +718,7 @@ procedure EditorLoop;
 	procedure EditorFloodFill(x, y: integer; from: TTile);
 		var
 			i: integer;
-			tileAt: TTile;
+			tileAt, tilePlaced: TTile;
 			toFill, filled: byte;
 			xPosition: array[0 .. 255] of integer;
 			yPosition: array[0 .. 255] of integer;
@@ -727,8 +728,9 @@ procedure EditorLoop;
 			while toFill <> filled do begin
 				tileAt := Board.Tiles[x][y];
 				EditorPlaceTile(x, y);
-				if (Board.Tiles[x][y].Element <> tileAt.Element)
-					or (Board.Tiles[x][y].Color <> tileAt.Color) then
+				tilePlaced := Board.Tiles[x][y];
+				if (tilePlaced.Element <> tileAt.Element)
+					or (tilePlaced.Color <> tileAt.Color) then
 					for i := 0 to 3 do
 					with Board.Tiles[x + NeighborDeltaX[i]][y + NeighborDeltaY[i]] do begin
 							if (Element = from.Element)
@@ -793,8 +795,10 @@ procedure EditorLoop;
 					if EditorPrepareModifyTile(cursorX, cursorY) then begin
 						i := (cursorColor and $07) + (E_TEXT_MIN - 1);
 						if i < E_TEXT_MIN then i := E_TEXT_MIN + 6;
-						Board.Tiles[cursorX][cursorY].Element := i;
-						Board.Tiles[cursorX][cursorY].Color := Ord(InputKeyPressed);
+						with Board.Tiles[cursorX][cursorY] do begin
+							Element := i;
+							Color := Ord(InputKeyPressed);
+						end;
 						EditorDrawTileAndNeighborsAt(cursorX, cursorY);
 						InputDeltaX := 1;
 						InputDeltaY := 0;
