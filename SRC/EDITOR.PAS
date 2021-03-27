@@ -36,7 +36,8 @@ interface
 	procedure EditorEditHelpFile;
 	procedure HighScoresAdd(score: integer);
 	function EditorGetBoardName(boardId: integer; titleScreenIsNone: boolean): TString50;
-	function EditorSelectBoard(title: string; currentBoard: integer; titleScreenIsNone: boolean): integer;
+	function EditorSelectBoard(title: string; currentBoard: integer; titleScreenIsNone: boolean;
+		windowAlreadyOpen: boolean): integer;
 
 implementation
 uses Dos, Crt, FileSel, ExtMem, Video, Sounds, Input, Elements, Oop, Game;
@@ -460,11 +461,12 @@ procedure EditorLoop;
 								:= EditorSelectBoard(
 									NeighborBoardStrs[state.LinePos - 4],
 									Board.Info.NeighborBoards[state.LinePos - 4],
-									true
+									true, true
 								);
-							if Board.Info.NeighborBoards[state.LinePos - 4] > World.BoardCount then
+							if Board.Info.NeighborBoards[state.LinePos - 4] > World.BoardCount then begin
 								EditorAppendBoard;
-							exitRequested := true;
+								exitRequested := true;
+							end;
 						end;
 						8: begin
 							Board.Info.ReenterWhenZapped := not Board.Info.ReenterWhenZapped;
@@ -632,7 +634,7 @@ procedure EditorLoop;
 						(Length(ElementDefs[element].ParamBoardName) <> 0) then
 					begin
 						if selected then begin
-							selectedBoard := EditorSelectBoard(ElementDefs[element].ParamBoardName, P3, true);
+							selectedBoard := EditorSelectBoard(ElementDefs[element].ParamBoardName, P3, true, false);
 							if selectedBoard <> 0 then begin
 								P3 := selectedBoard;
 								World.EditorStatSettings[element].P3 := World.Info.CurrentBoard;
@@ -1014,7 +1016,7 @@ procedure EditorLoop;
 						editorExitRequested := true;
 					end;
 					'B': begin
-						i := EditorSelectBoard('Switch boards', World.Info.CurrentBoard, false);
+						i := EditorSelectBoard('Switch boards', World.Info.CurrentBoard, false, false);
 						if (InputKeyPressed <> KEY_ESCAPE) then begin
 							if (i > World.BoardCount) then
 								if SidebarPromptYesNo('Add new board? ', false) then
@@ -1315,7 +1317,8 @@ function EditorGetBoardName(boardId: integer; titleScreenIsNone: boolean): TStri
 		end;
 	end;
 
-function EditorSelectBoard(title: string; currentBoard: integer; titleScreenIsNone: boolean): integer;
+function EditorSelectBoard(title: string; currentBoard: integer; titleScreenIsNone: boolean;
+	windowAlreadyOpen: boolean): integer;
 	var
 		i: integer;
 		textWindow: TTextWindowState;
@@ -1328,9 +1331,9 @@ function EditorSelectBoard(title: string; currentBoard: integer; titleScreenIsNo
 			TextWindowAppend(textWindow, EditorGetBoardName(i, titleScreenIsNone));
 		end;
 		TextWindowAppend(textWindow, 'Add new board');
-		TextWindowDrawOpen(textWindow);
+		if not windowAlreadyOpen then TextWindowDrawOpen(textWindow);
 		TextWindowSelect(textWindow, false, false);
-		TextWindowDrawClose(textWindow);
+		if not windowAlreadyOpen then TextWindowDrawClose(textWindow);
 		TextWindowFree(textWindow);
 		if InputKeyPressed = KEY_ESCAPE then
 			EditorSelectBoard := 0

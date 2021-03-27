@@ -1780,7 +1780,7 @@ procedure GameDebugPrompt;
 {$IFDEF EXTCHEAT}
 				if input = 'PASSAGE' then begin
 					if GameStateElement = E_PLAYER then begin
-						BoardChange(EditorSelectBoard('Teleport to', World.Info.CurrentBoard, false));
+						BoardChange(EditorSelectBoard('Teleport to', World.Info.CurrentBoard, false, false));
 						GamePaused := true;
 						TransitionDrawBoardChange;
 						BoardEnter;
