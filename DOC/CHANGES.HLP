@@ -5,6 +5,24 @@ Legend:
 + Additions         * Changes
 - Removals          / Bugfixes
 
+$< ClassicZoo 4.02 >
+
++ Added support for inputting custom text
+  characters in the editor - press F10
+  while typing.
++ Added support for using PgUp/PgDn in
+  many choice-based sidebar prompts.
++ Allowed inputting longer board names -
+  up to 42 characters in length.
+* Changed the ZZT.DAT format, saving ~1KB
+  of runtime memory.
+* Editing neighbor boards no longer quits
+  the board information menu.
+* Inputting text in the editor no longer
+  allows using certain sidebar commands.
+/ Fixed bugs related to file closing
+  and subdirectory handling.
+
 $< ClassicZoo 4.01 >
 
 + Added rudimentary support for Zeta's
