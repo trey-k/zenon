@@ -73,7 +73,7 @@ procedure EditorAppendBoard;
 			TransitionDrawToBoard;
 
 			repeat
-				PopupPromptString('Room'#39's Title:', Board.Name);
+				PopupPromptString('Room'#39's Title:', Board.Name, MAX_BOARD_NAME_LENGTH);
 			until Length(Board.Name) <> 0;
 
 			TransitionDrawToBoard;
@@ -441,7 +441,7 @@ procedure EditorLoop;
 					wasModified := true;
 					case state.LinePos of
 						1: begin
-							PopupPromptString('New title for board:', Board.Name);
+							PopupPromptString('New title for board:', Board.Name, MAX_BOARD_NAME_LENGTH);
 							exitRequested := true;
 							TextWindowDrawClose(state);
 						end;
@@ -1291,7 +1291,7 @@ procedure HighScoresAdd(score: integer);
 			TextWindowDraw(textWindow, false, false);
 
 			name := '';
-			PopupPromptString('Congratulations!  Enter your name:', name);
+			PopupPromptString('Congratulations!  Enter your name:', name, MAX_HIGH_SCORE_NAME_LENGTH);
 			HighScoreList[listPos].Name := name;
 			HighScoresSave;
 

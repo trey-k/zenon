@@ -67,7 +67,7 @@ interface
 	function GetStatIdAt(tx, ty: integer): integer;
 	function BoardPrepareTileForPlacement(x, y: integer): boolean;
 	procedure MoveStat(statId: integer; newX, newY: integer);
-	procedure PopupPromptString(question: string; var buffer: TString50);
+	procedure PopupPromptString(question: string; var buffer: TString50; maxLen: integer);
 	function Signum(val: integer): integer;
 	function Difference(a, b: integer): integer;
 	procedure DamageStat(attackerStatId: integer);
@@ -1279,7 +1279,7 @@ procedure MoveStat(statId: integer; newX, newY: integer);
 		end;
 	end;
 
-procedure PopupPromptString(question: string; var buffer: TString50);
+procedure PopupPromptString(question: string; var buffer: TString50; maxLen: integer);
 	var
 		x, y: integer;
 	begin
@@ -1291,7 +1291,10 @@ procedure PopupPromptString(question: string; var buffer: TString50);
 		VideoWriteText(3, 23, $4F, TextWindowStrBottom);
 		VideoWriteText(4 + (TextWindowWidth - Length(question)) div 2, 19, $4F, question);
 		buffer := '';
-		PromptString(10, 22, $4F, $4E, TextWindowWidth - 16, TextWindowWidth - 16, PROMPT_ANY, buffer);
+		{ x = x, y = width }
+		if maxLen > (TextWindowWidth - 8) then y := (TextWindowWidth - 8) else y := maxLen;
+		x := 6 + (((TextWindowWidth - 8) - y) shr 1);
+		PromptString(x, 22, $4F, $4E, y, maxLen, PROMPT_ANY, buffer);
 		for y := 18 to 23 do
 			for x := 3 to (TextWindowWidth + 3) do
 				BoardDrawTile(x + 1, y + 1);
