@@ -37,14 +37,12 @@ interface
 		VideoWriteText: TVideoWriteTextProc;
 		VideoMonochrome: boolean;
 		VideoColumns: integer;
-		VideoBorderColor: integer;
 		VideoTextSegment: word;
-		VideoTextPointer: pointer;
-		VideoCursorVisible: boolean;
 		VideoEGAInstalled: boolean;
 		VideoMDAInstalled: boolean;
+		VideoLastMode: word;
 	function VideoConfigure: boolean;
-	procedure VideoInstall(columns, borderColor: integer);
+	procedure VideoInstall(borderColor: integer);
 	procedure VideoUninstall;
 	procedure VideoShowCursor;
 	procedure VideoHideCursor;
@@ -211,6 +209,8 @@ procedure VideoWriteTextFast(x, y, color: byte; text: TVideoLine);
 	end ['ax', 'cx', 'dx', 'si', 'di'];
 {$ENDIF}
 
+{$F-}
+
 function ColorToBW(color: byte): byte;
 	begin
 		{ FIX: Special handling of blinking solids }
@@ -234,6 +234,8 @@ function ColorToBW(color: byte): byte;
 		ColorToBW := color;
 	end;
 
+{$F+}
+
 procedure VideoWriteTextCGABW(x, y, color: byte; text: TVideoLine);
 	begin
 		VideoWriteTextCGA(x, y, ColorToBW(color), text);
@@ -251,7 +253,7 @@ function VideoConfigure: boolean;
 		charTyped: Char;
 	begin
 		charTyped := ' ';
-		if LastMode = 7 then begin
+		if VideoLastMode = 7 then begin
 			VideoWriteText := VideoWriteTextFastBW;
 			VideoMonochrome := true;
 		end else begin
@@ -262,15 +264,15 @@ function VideoConfigure: boolean;
 				charTyped := UpCase(ReadKey);
 			until charTyped in [#27, 'C', 'M'];
 			case charTyped of
-				'C': VideoMonochrome := false;
+				'C', #27: VideoMonochrome := false;
 				'M': VideoMonochrome := true;
-				#27: VideoMonochrome := (LastMode = 7);
+				{ #27: false if (VideoLastMode = 7);, checked above }
 			end;
 		end;
 		VideoConfigure := charTyped <> #27;
 	end;
 
-procedure VideoInstall(columns, borderColor: integer);
+procedure VideoInstall(borderColor: integer);
 	var
 		regs: Registers;
 	begin
@@ -278,7 +280,7 @@ procedure VideoInstall(columns, borderColor: integer);
 		regs.BX := $FF10;
 		Intr($10, regs);
 		VideoEGAInstalled := regs.BH <> $FF;
-		VideoMDAInstalled := LastMode = 7;
+		VideoMDAInstalled := VideoLastMode = 7;
 
 		if VideoEGAInstalled then begin
 			regs.AX := $1201;
@@ -286,43 +288,31 @@ procedure VideoInstall(columns, borderColor: integer);
 			Intr($10, regs);
 		end;
 
-		VideoColumns := columns;
+		VideoColumns := 80;
 		if VideoMonochrome then begin
 			if VideoEGAInstalled or VideoMDAInstalled then
 				VideoWriteText := VideoWriteTextFastBW
 			else
 				VideoWriteText := VideoWriteTextCGABW;
 
-			if (LastMode >= 0) and (LastMode <= 3) then begin
-				if columns = 80 then begin
-					TextMode(BW80);
-				end else begin
-					TextMode(BW40);
-				end;
+			if (VideoLastMode and $FFFC) = 0 {>= 0, <= 3} then begin
+				TextMode(BW80);
 			end else begin
 				TextMode(7);
-				VideoColumns := 80;
 			end;
 		end else begin
-			if VideoEGAInstalled or VideoMDAInstalled then
+			if VideoEGAInstalled then
 				VideoWriteText := VideoWriteTextFast
 			else
 				VideoWriteText := VideoWriteTextCGA;
 
-			if columns = 80 then begin
-				TextMode(CO80);
-			end else begin
-				TextMode(CO40);
-			end;
-
+			TextMode(CO80);
 			TextBackground(borderColor);
+			VideoSetBorderColor(borderColor);
 		end;
 
 		ClrScr;
-
-		if not VideoCursorVisible then
-			VideoHideCursor;
-		VideoSetBorderColor(borderColor);
+		VideoHideCursor;
 	end;
 
 procedure VideoUninstall;
@@ -337,10 +327,7 @@ procedure VideoUninstall;
 
 		TextBackground(0);
 		VideoColumns := 80;
-		if VideoMonochrome then
-			TextMode(BW80)
-		else
-			TextMode(CO80);
+		TextMode(VideoLastMode);
 		VideoSetBorderColor(0);
 		ClrScr;
 	end;
@@ -357,19 +344,16 @@ procedure VideoSetCursorShape(value: integer);
 procedure VideoShowCursor;
 	begin
 		VideoSetCursorShape($0607);
-		VideoCursorVisible := true;
 	end;
 
 procedure VideoHideCursor;
 	begin
 		VideoSetCursorShape($2000);
-		VideoCursorVisible := false;
 	end;
 
 procedure VideoSetBorderColor(value: integer);
 	begin
 		Port[PORT_CGA_PALETTE] := value;
-		VideoBorderColor := value;
 	end;
 
 procedure VideoSetBlink(value: boolean);
@@ -401,16 +385,14 @@ procedure VideoMove(x, y, chars: integer; data: pointer; toVideo: boolean);
 
 
 begin
-	VideoBorderColor := 0;
 	VideoColumns := 80;
 	VideoWriteText := VideoWriteTextCGA;
-	if LastMode = 7 then begin
+	VideoLastMode := LastMode;
+	if VideoLastMode = 7 then begin
 		VideoTextSegment := $B000;
 		VideoMonochrome := true;
 	end else begin
 		VideoTextSegment := $B800;
 		VideoMonochrome := false;
 	end;
-	VideoTextPointer := Ptr(VideoTextSegment, $0000);
-	VideoCursorVisible := true;
 end.

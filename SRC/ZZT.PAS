@@ -191,7 +191,7 @@ begin
 	ParseArguments;
 
 	if not GameTitleExitRequested then begin
-		VideoInstall(80, Blue);
+		VideoInstall(Blue);
 		{ OrderPrintId := @GameVersion; }
 		TextWindowInit(5, 3, 50, 18);
 		GetMem(IoTmpBuf, IoTmpBufSize);
