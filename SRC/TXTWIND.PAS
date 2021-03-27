@@ -587,12 +587,11 @@ procedure TextWindowOpenFile(filename: TTextWindowLine; var state: TTextWindowSt
 						if lineLen = 0 then begin
 							Lines[LineCount]^ := '';
 						end else begin
-							BlockRead(f, line^, Ord(Lines[LineCount]^[0]));
-						end;
-
-						if Lines[LineCount]^ = '@' then begin
-							retVal := false;
-							Lines[LineCount]^ := '';
+							BlockRead(f, line^, lineLen);
+							if Lines[LineCount]^ = '@' then begin
+								retVal := false;
+								Lines[LineCount]^ := '';
+							end;
 						end;
 					end;
 				end;
@@ -647,10 +646,10 @@ procedure TextWindowInit;
 			TextWindowStrInnerEmpty[i] := ' ';
 			TextWindowStrInnerLine[i] := #205;
 		end;
-		TextWindowStrTop    := #198#209 + TextWindowStrInnerLine  + #209 + #181;
-		TextWindowStrBottom := #198#207 + TextWindowStrInnerLine  + #207 + #181;
-		TextWindowStrSep    :=  ' '#198 + TextWindowStrInnerLine  + #181 + ' ';
-		TextWindowStrText   :=  ' '#179 + TextWindowStrInnerEmpty + #179 + ' ';
+		TextWindowStrTop    := #198#209 + TextWindowStrInnerLine  + #209#181;
+		TextWindowStrBottom := #198#207 + TextWindowStrInnerLine  + #207#181;
+		TextWindowStrSep    :=  ' '#198 + TextWindowStrInnerLine  + #181' ';
+		TextWindowStrText   :=  ' '#179 + TextWindowStrInnerEmpty + #179' ';
 		TextWindowStrInnerArrows := TextWindowStrInnerEmpty;
 		TextWindowStrInnerArrows[1] := #175;
 		TextWindowStrInnerArrows[Length(TextWindowStrInnerArrows)] := #174;
