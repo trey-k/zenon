@@ -94,6 +94,7 @@ procedure EditorLoop;
 		canModify: boolean;
 		copiedTiles: array[1 .. COPIED_TILES_COUNT] of TEditorCopiedTile;
 		cursorBlinker: integer;
+		inputByte: byte;
 
 	function EditorGetDrawingColor(eid: integer): integer;
 		begin
@@ -141,6 +142,14 @@ procedure EditorLoop;
 				DrawingOn: VideoWriteText(75, 16, $9E, 'Draw');
 				TextEntry: VideoWriteText(75, 16, $9E, 'Text');
 				DrawingOff: VideoWriteText(75, 16, $1E, 'None');
+			end;
+
+			if drawMode = TextEntry then begin
+				VideoWriteText(61, 15, $70, '  f10  ');
+				VideoWriteText(68, 15, $1F, ' Custom');
+			end else begin
+				VideoWriteText(61, 15, $70, ' Space ');
+				VideoWriteText(68, 15, $1F, ' Plot  ');
 			end;
 		end;
 
@@ -251,8 +260,6 @@ procedure EditorLoop;
 			VideoWriteText(68, 12, $1F, ' Terrain');
 			VideoWriteText(61, 13, $30, '  f4   ');
 			VideoWriteText(68, 13, $1F, ' Enter text');
-			VideoWriteText(61, 15, $70, ' Space ');
-			VideoWriteText(68, 15, $1F, ' Plot');
 			VideoWriteText(61, 16, $30, '  Tab  ');
 			VideoWriteText(68, 16, $1F, ' Mode:');
 			VideoWriteText(61, 18, $70, ' P ');
@@ -762,6 +769,24 @@ procedure EditorLoop;
 			EditorDrawSidebar;
 		end;
 
+	procedure EditorTypeCharacter(ch: byte);
+		var
+			i: integer;
+		begin
+			if EditorPrepareModifyTile(cursorX, cursorY) then begin
+				i := (cursorColor and $07) + (E_TEXT_MIN - 1);
+				if i < E_TEXT_MIN then i := E_TEXT_MIN + 6;
+				with Board.Tiles[cursorX][cursorY] do begin
+					Element := i;
+					Color := ch;
+				end;
+				EditorDrawTileAndNeighborsAt(cursorX, cursorY);
+				InputDeltaX := 1;
+				InputDeltaY := 0;
+			end;
+		end;
+
+
 	procedure EditorFloodFill(x, y: integer; from: TTile);
 		var
 			i: integer;
@@ -810,6 +835,7 @@ procedure EditorLoop;
 		cursorColor := $0E;
 		colorIgnoreDefaults := false;
 		cursorBlinker := 0;
+		inputByte := 0;
 
 		for i := 1 to COPIED_TILES_COUNT do
 			EditorClearPattern(copiedTiles[i], true);
@@ -839,27 +865,20 @@ procedure EditorLoop;
 
 			if drawMode = TextEntry then begin
 				if (InputKeyPressed >= #32) and (InputKeyPressed < #128) then begin
-					if EditorPrepareModifyTile(cursorX, cursorY) then begin
-						i := (cursorColor and $07) + (E_TEXT_MIN - 1);
-						if i < E_TEXT_MIN then i := E_TEXT_MIN + 6;
-						with Board.Tiles[cursorX][cursorY] do begin
-							Element := i;
-							Color := Ord(InputKeyPressed);
-						end;
-						EditorDrawTileAndNeighborsAt(cursorX, cursorY);
-						InputDeltaX := 1;
-						InputDeltaY := 0;
-					end;
-					InputKeyPressed := #0;
+					EditorTypeCharacter(Ord(InputKeyPressed));
 				end else if (InputKeyPressed = KEY_BACKSPACE) and (cursorX > 1)
 					and EditorPrepareModifyTile(cursorX - 1, cursorY) then
 				begin
 					Dec(cursorX);
 				end else if (InputKeyPressed = KEY_ENTER) or (InputKeyPressed = KEY_ESCAPE) then begin
 					drawMode := DrawingOff;
-					InputKeyPressed := #0;
 					EditorUpdateDrawMode;
+				end else if (InputKeyPressed = KEY_F10) then begin
+					SidebarPromptCharacter(true, 63, 3, 'Character?', inputByte);
+					EditorTypeCharacter(inputByte);
+					EditorDrawSidebar;
 				end;
+				InputKeyPressed := #0;
 			end;
 
 			with Board.Tiles[cursorX][cursorY] do begin

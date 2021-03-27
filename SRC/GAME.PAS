@@ -548,8 +548,10 @@ procedure SidebarPromptCharacter(editable: boolean; x, y: integer; prompt: TStri
 			if editable then begin
 				Delay(25);
 				InputUpdate;
-				if InputKeyPressed = KEY_TAB then
-					InputDeltaX := 9;
+				if (InputKeyPressed = KEY_TAB) or (InputKeyPressed = KEY_PAGE_DOWN) then
+					InputDeltaX := 9
+				else if (InputKeyPressed = KEY_PAGE_UP) then
+					InputDeltaX := -9;
 
 				newValue := value + InputDeltaX;
 				if value <> newValue then begin
@@ -593,7 +595,12 @@ procedure SidebarPromptSlider(editable: boolean; x, y: integer; prompt: string; 
 					value := Ord(InputKeyPressed) - 49;
 					SidebarClearLine(y + 1);
 				end else begin
-					newValue := value + InputDeltaX;
+					if (InputKeyPressed = KEY_PAGE_DOWN) then
+						newValue := 8
+					else if (InputKeyPressed = KEY_PAGE_UP) then
+						newValue := 0
+					else
+						newValue := value + InputDeltaX;
 					if (value <> newValue) and (newValue >= 0) and (newValue <= 8) then begin
 						value := newValue;
 						SidebarClearLine(y + 1);
@@ -635,7 +642,12 @@ procedure SidebarPromptChoice(editable: boolean; y: integer; prompt, choiceStr: 
 				Delay(35);
 				InputUpdate;
 
-				newResult := result + InputDeltaX;
+				if (InputKeyPressed = KEY_PAGE_DOWN) then
+					newResult := choiceCount - 1
+				else if (InputKeyPressed = KEY_PAGE_UP) then
+					newResult := 0
+				else
+					newResult := result + InputDeltaX;
 				if (result <> newResult) and (newResult >= 0) and (newResult <= (choiceCount - 1)) then begin
 					result := newResult;
 					SidebarClearLine(y + 1);
