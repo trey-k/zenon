@@ -31,6 +31,10 @@ interface
 	const
 		MAX_TEXT_WINDOW_LINES = 1024;
 		MAX_RESOURCE_DATA_FILES = 24;
+		TextWindowX = 5;
+		TextWindowY = 3;
+		TextWindowWidth = 50;
+		TextWindowHeight = 18;
 	type
 		TTextWindowLine = string[50];
 		TTextWindowState = record
@@ -49,8 +53,6 @@ interface
 			FileOffset: array[1 .. MAX_RESOURCE_DATA_FILES] of longint;
 		end;
 	var
-		TextWindowX, TextWindowY: integer;
-		TextWindowWidth, TextWindowHeight: integer;
 		TextWindowStrInnerEmpty: TVideoLine;
 		TextWindowStrText: TVideoLine;
 		TextWindowStrInnerLine: TVideoLine;
@@ -74,7 +76,7 @@ interface
 	procedure TextWindowOpenFile(filename: TTextWindowLine; var state: TTextWindowState);
 	procedure TextWindowSaveFile(filename: TTextWindowLine; var state: TTextWindowState);
 	procedure TextWindowDisplayFile(filename, title: string);
-	procedure TextWindowInit(x, y, width, height: integer);
+	procedure TextWindowInit;
 
 implementation
 uses Crt, Input, Printer;
@@ -629,19 +631,15 @@ procedure TextWindowDisplayFile(filename, title: string);
 		TextWindowFree(state);
 	end;
 
-procedure TextWindowInit(x, y, width, height: integer);
+procedure TextWindowInit;
 	var
 		i: integer;
 	begin
-		TextWindowX := x;
-		TextWindowWidth := width;
-		TextWindowY := y;
-		TextWindowHeight := height;
-		TextWindowStrInnerEmpty := '';
-		TextWindowStrInnerLine := '';
+		TextWindowStrInnerEmpty[0] := Chr(TextWindowWidth - 5);
+		TextWindowStrInnerLine[0] := Chr(TextWindowWidth - 5);
 		for i := 1 to (TextWindowWidth - 5) do begin
-			TextWindowStrInnerEmpty := TextWindowStrInnerEmpty + ' ';
-			TextWindowStrInnerLine := TextWindowStrInnerLine + #205;
+			TextWindowStrInnerEmpty[i] := ' ';
+			TextWindowStrInnerLine[i] := #205;
 		end;
 		TextWindowStrTop    := #198#209 + TextWindowStrInnerLine  + #209 + #181;
 		TextWindowStrBottom := #198#207 + TextWindowStrInnerLine  + #207 + #181;
