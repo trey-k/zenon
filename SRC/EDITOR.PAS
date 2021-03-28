@@ -40,7 +40,7 @@ interface
 		windowAlreadyOpen: boolean): integer;
 
 implementation
-uses Dos, Crt, FileSel, ExtMem, Video, Sounds, Input, Elements, Oop, Game;
+uses Dos, FileSel, ExtMem, ZVideo, Sounds, Input, Elements, Oop, Game;
 
 type
 	TDrawMode = (DrawingOff, DrawingOn, TextEntry);
@@ -920,7 +920,7 @@ procedure EditorLoop;
 					VideoWriteText(cursorX - 1, cursorY - 1, $0F, #197);
 
 					if (InputKeyPressed = #0) and InputJoystickEnabled then
-						Delay(70);
+						AccurateDelay(70);
 					InputShiftAccepted := false;
 				end;
 

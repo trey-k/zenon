@@ -27,7 +27,7 @@
 unit TxtWind;
 
 interface
-	uses Video;
+	uses ZVideo;
 	const
 		MAX_TEXT_WINDOW_LINES = 1024;
 		MAX_RESOURCE_DATA_FILES = 24;
@@ -45,7 +45,7 @@ interface
 			Hyperlink: string[20];
 			Title: TTextWindowLine;
 			LoadedFilename: string[50];
-			ScreenCopy: array[1 .. 25] of string[160];
+			ScreenCopy: array[1 .. 25] of TScreenCopyLine;
 		end;
 		TResourceDataHeader = record
 			Version: integer;
@@ -80,7 +80,11 @@ interface
 	procedure TextWindowInit;
 
 implementation
-uses Crt, Sounds, Input, Printer;
+{$IFDEF PRINTTXT}
+uses Sounds, Input, Printer;
+{$ELSE}
+uses Sounds, Input;
+{$ENDIF}
 
 function UpCaseString(input: string): string;
 	var
@@ -189,12 +193,18 @@ procedure TextWindowDrawLine(var state: TTextWindowState; lpos: integer; without
 				end;
 			end else if (lpos = 0) or (lpos = (state.LineCount + 1)) then begin
 				VideoWriteText(TextWindowX + 2, lineY, $1E, TextWindowStrInnerSep);
+{$IFDEF PRINTTXT}
 			end else if (lpos = -4) and viewingFile then begin
 				VideoWriteText(TextWindowX + 2, lineY, $1A, '   Use            to view text,');
 				VideoWriteText(TextWindowX + 2 + 7, lineY, $1F, #24' '#25', Enter');
 			end else if (lpos = -3) and viewingFile then begin
 				VideoWriteText(TextWindowX + 2 + 1, lineY, $1A, '                 to print.');
 				VideoWriteText(TextWindowX + 2 + 12, lineY, $1F, 'Alt-P');
+{$ELSE}
+			end else if (lpos = -3) and viewingFile then begin
+				VideoWriteText(TextWindowX + 2, lineY, $1A, '   Use            to view text.');
+				VideoWriteText(TextWindowX + 2 + 7, lineY, $1F, #24' '#25', Enter');
+{$ENDIF}
 			end;
 		end;
 	end;
@@ -231,6 +241,7 @@ procedure TextWindowFree(var state: TTextWindowState);
 		end;
 	end;
 
+{$IFDEF PRINTTXT}
 procedure TextWindowPrint(var state: TTextWindowState);
 	var
 		iLine, iChar: integer;
@@ -268,6 +279,7 @@ procedure TextWindowPrint(var state: TTextWindowState);
 			Close(Lst);
 		end;
 	end;
+{$ENDIF}
 
 procedure TextWindowSelect(var state: TTextWindowState; hyperlinkAsSelect, viewingFile: boolean);
 	var
@@ -332,12 +344,15 @@ procedure TextWindowSelect(var state: TTextWindowState; hyperlinkAsSelect, viewi
 						end;
 					end;
 				end else begin
-					if InputKeyPressed = KEY_PAGE_UP then
-						newLinePos := LinePos - TextWindowHeight + 4
-					else if InputKeyPressed = KEY_PAGE_DOWN then
-						newLinePos := LinePos + TextWindowHeight - 4
-					else if InputKeyPressed = KEY_ALT_P then
+					if InputKeyPressed = KEY_PAGE_UP then begin
+						newLinePos := LinePos - TextWindowHeight + 4;
+					end else if InputKeyPressed = KEY_PAGE_DOWN then begin
+						newLinePos := LinePos + TextWindowHeight - 4;
+{$IFDEF PRINTTXT}
+					end else if InputKeyPressed = KEY_ALT_P then begin
 						TextWindowPrint(state);
+{$ENDIF}
+					end;
 				end;
 
 			LabelMatched:
@@ -356,7 +371,7 @@ procedure TextWindowSelect(var state: TTextWindowState; hyperlinkAsSelect, viewi
 							TextWindowDrawTitle($1E, #174'Press ENTER for more info'#175);
 				end;
 				if InputJoystickMoved then begin
-					Delay(35);
+					AccurateDelay(35);
 				end;
 			until (InputKeyPressed = KEY_ESCAPE) or (InputKeyPressed = KEY_ENTER) or InputShiftPressed;
 			if InputKeyPressed = KEY_ESCAPE then begin

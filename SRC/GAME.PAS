@@ -115,7 +115,7 @@ DebugWnd,
 {$IFDEF ZETAEMU}
 ZetaSupp,
 {$ENDIF}
-Dos, Crt, FileSel, ExtMem, Video, Sounds, Input, Elements, Editor, Oop;
+Dos, FileSel, ExtMem, ZVideo, Sounds, Input, Elements, Editor, Oop;
 
 function LFSR11UpdateSeed(var seed: word; var tx, ty: byte): boolean;
 	begin
@@ -489,7 +489,11 @@ procedure BoardDrawTile(x, y: integer);
 					{ Text drawing }
 					if Element = E_TEXT_WHITE then
 						VideoWriteText(x - 1, y - 1, $0F, Chr(Color))
+{$IFDEF NEC98}
+					else if VideoEightColor or VideoMonochrome then
+{$ELSE}
 					else if VideoMonochrome then
+{$ENDIF}
 						VideoWriteText(x - 1, y - 1, ((Element - E_TEXT_MIN) + 1) shl 4, Chr(Color))
 					else
 						VideoWriteText(x - 1, y - 1, (((Element - E_TEXT_MIN) + 1) shl 4) + $F, Chr(Color));
@@ -549,7 +553,7 @@ procedure SidebarPromptCharacter(editable: boolean; x, y: integer; prompt: TStri
 				VideoWriteText(((x + i) - value) + 5, y + 2, $1E, Chr(i and $FF));
 
 			if editable then begin
-				Delay(25);
+				AccurateDelay(25);
 				InputUpdate;
 				if (InputKeyPressed = KEY_TAB) or (InputKeyPressed = KEY_PAGE_DOWN) then
 					InputDeltaX := 9
@@ -590,7 +594,7 @@ procedure SidebarPromptSlider(editable: boolean; x, y: integer; prompt: string; 
 		repeat
 			if editable then begin
 				if InputJoystickMoved then
-					Delay(45);
+					AccurateDelay(45);
 				VideoWriteText(x + value + 1, y + 1, $9F, #31);
 
 				InputUpdate;
@@ -642,7 +646,7 @@ procedure SidebarPromptChoice(editable: boolean; y: integer; prompt, choiceStr: 
 
 			if editable then begin
 				VideoWriteText(62 + i, y + 1, $9F, #31);
-				Delay(35);
+				AccurateDelay(35);
 				InputUpdate;
 
 				if (InputKeyPressed = KEY_PAGE_DOWN) then

@@ -25,11 +25,20 @@
 
 {$I-}
 {$IFNDEF FPC}
+{$IFDEF NEC98}
+{$M 24576,163840,655360}
+{$ELSE}
 {$M 20480,163840,655360}
-{$M 49152,163840,655360}
+{$ENDIF}
 {$ENDIF}
 program ZZT;
-uses Crt, Dos, ExtMem, Video, Keys, Sounds, Input, TxtWind, GameVars, Elements, Editor, Oop, Game;
+uses 
+{$IFDEF NEC98}
+Pc98,
+{$ELSE}
+Crt,
+{$ENDIF}
+Dos, ExtMem, ZVideo, Keys, Sounds, Input, TxtWind, GameVars, Elements, Editor, Oop, Game;
 
 procedure ParseArguments;
 	var
@@ -63,6 +72,7 @@ procedure ParseArguments;
 		ExtMemInstall(enableEms, enableXms);
 	end;
 
+{$IFNDEF NEC98}
 procedure WritelnCentered(s: string);
 	var
 		y: byte;
@@ -71,6 +81,7 @@ procedure WritelnCentered(s: string);
 		GotoXY(1 + ((80 - Length(s)) shr 1), y);
 		Writeln(s);
 	end;
+{$ENDIF}
 
 procedure GameConfigure;
 	var
@@ -110,6 +121,7 @@ procedure GameConfigure;
 
 		ParsingConfigFile := false;
 
+{$IFNDEF NEC98}
 		Window(1, 1, 80, 25);
 		TextBackground(Black);
 		ClrScr;
@@ -141,14 +153,19 @@ procedure GameConfigure;
 		TextBackground(Black);
 		ClrScr;
 		TextColor(Yellow);
+{$ENDIF}
 		if not InputConfigure then
 			GameTitleExitRequested := true
 		else begin
+{$IFNDEF NEC98}
 			TextColor(LightGreen);
+{$ENDIF}
 			if not VideoConfigure then
 				GameTitleExitRequested := true;
 		end;
+{$IFNDEF NEC98}
 		Window(1, 1, 80, 25);
+{$ENDIF}
 	end;
 
 begin
@@ -171,8 +188,10 @@ begin
 {$ENDIF}
 
 	Randomize;
+{$IFNDEF NEC98}
 	SetCBreak(false);
 	InitialTextAttr := TextAttr;
+{$ENDIF}
 
 	StartupWorldFileName := 'TOWN';
 {$IFDEF SUBDIRS}
@@ -218,7 +237,9 @@ begin
 	SoundClearQueue;
 
 	VideoUninstall;
+{$IFNDEF NEC98}
 	TextAttr := InitialTextAttr;
+{$ENDIF}
 	ClrScr;
 
 	VideoShowCursor;

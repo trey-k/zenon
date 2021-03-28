@@ -24,11 +24,12 @@
 }
 
 {$I-}
-unit Video;
+unit ZVideo;
 
 interface
 	type
 		TVideoLine = string[80];
+		TScreenCopyLine = string[160];
 		TVideoWriteTextProc = procedure(x, y, color: byte; text: TVideoLine);
 	const
 		PORT_CGA_MODE = $03D8;

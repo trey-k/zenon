@@ -38,16 +38,11 @@ interface
 		SoundDurationMultiplier: byte;
 		SoundDurationCounter: byte;
 		SoundBuffer: string;
+		SoundNewVector: pointer;
 		SoundOldVector: pointer;
 		SoundBufferPos: integer;
 		SoundIsPlaying: boolean;
 		TimerTicks: word;
-{$IFDEF NEC98}
-		TimerSubTicks: byte;
-		SoundOldVector07: pointer;
-		SoundFreqDivisor: longint;
-		SpeakerActive: boolean;
-{$ENDIF}
 {$IFDEF ZETAEMU}
 		ZetaDetected: boolean;
 {$ENDIF}
@@ -64,12 +59,7 @@ uses
 {$IFDEF ZETAEMU}
 ZetaSupp,
 {$ENDIF}
-{$IFDEF NEC98}
-Pc98,
-{$ELSE}
-Crt,
-{$ENDIF}
-Dos;
+Crt, Dos;
 
 const
 	DELAY_LOOP_MAX_ITERATIONS = $7FFFFFFF;
@@ -206,34 +196,9 @@ function SoundHasTimeElapsed(var counter: integer; duration: integer): boolean;
 		end;
 	end;
 
-{$IFDEF NEC98}
-procedure SoundUpdateFreqDivisor;
-	begin
-		if (Mem[0:$0501] and $80) = 0 then begin
-			Port[$71] := $D1;
-			Port[$71] := $83;
-			SoundFreqDivisor := 2457600;
-		end else begin
-			Port[$71] := $1A;
-			Port[$71] := $6B;
-			SoundFreqDivisor := 1996800; 
-		end;
-	end;
-{$ENDIF}
-
 procedure SoundTimerHandler;
 	interrupt;
-{$IFDEF NEC98}
-	var
-		regs: Registers;
-{$ENDIF}
 	begin
-{$IFDEF NEC98}
-		Intr($07, regs);
-		SoundUpdateFreqDivisor;
-		Inc(TimerSubTicks);
-		if (TimerSubTicks and 3) <> 0 then exit;
-{$ENDIF}
 		Inc(TimerTicks);
 
 		if not SoundEnabled then begin
@@ -264,12 +229,7 @@ procedure SoundTimerHandler;
 
 procedure SoundUninstall;
 	begin
-{$IFDEF NEC98}
-		SetIntVec($08, SoundOldVector);
-		SetIntVec($07, SoundOldVector07);
-{$ELSE}
 		SetIntVec($1C, SoundOldVector);
-{$ENDIF}
 	end;
 
 function SoundParse(input: string): string;
@@ -366,40 +326,16 @@ function SoundParse(input: string): string;
 	end;
 
 begin
+	TimerTicks := 0;
 	SoundEnabled := true;
 	SoundBlockQueueing := false;
 	SoundClearQueue;
 	SoundDurationMultiplier := 1;
 	SoundIsPlaying := false;
 	TimerTicks := 0;
-{$IFDEF NEC98} { PC-98 init }
-	GetIntVec($08, SoundOldVector);
-	GetIntVec($07, SoundOldVector07);
-	SetIntVec($08, @SoundTimerHandler);
-	SetIntVec($07, SoundOldVector);
-
-	{ configure timing }
-{$IFNDEF FPC}
-	inline($FA); { CLI }
-{$ELSE}
-	asm
-		cli
-	end;
-{$ENDIF}
-	Port[$77] := $36;
-	SoundUpdateFreqDivisor;
-	Port[$02] := (Port[$02] and $FE);
-{$IFNDEF FPC}
-	inline($FB); { STI }
-{$ELSE}
-	asm
-		sti
-	end;
-{$ENDIF}
-{$ELSE} { PC init }
+	SoundNewVector := @SoundTimerHandler;
 	GetIntVec($1C, SoundOldVector);
-	SetIntVec($1C, @SoundTimerHandler);
-{$ENDIF}
+	SetIntVec($1C, SoundNewVector);
 {$IFNDEF FPC}
 	DelayLoopIterations := 0;
 	AccurateDelayCalibrate;
