@@ -5,6 +5,17 @@ Legend:
 + Additions         * Changes
 - Removals          / Bugfixes
 
+$< ClassicZoo 4.03 >
+
+* Minor filesize/CPU optimizations have
+  been made to the engine.
+* Standardized ZZT time tracking logic
+  across PC configurations. (Hopefully!)
+/ Fixed ?NODEBUG not clearing the debug
+  text.
+/ Fixed the ZZT.DAT file not being
+  detected correctly on many setups.
+
 $< ClassicZoo 4.02 >
 
 + Added support for inputting custom text
