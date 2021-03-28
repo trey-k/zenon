@@ -1294,23 +1294,22 @@ procedure ElementBoardEdgeTouch(x, y: integer; sourceStatId: integer; var deltaX
 		if Board.Info.NeighborBoards[neighborId] <> 0 then begin
 			boardId := World.Info.CurrentBoard;
 			BoardChange(Board.Info.NeighborBoards[neighborId]);
-			if Board.Tiles[entryX][entryY].Element <> E_PLAYER then begin
-				ElementDefs[Board.Tiles[entryX][entryY].Element].TouchProc(
-					entryX, entryY, sourceStatId, InputDeltaX, InputDeltaY);
-			end;
+			with Board.Tiles[entryX][entryY] do begin
+				if Element <> E_PLAYER then begin
+					ElementDefs[Element].TouchProc(entryX, entryY, sourceStatId, InputDeltaX, InputDeltaY);
+				end;
 
-			if ElementDefs[Board.Tiles[entryX][entryY].Element].Walkable
-				or (Board.Tiles[entryX][entryY].Element = E_PLAYER) then
-			begin
-				if Board.Tiles[entryX][entryY].Element <> E_PLAYER then
-					MoveStat(0, entryX, entryY);
+				if ElementDefs[Element].Walkable or (Element = E_PLAYER) then begin
+					if Element <> E_PLAYER then
+						MoveStat(0, entryX, entryY);
 
-				TransitionDrawBoardChange;
-				deltaX := 0;
-				deltaY := 0;
-				BoardEnter;
-			end else begin
-				BoardChange(boardId);
+					TransitionDrawBoardChange;
+					deltaX := 0;
+					deltaY := 0;
+					BoardEnter;
+				end else begin
+					BoardChange(boardId);
+				end;
 			end;
 		end;
 	end;
@@ -1377,22 +1376,24 @@ procedure ElementPlayerTick(statId: integer);
 		bulletCount: integer;
 	begin
 		with Board.Stats[statId] do begin
-			if World.Info.EnergizerTicks > 0 then begin
-				if ElementDefs[E_PLAYER].Character = #2 then
-					ElementDefs[E_PLAYER].Character := #1
-				else
+			with Board.Tiles[X][Y] do begin
+				if World.Info.EnergizerTicks > 0 then begin
+					if ElementDefs[E_PLAYER].Character = #2 then
+						ElementDefs[E_PLAYER].Character := #1
+					else
+						ElementDefs[E_PLAYER].Character := #2;
+
+					if (CurrentTick and 1) <> 0 then
+						Color := $0F
+					else
+						Color := ((CurrentTick mod 7) shl 4) + $1F;
+
+					BoardDrawTile(X, Y);
+				end else if (Color <> $1F) or (ElementDefs[E_PLAYER].Character <> #2) then begin
+					Color := $1F;
 					ElementDefs[E_PLAYER].Character := #2;
-
-				if (CurrentTick and 1) <> 0 then
-					Board.Tiles[X][Y].Color := $0F
-				else
-					Board.Tiles[X][Y].Color := ((CurrentTick mod 7) shl 4) + $1F;
-
-				BoardDrawTile(X, Y);
-			end else if (Board.Tiles[X][Y].Color <> $1F) or (ElementDefs[E_PLAYER].Character <> #2) then begin
-				Board.Tiles[X][Y].Color := $1F;
-				ElementDefs[E_PLAYER].Character := #2;
-				BoardDrawTile(X, Y);
+					BoardDrawTile(X, Y);
+				end;
 			end;
 
 			if World.Info.Health <= 0 then begin
