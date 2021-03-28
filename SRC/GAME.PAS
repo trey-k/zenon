@@ -1741,6 +1741,10 @@ procedure GameDebugPrompt;
 				VideoSetBlink(isYes);
 			end else if input = 'DEBUG' then begin
 				DebugEnabled := isYes;
+				if GameStateElement = E_PLAYER then begin
+					SidebarClearLine(3);
+					SidebarClearLine(4);
+				end;
 {$IFDEF DEBUGWND}
 			end else if input = 'DCOMPAT' then begin
 				DebugCompatEnabled := isYes;
