@@ -63,7 +63,7 @@ interface
 		TextWindowStrInnerSep: TVideoLine;
 		TextWindowStrInnerArrows: TVideoLine;
 		TextWindowRejected: boolean;
-		ResourceDataFileName: string[12];
+		ResourceDataFileName: string[128];
 		ResourceDataHeader: TResourceDataHeader;
 		{ OrderPrintId: ^string; }
 	procedure TextWindowInitState(var state: TTextWindowState);
