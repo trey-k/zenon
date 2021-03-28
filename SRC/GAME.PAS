@@ -127,6 +127,11 @@ function LFSR11UpdateSeed(var seed: word; var tx, ty: byte): boolean;
 
 procedure SidebarClearLine(y: integer);
 	begin
+{$IFDEF NEC98}
+		if VideoEightColor then
+			VideoWriteText(60, y, $01, #179'                   ')
+		else
+{$ENDIF}
 		VideoWriteText(60, y, $11, #179'                   ');
 	end;
 
