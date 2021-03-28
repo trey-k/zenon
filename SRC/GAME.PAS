@@ -112,6 +112,9 @@ uses
 {$IFDEF DEBUGWND}
 DebugWnd,
 {$ENDIF}
+{$IFDEF ZETAEMU}
+ZetaSupp,
+{$ENDIF}
 Dos, Crt, FileSel, ExtMem, Video, Sounds, Input, Elements, Editor, Oop;
 
 function LFSR11UpdateSeed(var seed: word; var tx, ty: byte): boolean;
@@ -2015,6 +2018,10 @@ procedure GamePlayLoop(boardChanged: boolean);
 					CurrentStatTicked := 0;
 
 					InputUpdate;
+{$IFDEF ZETAEMU}
+				end else begin
+					ZetaSleepPit;
+{$ENDIF}
 				end;
 			end;
 		until (exitLoop or GamePlayExitRequested) and GamePlayExitRequested;

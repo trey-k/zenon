@@ -42,10 +42,7 @@ interface
 		SoundOldVector: pointer;
 		SoundBufferPos: integer;
 		SoundIsPlaying: boolean;
-		SoundTimeCheckCounter: integer;
-		UseSystemTimeForElapsed: boolean;
 		TimerTicks: word;
-		SoundTimeCheckHsec: integer;
 {$IFDEF ZETAEMU}
 		ZetaDetected: boolean;
 {$ENDIF}
@@ -183,37 +180,13 @@ procedure SoundPlayDrum(var drum: TDrumData);
 		NoSound;
 	end;
 
-procedure SoundCheckTimeIntr;
-	var
-		hour, minute, sec, hSec: word;
-	begin
-		GetTime(hour, minute, sec, hSec);
-		if (SoundTimeCheckHsec <> 0) and (Integer(hSec) <> SoundTimeCheckHsec) then begin
-			SoundTimeCheckCounter := 0;
-			UseSystemTimeForElapsed := true;
-		end;
-		SoundTimeCheckHsec := Integer(hSec);
-	end;
-
 function SoundHasTimeElapsed(var counter: integer; duration: integer): boolean;
 	var
-		hour, minute, sec, hSec: word;
 		hSecsDiff: word;
 		hSecsTotal: integer;
 	begin
-		if (SoundTimeCheckCounter > 0) and ((SoundTimeCheckCounter and 1) = 1) then begin
-			Dec(SoundTimeCheckCounter);
-			SoundCheckTimeIntr;
-		end;
-
-		if UseSystemTimeForElapsed then begin
-			GetTime(hour, minute, sec, hSec);
-			hSecsTotal := sec * 100 + hSec;
-			hSecsDiff := Word((hSecsTotal - counter) + 6000) mod 6000;
-		end else begin
-			hSecsTotal := TimerTicks * 6;
-			hSecsDiff := hSecsTotal - counter;
-		end;
+		hSecsTotal := (LongInt(TimerTicks) * 11) shr 1;
+		hSecsDiff := hSecsTotal - counter;
 
 		if hSecsDiff >= duration then begin
 			SoundHasTimeElapsed := true;
@@ -227,9 +200,6 @@ procedure SoundTimerHandler;
 	interrupt;
 	begin
 		Inc(TimerTicks);
-		if (SoundTimeCheckCounter > 0) and ((SoundTimeCheckCounter and 1) = 0) then begin
-			Dec(SoundTimeCheckCounter);
-		end;
 
 		if not SoundEnabled then begin
 			SoundIsPlaying := false;
@@ -356,10 +326,7 @@ function SoundParse(input: string): string;
 	end;
 
 begin
-	SoundTimeCheckCounter := 36;
-	UseSystemTimeForElapsed := false;
 	TimerTicks := 0;
-	SoundTimeCheckHsec := 0;
 	SoundEnabled := true;
 	SoundBlockQueueing := false;
 	SoundClearQueue;

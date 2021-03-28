@@ -45,10 +45,6 @@ procedure ParseArguments;
 			pArg := ParamStr(i);
 			if pArg[1] = '/' then begin
 				case UpCase(pArg[2]) of
-					'T': begin
-						SoundTimeCheckCounter := 0;
-						UseSystemTimeForElapsed := false;
-					end;
 					'R': ResetConfig := true;
 				end;
 
