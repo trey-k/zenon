@@ -550,8 +550,8 @@ procedure EditorLoop;
 					Inc(i);
 				end;
 
-				TextWindowFree(state);
 				TextWindowDrawClose(state);
+				TextWindowFreeEdit(state);
 				InputKeyPressed := #0;
 			end;
 		end;
@@ -1238,18 +1238,20 @@ procedure HighScoresDisplay(linePos: integer);
 procedure EditorOpenEditTextWindow(var state: TTextWindowState);
 	begin
 		SidebarClear;
-		VideoWriteText(61, 4, $30, ' Return ');
-		VideoWriteText(64, 5, $1F, ' Insert line');
-		VideoWriteText(61, 7, $70, ' Ctrl-Y ');
-		VideoWriteText(64, 8, $1F, ' Delete line');
-		VideoWriteText(61, 10, $30, ' Cursor keys ');
-		VideoWriteText(64, 11, $1F, ' Move cursor');
-		VideoWriteText(61, 13, $70, ' Insert ');
-		VideoWriteText(64, 14, $1F, ' Insert mode: ');
-		VideoWriteText(61, 16, $30, ' Delete ');
-		VideoWriteText(64, 17, $1F, ' Delete char');
-		VideoWriteText(61, 19, $70, ' Escape ');
-		VideoWriteText(64, 20, $1F, ' Exit editor');
+		VideoWriteText(61, 7, $30, ' Return ');
+		VideoWriteText(69, 7, $1F, ' New line');
+		VideoWriteText(61, 8, $70, ' Ctrl-Y ');
+		VideoWriteText(69, 8, $1F, ' Del line');
+		VideoWriteText(61, 10, $30, ' '#24#25#27#26' ');
+		VideoWriteText(67, 10, $1F, ' Move cursor');
+		VideoWriteText(61, 12, $70, ' Ins ');
+		VideoWriteText(66, 12, $1F, ' Insert: ');
+		VideoWriteText(61, 13, $30, ' Del ');
+		VideoWriteText(66, 13, $1F, ' Delete char');
+		VideoWriteText(61, 14, $70, ' f10 ');
+		VideoWriteText(66, 14, $1F, ' Custom char');
+		VideoWriteText(61, 16, $30, ' Esc ');
+		VideoWriteText(66, 16, $1F, ' Exit editor');
 		TextWindowEdit(state);
 	end;
 
@@ -1261,13 +1263,13 @@ procedure EditorEditHelpFile;
 		filename := '';
 		SidebarPromptString('File to edit', '.HLP', filename, PROMPT_ALPHANUM);
 		if Length(filename) <> 0 then begin
-			TextWindowOpenFile('*' + filename + '.HLP', textWindow);
+			TextWindowOpenFile('*' + filename + '.HLP', textWindow, true);
 			textWindow.Title := 'Editing ' + filename;
 			TextWindowDrawOpen(textWindow);
 			EditorOpenEditTextWindow(textWindow);
 			TextWindowSaveFile(filename + '.HLP', textWindow);
-			TextWindowFree(textWindow);
 			TextWindowDrawClose(textWindow);
+			TextWindowFreeEdit(textWindow);
 		end;
 	end;
 

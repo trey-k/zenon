@@ -1031,7 +1031,7 @@ procedure CopyStatDataToTextWindow(statId: integer; var state: TTextWindowState)
 				{$ENDIF}
 				if dataChr = KEY_ENTER then begin
 					dataStr[0] := Chr(dataStrLen);
-					TextWindowAppend(state, dataStr);
+					TextWindowAppendEdit(state, dataStr);
 					dataStrLen := 0;
 				end else begin
 					Inc(dataStrLen);
