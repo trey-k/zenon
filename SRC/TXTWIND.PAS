@@ -74,7 +74,7 @@ interface
 	procedure TextWindowFree(var state: TTextWindowState);
 	procedure TextWindowFreeEdit(var state: TTextWindowState);
 	procedure TextWindowSelect(var state: TTextWindowState; hyperlinkAsSelect, viewingFile: boolean);
-	procedure TextWindowEdit(var state: TTextWindowState);
+	procedure TextWindowEdit(var state: TTextWindowState; syntaxHighlighting: boolean);
 	procedure TextWindowOpenFile(filename: TTextWindowLine; var state: TTextWindowState; editing: boolean);
 	procedure TextWindowSaveFile(filename: TTextWindowLine; var state: TTextWindowState);
 	procedure TextWindowDisplayFile(filename, title: string);
@@ -211,9 +211,10 @@ procedure TextWindowDraw(var state: TTextWindowState; withoutFormatting, viewing
 		TextWindowDrawTitle($1E, state.Title);
 	end;
 
-procedure TextWindowDrawLineEdit(var state: TTextWindowState; lpos: integer; xOffset: integer);
+procedure TextWindowDrawLineEdit(var state: TTextWindowState; lpos: integer; xOffset: integer; syntaxHighlighting: boolean);
 	var
 		i, lineX, lineY: integer;
+		textColor: byte;
 	begin
 		with state do begin
 			lineY := ((TextWindowY + lpos) - LinePos) + (TextWindowHeight div 2) + 1;
@@ -226,12 +227,22 @@ procedure TextWindowDrawLineEdit(var state: TTextWindowState; lpos: integer; xOf
 			end;
 			VideoWriteText(TextWindowX + 3, lineY, $1E, ' ');
 			if (lpos > 0) and (lpos <= LineCount) then begin
+				textColor := $1E;
+				if syntaxHighlighting and (not VideoMonochrome) then begin
+					case Lines[lpos]^[1] of
+						#39: textColor := $1B; { comments }
+						':': textColor := $1C; { labels }
+						'$', '!': textColor := $1F; { centered text, selection }
+						'@': textColor := $1D; { program name }
+						'/', '?', '#': textColor := $1A;
+					end;
+				end;
 				lineX := xOffset + 1;
 				for i := 1 to (TextWindowWidth - 8) do begin
 					if lineX > Length(Lines[lpos]^) then
-						VideoWriteText(TextWindowX + 3 + i, lineY, $1E, ' ')
+						VideoWriteText(TextWindowX + 3 + i, lineY, textColor, ' ')
 					else
-						VideoWriteText(TextWindowX + 3 + i, lineY, $1E, Lines[lpos]^[lineX]);
+						VideoWriteText(TextWindowX + 3 + i, lineY, textColor, Lines[lpos]^[lineX]);
 					Inc(lineX);
 				end;
 			end else if (lpos = 0) or (lpos = (state.LineCount + 1)) then begin
@@ -425,7 +436,7 @@ procedure TextWindowSelect(var state: TTextWindowState; hyperlinkAsSelect, viewi
 		end;
 	end;
 
-procedure TextWindowEdit(var state: TTextWindowState);
+procedure TextWindowEdit(var state: TTextWindowState; syntaxHighlighting: boolean);
 	var
 		newLinePos: integer;
 		insertMode: boolean;
@@ -459,9 +470,9 @@ procedure TextWindowEdit(var state: TTextWindowState);
 			if fullRedraw then begin
 				for i := 0 to (TextWindowHeight - 4) do
 					TextWindowDrawLineEdit(state, state.LinePos - (TextWindowHeight div 2) + i + 2,
-						xOffset);
+						xOffset, syntaxHighlighting);
 			end else begin
-				TextWindowDrawLineEdit(state, line, xOffset);
+				TextWindowDrawLineEdit(state, line, xOffset, syntaxHighlighting);
 			end;
 			{ draw prompt }
 			with state do begin

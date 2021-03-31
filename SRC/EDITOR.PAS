@@ -32,7 +32,7 @@ interface
 	procedure HighScoresLoad;
 	procedure HighScoresSave;
 	procedure HighScoresDisplay(linePos: integer);
-	procedure EditorOpenEditTextWindow(var state: TTextWindowState);
+	procedure EditorOpenEditTextWindow(var state: TTextWindowState; syntaxHighlighting: boolean);
 	procedure EditorEditHelpFile;
 	procedure HighScoresAdd(score: integer);
 	function EditorGetBoardName(boardId: integer; titleScreenIsNone: boolean): TString50;
@@ -510,7 +510,7 @@ procedure EditorLoop;
 					DataLen := 0;
 				end;
 
-				EditorOpenEditTextWindow(state);
+				EditorOpenEditTextWindow(state, true);
 
 				for iLine := 1 to state.LineCount do
 					DataLen := DataLen + Length(state.Lines[iLine]^) + 1;
@@ -1190,7 +1190,7 @@ procedure HighScoresDisplay(linePos: integer);
 		TextWindowFree(state);
 	end;
 
-procedure EditorOpenEditTextWindow(var state: TTextWindowState);
+procedure EditorOpenEditTextWindow(var state: TTextWindowState; syntaxHighlighting: boolean);
 	begin
 		SidebarClear;
 		VideoWriteText(61, 7, $30, ' Return ');
@@ -1207,7 +1207,7 @@ procedure EditorOpenEditTextWindow(var state: TTextWindowState);
 		VideoWriteText(66, 14, $1F, ' Custom char');
 		VideoWriteText(61, 16, $30, ' Esc ');
 		VideoWriteText(66, 16, $1F, ' Exit editor');
-		TextWindowEdit(state);
+		TextWindowEdit(state, syntaxHighlighting);
 	end;
 
 procedure EditorEditHelpFile;
@@ -1221,7 +1221,7 @@ procedure EditorEditHelpFile;
 			TextWindowOpenFile('*' + filename + '.HLP', textWindow, true);
 			textWindow.Title := 'Editing ' + filename;
 			TextWindowDrawOpen(textWindow);
-			EditorOpenEditTextWindow(textWindow);
+			EditorOpenEditTextWindow(textWindow, false);
 			TextWindowSaveFile(filename + '.HLP', textWindow);
 			TextWindowDrawClose(textWindow);
 			TextWindowFreeEdit(textWindow);
