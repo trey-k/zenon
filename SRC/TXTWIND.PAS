@@ -31,9 +31,10 @@ interface
 	const
 		MAX_TEXT_WINDOW_LINES = 1024;
 		MAX_RESOURCE_DATA_FILES = 24;
+		MAX_LINE_LENGTH_EDIT = 58;
 		MAX_LINE_LENGTH = 50;
 	type
-		TTextWindowLine = string[MAX_LINE_LENGTH];
+		TTextWindowLine = string[MAX_LINE_LENGTH_EDIT];
 		TTextWindowState = record
 			Selectable: boolean;
 			LineCount: integer;
@@ -69,10 +70,12 @@ interface
 	procedure TextWindowDrawClose(var state: TTextWindowState);
 	procedure TextWindowDraw(var state: TTextWindowState; withoutFormatting, viewingFile: boolean);
 	procedure TextWindowAppend(var state: TTextWindowState; line: TTextWindowLine);
+	procedure TextWindowAppendEdit(var state: TTextWindowState; line: TTextWindowLine);
 	procedure TextWindowFree(var state: TTextWindowState);
+	procedure TextWindowFreeEdit(var state: TTextWindowState);
 	procedure TextWindowSelect(var state: TTextWindowState; hyperlinkAsSelect, viewingFile: boolean);
 	procedure TextWindowEdit(var state: TTextWindowState);
-	procedure TextWindowOpenFile(filename: TTextWindowLine; var state: TTextWindowState);
+	procedure TextWindowOpenFile(filename: TTextWindowLine; var state: TTextWindowState; editing: boolean);
 	procedure TextWindowSaveFile(filename: TTextWindowLine; var state: TTextWindowState);
 	procedure TextWindowDisplayFile(filename, title: string);
 	procedure TextWindowInit(x, y, width, height: integer);
@@ -240,15 +243,40 @@ procedure TextWindowDrawLineEdit(var state: TTextWindowState; lpos: integer; xOf
 	end;
 
 procedure TextWindowAppend(var state: TTextWindowState; line: TTextWindowLine);
+	var
+		len: integer;
+	begin
+		with state do begin
+			len := Length(line);
+			if len > MAX_LINE_LENGTH then len := MAX_LINE_LENGTH;
+
+			LineCount := LineCount + 1;
+			GetMem(Lines[LineCount], len + 1);
+			Lines[LineCount]^ := Copy(line, 1, len);
+		end;
+	end;
+
+procedure TextWindowAppendEdit(var state: TTextWindowState; line: TTextWindowLine);
 	begin
 		with state do begin
 			LineCount := LineCount + 1;
 			New(Lines[LineCount]);
-			Lines[LineCount]^ := line;
+			Lines[LineCount]^ := Copy(line, 1, MAX_LINE_LENGTH_EDIT);
 		end;
 	end;
 
 procedure TextWindowFree(var state: TTextWindowState);
+	begin
+		with state do begin
+			while LineCount > 0 do begin
+				FreeMem(Lines[LineCount], Ord(Lines[LineCount]^[0]));
+				LineCount := LineCount - 1;
+			end;
+			LoadedFilename := '';
+		end;
+	end;
+
+procedure TextWindowFreeEdit(var state: TTextWindowState);
 	begin
 		with state do begin
 			while LineCount > 0 do begin
@@ -330,7 +358,7 @@ procedure TextWindowSelect(var state: TTextWindowState; hyperlinkAsSelect, viewi
 						if pointerStr[1] = '-' then begin
 							Delete(pointerStr, 1, 1);
 							TextWindowFree(state);
-							TextWindowOpenFile(pointerStr, state);
+							TextWindowOpenFile(pointerStr, state, false);
 							if state.LineCount = 0 then
 								exit
 							else begin
@@ -475,7 +503,7 @@ procedure TextWindowEdit(var state: TTextWindowState);
 						+ Copy(Lines[LinePos]^, charPos + 1, Length(Lines[LinePos]^) - charPos);
 					Inc(charPos);
 				end else begin
-					if Length(Lines[LinePos]^) < MAX_LINE_LENGTH then begin
+					if Length(Lines[LinePos]^) < MAX_LINE_LENGTH_EDIT then begin
 						Lines[LinePos]^ := Copy(Lines[LinePos]^, 1, charPos - 1)
 							+ ch
 							+ Copy(Lines[LinePos]^, charPos, Length(Lines[LinePos]^) - charPos + 1);
@@ -487,7 +515,7 @@ procedure TextWindowEdit(var state: TTextWindowState);
 	begin
 		with state do begin
 			if LineCount = 0 then
-				TextWindowAppend(state, '');
+				TextWindowAppendEdit(state, '');
 			insertMode := true;
 			LinePos := 1;
 			charPos := 1;
@@ -568,14 +596,17 @@ procedure TextWindowEdit(var state: TTextWindowState);
 						DeleteCurrLine;
 					end;
 				else
-					if (InputKeyPressed >= #32) and (InputKeyPressed < #127) and (charPos < MAX_LINE_LENGTH) then
+					if (InputKeyPressed >= #32) and (InputKeyPressed < #127) then
 						InsertCharacter(InputKeyPressed);
 				end;
 
-				if newLinePos < 1 then
-					newLinePos := 1
-				else if newLinePos > LineCount then
+				if newLinePos < 1 then begin
+					newLinePos := 1;
+					charPos := 1;
+				end else if newLinePos > LineCount then begin
 					newLinePos := LineCount;
+					charPos := 255;
+				end;
 
 				if newLinePos <> LinePos then begin
 					LinePos := newLinePos;
@@ -594,7 +625,7 @@ procedure TextWindowEdit(var state: TTextWindowState);
 		end;
 	end;
 
-procedure TextWindowOpenFile(filename: TTextWindowLine; var state: TTextWindowState);
+procedure TextWindowOpenFile(filename: TTextWindowLine; var state: TTextWindowState; editing: boolean);
 	var
 		f: file;
 		tf: text;
@@ -654,15 +685,19 @@ procedure TextWindowOpenFile(filename: TTextWindowLine; var state: TTextWindowSt
 					retVal := true;
 					while (IOResult = 0) and retVal do begin
 						Inc(LineCount);
-						New(Lines[LineCount]);
 
-						BlockRead(f, Lines[LineCount]^, 1);
+						BlockRead(f, lineLen, 1);
+						if editing then
+							New(Lines[LineCount])
+						else
+							GetMem(Lines[LineCount], lineLen + 1);
+						Lines[LineCount]^[0] := Chr(lineLen);
 						line := Ptr(Seg(Lines[LineCount]^), Ofs(Lines[LineCount]^) + 1);
-						lineLen := Ord(Lines[LineCount]^[0]);
+
 						if lineLen = 0 then begin
 							Lines[LineCount]^ := '';
 						end else begin
-							BlockRead(f, line^, Ord(Lines[LineCount]^[0]));
+							BlockRead(f, line^, lineLen);
 						end;
 
 						if Lines[LineCount]^ = '@' then begin
@@ -700,7 +735,7 @@ procedure TextWindowDisplayFile(filename, title: string);
 		state: TTextWindowState;
 	begin
 		state.Title := title;
-		TextWindowOpenFile(filename, state);
+		TextWindowOpenFile(filename, state, false);
 		state.Selectable := false;
 		if state.LineCount > 0 then begin
 			TextWindowDrawOpen(state);

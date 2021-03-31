@@ -529,8 +529,8 @@ procedure EditorLoop;
 					AdvancePointer(dataPtr, 1);
 				end;
 
-				TextWindowFree(state);
 				TextWindowDrawClose(state);
+				TextWindowFreeEdit(state);
 				InputKeyPressed := #0;
 			end;
 		end;
@@ -1218,13 +1218,13 @@ procedure EditorEditHelpFile;
 		filename := '';
 		SidebarPromptString('File to edit', '.HLP', filename, PROMPT_ALPHANUM);
 		if Length(filename) <> 0 then begin
-			TextWindowOpenFile('*' + filename + '.HLP', textWindow);
+			TextWindowOpenFile('*' + filename + '.HLP', textWindow, true);
 			textWindow.Title := 'Editing ' + filename;
 			TextWindowDrawOpen(textWindow);
 			EditorOpenEditTextWindow(textWindow);
 			TextWindowSaveFile(filename + '.HLP', textWindow);
-			TextWindowFree(textWindow);
 			TextWindowDrawClose(textWindow);
+			TextWindowFreeEdit(textWindow);
 		end;
 	end;
 
