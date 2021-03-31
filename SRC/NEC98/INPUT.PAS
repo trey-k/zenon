@@ -52,6 +52,10 @@ interface
 		KEY_HOME = #190;
 		KEY_END = #191;
 		{}
+		KEY_CTRL_Z = #250;
+		KEY_CTRL_C = #251;
+		KEY_CTRL_X = #252;
+		KEY_CTRL_V = #253;
 		KEY_CTRL_Y = #254;
 		KEY_ALT_P = #255; { TODO: not working }
 	var

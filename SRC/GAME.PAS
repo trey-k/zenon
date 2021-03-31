@@ -47,6 +47,7 @@ interface
 	procedure BoardDrawBorder;
 	procedure TransitionDrawToBoard;
 	procedure SidebarPromptCharacter(editable: boolean; x, y: integer; prompt: TString50; var value: byte);
+	procedure SidebarPromptNumeric(editable: boolean; x, y: integer; prompt: string; minV, maxV: integer; var value: integer);
 	procedure SidebarPromptSlider(editable: boolean; x, y: integer; prompt: string; var value: byte);
 	procedure SidebarPromptChoice(editable: boolean; y: integer; prompt, choiceStr: string; var result: byte);
 	procedure SidebarPromptDirection(editable: boolean; y: integer; prompt: string; var deltaX, deltaY: integer);
@@ -574,6 +575,48 @@ procedure SidebarPromptCharacter(editable: boolean; x, y: integer; prompt: TStri
 		until (InputKeyPressed = KEY_ENTER) or (InputKeyPressed = KEY_ESCAPE) or not editable or InputShiftPressed;
 
 		VideoWriteText(x + 5, y + 1, $1F, #31);
+	end;
+
+procedure SidebarPromptNumeric(editable: boolean; x, y: integer; prompt: string; minV, maxV: integer; var value: integer);
+	var
+		valueOffset: integer;
+		newValue: longint;
+		numStr: string[6];
+	begin
+		SidebarClearLine(y);
+		VideoWriteText(x, y, Integer(editable) + $1E, prompt);
+		SidebarClearLine(y + 1);
+		SidebarClearLine(y + 2);
+		VideoWriteText(x + 1, y + 2, $1E, #30#31);
+
+		repeat
+			if editable then begin
+				if InputJoystickMoved then
+					AccurateDelay(45);
+
+				Str(value, numStr);
+				VideoWriteText(x + 4, y + 2, $1F, numStr);
+
+				InputUpdate;
+				valueOffset := 0;
+				case InputKeyPressed of
+					KEY_UP: valueOffset := 1;
+					KEY_DOWN: valueOffset := -1;
+					KEY_PAGE_UP: valueOffset := 5;
+					KEY_PAGE_DOWN: valueOffset := -5;
+				end;
+				
+				newValue := LongInt(value) + valueOffset;
+				
+				if (value <> newValue) and (newValue >= minV) and (newValue <= maxV) then begin
+					value := Integer(newValue);
+					VideoWriteText(x + 4, y + 2, $1E, '      ');
+				end;
+			end;
+		until (InputKeyPressed = KEY_ENTER) or (InputKeyPressed = KEY_ESCAPE) or not editable or InputShiftPressed;
+
+		Str(value, numStr);
+		VideoWriteText(x + 4, y + 2, $1E, numStr);
 	end;
 
 procedure SidebarPromptSlider(editable: boolean; x, y: integer; prompt: string; var value: byte);

@@ -30,6 +30,9 @@ interface
 		KEY_BACKSPACE = #8;
 		KEY_TAB = #9;
 		KEY_ENTER = #13;
+		KEY_CTRL_C = #3;
+		KEY_CTRL_V = #22;
+		KEY_CTRL_X = #24;
 		KEY_CTRL_Y = #25;
 		KEY_ESCAPE = #27;
 		KEY_ALT_P = #153;
@@ -235,9 +238,9 @@ procedure InputUpdate;
 			InputKeyPressed := #0;
 		end;
 
+		KeysUpdateModifiers;
 		if (InputDeltaX <> 0) or (InputDeltaY <> 0) then begin
 			{ keyboard movement }
-			KeysUpdateModifiers;
 			InputShiftPressed := KeysShiftHeld;
 		end else if InputJoystickEnabled then begin
 			InputJoystickGetCoords(joyXraw, joyYraw);

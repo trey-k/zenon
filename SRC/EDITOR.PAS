@@ -32,7 +32,7 @@ interface
 	procedure HighScoresLoad;
 	procedure HighScoresSave;
 	procedure HighScoresDisplay(linePos: integer);
-	procedure EditorOpenEditTextWindow(var state: TTextWindowState);
+	procedure EditorOpenEditTextWindow(var state: TTextWindowState; syntaxHighlighting: boolean);
 	procedure EditorEditHelpFile;
 	procedure HighScoresAdd(score: integer);
 	function EditorGetBoardName(boardId: integer; titleScreenIsNone: boolean): TString50;
@@ -512,7 +512,7 @@ procedure EditorLoop;
 					FillChar(affectedStats, Board.StatCount + 1, false);
 				end;
 
-				EditorOpenEditTextWindow(state);
+				EditorOpenEditTextWindow(state, true);
 
 				for iLine := 1 to state.LineCount do
 					Inc(DataLen, Length(state.Lines[iLine]^) + 1);
@@ -583,6 +583,11 @@ procedure EditorLoop;
 						end;
 						if selected then
 							World.EditorStatSettings[element].P1 := P1;
+						Inc(iy, 4);
+					end;
+
+					if element = E_OBJECT then begin
+						SidebarPromptNumeric(selected, 63, iy, 'Initial cycle?', 1, 420, Cycle);
 						Inc(iy, 4);
 					end;
 
@@ -1235,7 +1240,7 @@ procedure HighScoresDisplay(linePos: integer);
 		TextWindowFree(state);
 	end;
 
-procedure EditorOpenEditTextWindow(var state: TTextWindowState);
+procedure EditorOpenEditTextWindow(var state: TTextWindowState; syntaxHighlighting: boolean);
 	begin
 		SidebarClear;
 		VideoWriteText(61, 7, $30, ' Return ');
@@ -1250,9 +1255,17 @@ procedure EditorOpenEditTextWindow(var state: TTextWindowState);
 		VideoWriteText(66, 13, $1F, ' Delete char');
 		VideoWriteText(61, 14, $70, ' f10 ');
 		VideoWriteText(66, 14, $1F, ' Custom char');
-		VideoWriteText(61, 16, $30, ' Esc ');
-		VideoWriteText(66, 16, $1F, ' Exit editor');
-		TextWindowEdit(state);
+		VideoWriteText(61, 16, $30, ' Shift  ');
+		VideoWriteText(69, 16, $1F, ' Select');
+		VideoWriteText(61, 17, $70, ' Ctrl-X ');
+		VideoWriteText(69, 17, $1F, ' Cut');
+		VideoWriteText(61, 18, $30, ' Ctrl-C ');
+		VideoWriteText(69, 18, $1F, ' Copy');
+		VideoWriteText(61, 19, $70, ' Ctrl-V ');
+		VideoWriteText(69, 19, $1F, ' Paste');
+		VideoWriteText(61, 21, $30, ' Esc ');
+		VideoWriteText(66, 21, $1F, ' Exit editor');
+		TextWindowEdit(state, syntaxHighlighting);
 	end;
 
 procedure EditorEditHelpFile;
@@ -1266,7 +1279,7 @@ procedure EditorEditHelpFile;
 			TextWindowOpenFile('*' + filename + '.HLP', textWindow, true);
 			textWindow.Title := 'Editing ' + filename;
 			TextWindowDrawOpen(textWindow);
-			EditorOpenEditTextWindow(textWindow);
+			EditorOpenEditTextWindow(textWindow, false);
 			TextWindowSaveFile(filename + '.HLP', textWindow);
 			TextWindowDrawClose(textWindow);
 			TextWindowFreeEdit(textWindow);

@@ -77,7 +77,7 @@ interface
 	procedure TextWindowFree(var state: TTextWindowState);
 	procedure TextWindowFreeEdit(var state: TTextWindowState);
 	procedure TextWindowSelect(var state: TTextWindowState; hyperlinkAsSelect, viewingFile: boolean);
-	procedure TextWindowEdit(var state: TTextWindowState);
+	procedure TextWindowEdit(var state: TTextWindowState; syntaxHighlighting: boolean);
 	procedure TextWindowOpenFile(filename: TTextWindowLine; var state: TTextWindowState; editing: boolean);
 	procedure TextWindowSaveFile(filename: TTextWindowLine; var state: TTextWindowState);
 	procedure TextWindowDisplayFile(filename, title: string);
@@ -85,10 +85,12 @@ interface
 
 implementation
 {$IFDEF PRINTTXT}
-uses Sounds, Input, Printer, Game;
+uses Sounds, Input, Keys, Printer, Game;
 {$ELSE}
-uses Sounds, Input, Game;
+uses Sounds, Input, Keys, Game;
 {$ENDIF}
+type
+	TTextWindowLineBuffer = array[1 .. MAX_TEXT_WINDOW_LINES] of ^TTextWindowLine;
 
 function UpCaseString(input: string): string;
 	var
@@ -222,37 +224,6 @@ procedure TextWindowDraw(var state: TTextWindowState; withoutFormatting, viewing
 			TextWindowDrawLine(state, state.LinePos - (TextWindowHeight shr 1) + i + 2,
 				withoutFormatting, viewingFile);
 		TextWindowDrawTitle($1E, state.Title);
-	end;
-
-procedure TextWindowDrawLineEdit(var state: TTextWindowState; lpos: integer; xOffset: integer);
-	var
-		i, lineX, lineY: integer;
-	begin
-		with state do begin
-			lineY := ((TextWindowY + lpos) - LinePos) + (TextWindowHeight div 2) + 1;
-			if lpos = LinePos then begin
-				VideoWriteText(TextWindowX + 2, lineY, $1C, #175);
-				VideoWriteText(TextWindowX + (TextWindowWidth - 4), lineY, $1C, #174);
-			end else begin
-				VideoWriteText(TextWindowX + 2, lineY, $1C, ' ');
-				VideoWriteText(TextWindowX + (TextWindowWidth - 4), lineY, $1C, ' ');
-			end;
-			VideoWriteText(TextWindowX + 3, lineY, $1E, ' ');
-			if (lpos > 0) and (lpos <= LineCount) then begin
-				lineX := xOffset + 1;
-				for i := 1 to (TextWindowWidth - 8) do begin
-					if lineX > Length(Lines[lpos]^) then
-						VideoWriteText(TextWindowX + 3 + i, lineY, $1E, ' ')
-					else
-						VideoWriteText(TextWindowX + 3 + i, lineY, $1E, Lines[lpos]^[lineX]);
-					Inc(lineX);
-				end;
-			end else if (lpos = 0) or (lpos = (state.LineCount + 1)) then begin
-				VideoWriteText(TextWindowX + 2, lineY, $1E, TextWindowStrInnerSep);
-			end else begin
-				VideoWriteText(TextWindowX + 2, lineY, $1E, TextWindowStrInnerEmpty);
-			end;
-		end;
 	end;
 
 procedure TextWindowAppend(var state: TTextWindowState; line: TTextWindowLine);
@@ -441,7 +412,7 @@ procedure TextWindowSelect(var state: TTextWindowState; hyperlinkAsSelect, viewi
 		end;
 	end;
 
-procedure TextWindowEdit(var state: TTextWindowState);
+procedure TextWindowEdit(var state: TTextWindowState; syntaxHighlighting: boolean);
 	var
 		newLinePos: integer;
 		insertMode: boolean;
@@ -449,6 +420,54 @@ procedure TextWindowEdit(var state: TTextWindowState);
 		charPos: integer;
 		i: integer;
 		inputByte: byte;
+		highlightLineStart, highlightLineEnd: integer;
+		copyBuffer: ^TTextWindowLineBuffer;
+		copyBufferLines: integer;
+		forceFullRedraw: boolean;
+		shiftHeld: boolean;
+	procedure DrawLineEdit(lpos: integer);
+		var
+			i, lineX, lineY: integer;
+			textColor: byte;
+		begin
+			with state do begin
+				lineY := ((TextWindowY + lpos) - LinePos) + (TextWindowHeight div 2) + 1;
+				if lpos = LinePos then begin
+					VideoWriteText(TextWindowX + 2, lineY, $1C, #175);
+					VideoWriteText(TextWindowX + (TextWindowWidth - 4), lineY, $1C, #174);
+				end else begin
+					VideoWriteText(TextWindowX + 2, lineY, $1C, ' ');
+					VideoWriteText(TextWindowX + (TextWindowWidth - 4), lineY, $1C, ' ');
+				end;
+				VideoWriteText(TextWindowX + 3, lineY, $1E, ' ');
+				if (lpos > 0) and (lpos <= LineCount) then begin
+					textColor := $1E;
+					if (lpos >= highlightLineStart) and (lpos <= highlightLineEnd) then begin
+						textColor := $70;
+					end else if syntaxHighlighting and (not VideoMonochrome) then begin
+						case Lines[lpos]^[1] of
+							#39: textColor := $1B; { comments }
+							':': textColor := $1C; { labels }
+							'$', '!': textColor := $1F; { centered text, selection }
+							'@': textColor := $1D; { program name }
+							'/', '?', '#': textColor := $1A; { direction/command }
+						end;
+					end;
+					lineX := xOffset + 1;
+					for i := 1 to (TextWindowWidth - 8) do begin
+						if lineX > Length(Lines[lpos]^) then
+							VideoWriteText(TextWindowX + 3 + i, lineY, $1E, ' ')
+						else
+							VideoWriteText(TextWindowX + 3 + i, lineY, textColor, Lines[lpos]^[lineX]);
+						Inc(lineX);
+					end;
+				end else if (lpos = 0) or (lpos = (state.LineCount + 1)) then begin
+					VideoWriteText(TextWindowX + 2, lineY, $1E, TextWindowStrInnerSep);
+				end else begin
+					VideoWriteText(TextWindowX + 2, lineY, $1E, TextWindowStrInnerEmpty);
+				end;
+			end;
+		end;
 	procedure ClampCharPos;
 		var
 			i: integer;
@@ -474,10 +493,9 @@ procedure TextWindowEdit(var state: TTextWindowState);
 			end;
 			if fullRedraw then begin
 				for i := 0 to (TextWindowHeight - 4) do
-					TextWindowDrawLineEdit(state, state.LinePos - (TextWindowHeight div 2) + i + 2,
-						xOffset);
+					DrawLineEdit(state.LinePos - (TextWindowHeight div 2) + i + 2);
 			end else begin
-				TextWindowDrawLineEdit(state, line, xOffset);
+				DrawLineEdit(line);
 			end;
 			{ draw prompt }
 			with state do begin
@@ -490,21 +508,19 @@ procedure TextWindowEdit(var state: TTextWindowState);
 					$70, promptChar);
 			end;
 		end;
-	procedure DeleteCurrLine;
+	procedure DeleteLine(lpos: integer);
 		var
 			i: integer;
 		begin
 			with state do begin
+				if (lpos < 1) or (lPos > LineCount) then exit;
 				if LineCount > 1 then begin
-					Dispose(Lines[LinePos]);
-					for i := (LinePos + 1) to LineCount do
+					Dispose(Lines[lpos]);
+					for i := (lpos + 1) to LineCount do
 						Lines[i - 1] := Lines[i];
 
 					Dec(LineCount);
-					if LinePos > LineCount then
-						newLinePos := LineCount
-					else
-						Redraw(-1);
+					if newLinePos > lpos then Dec(newLinePos);
 				end else begin
 					Lines[1]^ := '';
 				end;
@@ -528,14 +544,74 @@ procedure TextWindowEdit(var state: TTextWindowState);
 				end;
 			end;
 		end;
+	procedure ClearHighlight;
+		begin
+			highlightLineStart := -1;
+			highlightLineEnd := -1;
+		end;
+	procedure AddLinePosToHighlight(lpos: integer);
+		begin
+			if lPos = (highlightLineStart - 1) then  begin
+				highlightLineStart := lpos;
+				Redraw(lpos);
+			end else if lPos = (highlightLineEnd + 1) then begin
+				highlightLineEnd := lpos;
+				Redraw(lpos);
+			end else if (lPos < highlightLineStart) or (lPos > highlightLineEnd) then begin
+				if highlightLineStart = -1 then begin
+					highlightLineStart := lpos;
+					highlightLineEnd := lpos;
+				end else begin
+					ClearHighlight;
+				end;
+				Redraw(-1);
+			end;
+		end;
+	procedure FreeCopyBuffer;
+		begin
+			if copyBufferLines > 0 then begin
+				FreeMem(copyBuffer, copyBufferLines * SizeOf(pointer));
+				copyBufferLines := 0;
+			end;
+		end;
+	procedure CopyHighlightToBuffer;
+		var
+			i: integer;
+		begin
+			FreeCopyBuffer;
+			if (highlightLineEnd >= highlightLineStart) and (highlightLineStart > 0) then begin
+				copyBufferLines := highlightLineEnd - highlightLineStart + 1;
+				GetMem(copyBuffer, copyBufferLines * SizeOf(pointer));
+				for i := 1 to copyBufferLines do begin
+					New(copyBuffer^[i]);
+					copyBuffer^[i]^ := state.Lines[i + highlightLineStart - 1]^;
+				end;
+			end;
+		end;
+	procedure InsertLine(lpos: integer; contents: TTextWindowLine);
+		var
+			i: integer;
+		begin
+			with state do if (lpos >= 1) and (lpos <= LineCount) and (LineCount < (MAX_TEXT_WINDOW_LINES - 1)) then begin
+				for i := LineCount downto lpos do
+					Lines[i + 1] := Lines[i];
+				New(Lines[lpos]);
+				Lines[lpos]^ := contents;
+				Inc(LineCount);
+				if newLinePos >= lpos then Inc(newLinePos);
+			end;
+		end;
 	begin
 		with state do begin
 			if LineCount = 0 then
 				TextWindowAppendEdit(state, '');
 			insertMode := true;
+			ClearHighlight;
+			copyBufferLines := 0;
 			LinePos := 1;
 			charPos := 1;
 			Redraw(-1);
+			forceFullRedraw := false;
 			TextWindowDrawTitle($1E, state.Title);
 			repeat
 				if insertMode then
@@ -544,9 +620,21 @@ procedure TextWindowEdit(var state: TTextWindowState);
 					VideoWriteText(75, 12, $1E, 'off');
 
 				ClampCharPos;
-				InputReadWaitKey;
+				shiftHeld := false;
+				repeat
+					InputUpdate;
+					shiftHeld := shiftHeld or KeysShiftHeld;
+				until InputKeyPressed <> #0;
 				newLinePos := LinePos;
+
 				case InputKeyPressed of
+					KEY_ESCAPE: begin
+						if highlightLineStart <> -1 then begin
+							ClearHighlight;
+							InputKeyPressed := #0;
+							forceFullRedraw := true;
+						end;
+					end;
 					KEY_F10: begin
 						SidebarPromptCharacter(true, 63, 3, 'Character?', inputByte);
 						InsertCharacter(Chr(inputByte));
@@ -554,8 +642,14 @@ procedure TextWindowEdit(var state: TTextWindowState);
 						SidebarClearLine(4);
 						SidebarClearLine(5);
 					end;
-					KEY_UP: newLinePos := LinePos - 1;
-					KEY_DOWN: newLinePos := LinePos + 1;
+					KEY_UP: begin
+						newLinePos := LinePos - 1;
+						if shiftHeld and (newLinePos >= 1) then AddLinePosToHighlight(newLinePos);
+					end;
+					KEY_DOWN: begin
+						newLinePos := LinePos + 1;
+						if shiftHeld then AddLinePosToHighlight(LinePos);
+					end;
 					KEY_PAGE_UP: newLinePos := LinePos - TextWindowHeight + 4;
 					KEY_PAGE_DOWN: newLinePos := LinePos + TextWindowHeight - 4;
 					KEY_RIGHT: begin
@@ -573,7 +667,7 @@ procedure TextWindowEdit(var state: TTextWindowState);
 						end;
 					end;
 					KEY_ENTER: begin
-						if LineCount < MAX_TEXT_WINDOW_LINES then begin
+						if LineCount < (MAX_TEXT_WINDOW_LINES - 1) then begin
 							for i := LineCount downto (LinePos + 1) do
 								Lines[i + 1] := Lines[i];
 
@@ -595,9 +689,10 @@ procedure TextWindowEdit(var state: TTextWindowState);
 								+ Copy(Lines[LinePos]^, charPos, Length(Lines[LinePos]^) - charPos + 1);
 							Dec(charPos);
 						end else if Length(Lines[LinePos]^) = 0 then begin
-							DeleteCurrLine;
+							DeleteLine(LinePos);
 							newLinePos := LinePos - 1;
 							charPos := 255;
+							forceFullRedraw := true;
 						end;
 					end;
 					KEY_INSERT: begin
@@ -608,8 +703,31 @@ procedure TextWindowEdit(var state: TTextWindowState);
 							Copy(Lines[LinePos]^, 1, charPos - 1)
 							+ Copy(Lines[LinePos]^, charPos + 1, Length(Lines[LinePos]^) - charPos);
 					end;
+					KEY_CTRL_X: if highlightLineStart > 0 then begin
+						CopyHighlightToBuffer;
+						for i := highlightLineStart to highlightLineEnd do
+							DeleteLine(highlightLineStart);
+						ClearHighlight;
+						forceFullRedraw := true;
+					end;
+					KEY_CTRL_C: if highlightLineStart > 0 then begin
+						CopyHighlightToBuffer;
+						ClearHighlight;
+						forceFullRedraw := true;
+					end;
+					KEY_CTRL_V: if copyBufferLines > 0 then begin
+						for i := copyBufferLines downto 1 do
+							InsertLine(LinePos, copyBuffer^[i]^);
+					end;
 					KEY_CTRL_Y: begin
-						DeleteCurrLine;
+						if highlightLineStart > 0 then begin
+							for i := highlightLineStart to highlightLineEnd do
+								DeleteLine(highlightLineStart);
+							ClearHighlight;
+						end else begin
+							DeleteLine(LinePos);
+						end;
+						forceFullRedraw := true;
 					end;
 				else
 					if (InputKeyPressed >= #32) and (InputKeyPressed < #127) then
@@ -624,14 +742,16 @@ procedure TextWindowEdit(var state: TTextWindowState);
 					charPos := 255;
 				end;
 
-				if newLinePos <> LinePos then begin
+				if (newLinePos <> LinePos) or forceFullRedraw then begin
 					LinePos := newLinePos;
 					ClampCharPos;
 					Redraw(-1);
+					forceFullRedraw := false;
 				end else begin
 					ClampCharPos;
 					Redraw(LinePos);
 				end;
+
 			until InputKeyPressed = KEY_ESCAPE;
 
 			if Length(Lines[LineCount]^) = 0 then begin
@@ -639,6 +759,7 @@ procedure TextWindowEdit(var state: TTextWindowState);
 				Dec(LineCount);
 			end;
 		end;
+		FreeCopyBuffer;
 	end;
 
 procedure TextWindowOpenFile(filename: TTextWindowLine; var state: TTextWindowState; editing: boolean);
