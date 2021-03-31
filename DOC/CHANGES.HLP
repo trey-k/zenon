@@ -5,6 +5,22 @@ Legend:
 + Additions         * Changes
 - Removals          / Bugfixes
 
+$< ClassicZoo dev >
+
++ NEC PC-9801 port! It's fairly barebones
+  (relies on text mode, vastly limiting
+  its color output), but 100% functional.
++ Text/code editing improvements!
+  + Lines longer than 42 characters are
+    now supported! (The new limit is 58.)
+  + F10 can be used to input custom ASCII
+    characters not available via keys.
+  + Minor cursor movement tweaks.
+* (Viewing) text in windows should now
+  use a bit less memory while open.
+/ Fixed 28KB (ouch!) stack memory usage
+  regression.
+
 $< ClassicZoo 4.03 >
 
 * Minor filesize/CPU optimizations have
