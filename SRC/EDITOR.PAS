@@ -565,6 +565,11 @@ procedure EditorLoop;
 						iy := iy + 4;
 					end;
 
+					if element = E_OBJECT then begin
+						SidebarPromptNumeric(selected, 63, iy, 'Initial cycle?', 1, 420, Cycle);
+						Inc(iy, 4);
+					end;
+
 					if (InputKeyPressed <> KEY_ESCAPE) and
 						(Length(ElementDefs[element].ParamTextName) <> 0) then
 					begin
@@ -1205,8 +1210,16 @@ procedure EditorOpenEditTextWindow(var state: TTextWindowState; syntaxHighlighti
 		VideoWriteText(66, 13, $1F, ' Delete char');
 		VideoWriteText(61, 14, $70, ' f10 ');
 		VideoWriteText(66, 14, $1F, ' Custom char');
-		VideoWriteText(61, 16, $30, ' Esc ');
-		VideoWriteText(66, 16, $1F, ' Exit editor');
+		VideoWriteText(61, 16, $30, ' Shift  ');
+		VideoWriteText(69, 16, $1F, ' Select');
+		VideoWriteText(61, 17, $70, ' Ctrl-X ');
+		VideoWriteText(69, 17, $1F, ' Cut');
+		VideoWriteText(61, 18, $30, ' Ctrl-C ');
+		VideoWriteText(69, 18, $1F, ' Copy');
+		VideoWriteText(61, 19, $70, ' Ctrl-V ');
+		VideoWriteText(69, 19, $1F, ' Paste');
+		VideoWriteText(61, 21, $30, ' Esc ');
+		VideoWriteText(66, 21, $1F, ' Exit editor');
 		TextWindowEdit(state, syntaxHighlighting);
 	end;
 
