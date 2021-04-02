@@ -47,6 +47,7 @@ interface
 		{ UI-only }
 		MAX_BOARD_NAME_LENGTH = 42;
 		MAX_HIGH_SCORE_NAME_LENGTH = 34;
+		EditorPatternCount = 6;
 	type
 		TString50 = string[50];
 		TCoord = record
@@ -199,8 +200,9 @@ interface
 		ElementDefs: array[0 .. MAX_ELEMENT] of TElementDef;
 		{ Anything after ElementDefs cannot be reached by the die-move trick. }
 
-		EditorPatternCount: integer;
-		EditorPatterns: array[1 .. 10] of byte;
+{$IFDEF EDITOR}
+		EditorPatterns: array[1 .. EditorPatternCount] of byte;
+{$ENDIF}
 
 		TickTimeDuration: integer;
 		CurrentTick: integer;

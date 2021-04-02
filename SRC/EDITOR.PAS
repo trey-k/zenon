@@ -28,7 +28,9 @@ unit Editor;
 
 interface
 	uses GameVars, TxtWind;
+{$IFDEF EDITOR}
 	procedure EditorLoop;
+{$ENDIF}
 	procedure HighScoresLoad;
 	procedure HighScoresSave;
 	procedure HighScoresDisplay(linePos: integer);
@@ -81,6 +83,7 @@ procedure EditorAppendBoard;
 		end;
 	end;
 
+{$IFDEF EDITOR}
 procedure EditorLoop;
 	var
 		selectedCategory: integer;
@@ -1176,6 +1179,7 @@ procedure EditorLoop;
 		InputKeyPressed := #0;
 		InitElementsGame;
 	end;
+{$ENDIF}
 
 procedure HighScoresLoad;
 	var

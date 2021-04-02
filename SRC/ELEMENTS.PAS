@@ -2008,13 +2008,14 @@ procedure InitElementDefs;
 
 		ElementDefs[1].TouchProc := ElementBoardEdgeTouch;
 
-		EditorPatternCount := 6;
+{$IFDEF EDITOR}
 		EditorPatterns[1] := E_SOLID;
 		EditorPatterns[2] := E_NORMAL;
 		EditorPatterns[3] := E_BREAKABLE;
 		EditorPatterns[4] := E_WATER;
 		EditorPatterns[5] := E_EMPTY;
 		EditorPatterns[6] := E_LINE;
+{$ENDIF}
 
 {$IFDEF EXTCHEAT}
 		for i := 0 to MAX_ELEMENT do begin
