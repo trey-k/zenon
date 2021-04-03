@@ -589,10 +589,10 @@ procedure EditorLoop;
 						Inc(iy, 4);
 					end;
 
-					if element = E_OBJECT then begin
+					{ if element = E_OBJECT then begin
 						SidebarPromptNumeric(selected, 63, iy, 'Initial cycle?', 1, 420, Cycle);
 						Inc(iy, 4);
-					end;
+					end; }
 
 					if (InputKeyPressed <> KEY_ESCAPE) and
 						(Length(ElementDefs[element].ParamTextName) <> 0) then

@@ -254,7 +254,7 @@ procedure TextWindowFree(var state: TTextWindowState);
 	begin
 		with state do begin
 			while LineCount > 0 do begin
-				FreeMem(Lines[LineCount], Ord(Lines[LineCount]^[0]));
+				FreeMem(Lines[LineCount], Ord(Lines[LineCount]^[0]) + 1);
 				LineCount := LineCount - 1;
 			end;
 			LoadedFilename := '';
