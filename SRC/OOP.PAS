@@ -383,10 +383,10 @@ function OopStringToWord(input: TString50): TString50;
 			if ((input[i] >= 'A') and (input[i] <= 'Z'))
 				or ((input[i] >= '0') and (input[i] <= '9')) then begin
 				Inc(outPos);
-				output := output + input[i];
+				output[outPos] := input[i];
 			end else if ((input[i] >= 'a') and (input[i] <= 'z')) then begin
 				Inc(outPos);
-				output := output + Chr(Ord(input[i]) - $20);
+				output[outPos] := Chr(Ord(input[i]) - $20);
 			end;
 		end;
 		output[0] := Chr(outPos);
@@ -736,7 +736,7 @@ procedure OopExecute(statId: integer; var position: integer; name: TString50);
 										OopValue := -OopValue;
 
 									if (counterPtr^ + OopValue) >= 0 then begin
-										counterPtr^ := counterPtr^ + OopValue;
+										Inc(counterPtr^, OopValue);
 									end else begin
 										goto ReadCommand;
 									end;
