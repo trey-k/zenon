@@ -53,6 +53,16 @@ type
 		previewChar: byte;
 		previewColor: byte;
 	end;
+	TEditorCopyTileBuffer = array[0 .. 32000] of TTile;
+	TEditorCopyStatBuffer = array[1 .. MAX_STAT + 2] of TStat;
+	TEditorCopyBuffer = record
+		tiles: ^TEditorCopyTileBuffer;
+		stats: ^TEditorCopyStatBuffer;
+		statCount: integer;
+		width: byte;
+		height: byte;
+	end;
+
 const
 	COPIED_TILES_COUNT = 10;
 	NeighborBoardStrs: array[0 .. 3] of string[20] =
@@ -84,6 +94,17 @@ procedure EditorAppendBoard;
 	end;
 
 {$IFDEF EDITOR}
+procedure EditorCopyStat(var fromStat: TStat; var toStat: TStat);
+	begin
+		Move(fromStat, toStat, SizeOf(TStat));
+		if toStat.DataLen > 0 then begin
+			GetMem(toStat.Data, toStat.DataLen);
+			Move(fromStat.Data^, toStat.Data^, toStat.DataLen);
+		end else begin
+			toStat.DataLen := 0;
+		end;
+	end;
+
 procedure EditorLoop;
 	var
 		selectedCategory: integer;
@@ -99,6 +120,7 @@ procedure EditorLoop;
 		copiedTiles: array[1 .. COPIED_TILES_COUNT] of TEditorCopiedTile;
 		cursorBlinker: integer;
 		inputByte: byte;
+		copyBuffer: TEditorCopyBuffer;
 
 	function EditorGetDrawingColor(eid: integer): integer;
 		begin
@@ -191,7 +213,6 @@ procedure EditorLoop;
 	procedure EditorCopyPattern(x, y: integer; var copied: TEditorCopiedTile);
 		var
 			statId: integer;
-			statCopy: TStat;
 		begin
 			if Board.Tiles[cursorX][cursorY].Element = E_PLAYER then
 				exit;
@@ -202,16 +223,8 @@ procedure EditorLoop;
 			with copied do begin
 				tile := Board.Tiles[cursorX][cursorY];
 				hasStat := statId > 0;
-				if hasStat then begin
-					statCopy := Board.Stats[statId];
-					stat := statCopy;
-					if statCopy.DataLen > 0 then begin
-						GetMem(stat.Data, stat.DataLen);
-						Move(statCopy.Data^, stat.Data^, stat.DataLen);
-					end else begin
-						stat.DataLen := 0;
-					end;
-				end;
+				if hasStat then
+					EditorCopyStat(Board.Stats[statId], stat);
 				if ElementDefs[tile.Element].HasDrawProc then
 					ElementDefs[tile.Element].DrawProc(x, y, previewChar)
 				else if tile.Element < E_TEXT_MIN then
@@ -779,6 +792,247 @@ procedure EditorLoop;
 			EditorDrawSidebar;
 		end;
 
+	procedure EditorFreeCopyBuffer;
+		var
+			i: integer;
+		begin
+			with copyBuffer do begin
+				if width <= 0 then exit;
+
+				FreeMem(tiles, Integer(width) * Integer(height) * SizeOf(TTile));
+				width := 0;
+
+				if statCount > 0 then begin
+					for i := 1 to statCount do begin
+						with stats^[i] do begin
+							if Data <> nil then FreeMem(Data, DataLen);
+						end;
+					end;
+					FreeMem(stats, statCount * SizeOf(TStat));
+				end;
+			end;
+		end;
+
+	procedure EditorRefreshCopyBuffer(ox, oy, width, height: integer);
+		var
+			ix, iy, tx, ty: integer;
+		begin
+			{ Refresh }
+			for iy := -1 to (height + 1) do begin
+				for ix := -1 to (width + 1) do begin
+					tx := ox + ix;
+					ty := oy + iy;
+					if (tx >= 1) and (ty >= 1) and (tx <= BOARD_WIDTH) and (ty <= BOARD_HEIGHT) then
+						BoardDrawTile(tx, ty);
+				end;
+			end;
+		end;
+
+	procedure EditorPasteCopyBuffer(ox, oy: integer);
+		var
+			ix, iy, ip, ist, tx, ty: integer;
+		begin
+			Dec(ox);
+			Dec(oy);
+
+			with copyBuffer do begin
+				if width <= 0 then exit;
+
+				{ Paste - Tiles }
+				ip := 0;
+				for iy := 1 to height do begin
+					for ix := 1 to width do begin
+						tx := ox + ix;
+						ty := oy + iy;
+						if (tx >= 1) and (ty >= 1) and (tx <= BOARD_WIDTH) and (ty <= BOARD_HEIGHT) then begin
+							ist := GetStatIdAt(tx, ty);
+							while ist > 0 do begin
+								RemoveStat(ist);
+								ist := GetStatIdAt(tx, ty);
+							end;
+							if ist < 0 then begin
+								Board.Tiles[tx][ty] := tiles^[ip];
+							end;
+						end;
+						Inc(ip);
+					end;
+				end;
+
+				{ Paste - Stats }
+				for ix := 1 to statCount do begin
+					with stats^[ix] do begin
+						tx := ox + X;
+						ty := oy + Y;
+					end;
+					ist := GetStatIdAt(tx, ty);
+					if ist < 0 then begin
+						if Board.StatCount < MAX_STAT then begin
+							Inc(Board.StatCount);
+							EditorCopyStat(stats^[ix], Board.Stats[Board.StatCount]);
+							with Board.Stats[Board.StatCount] do begin
+								Inc(X, ox);
+								Inc(Y, oy);
+							end;
+						end else begin
+							Board.Tiles[tx][ty].Element := E_EMPTY;
+						end;
+					end;
+				end;
+
+				EditorRefreshCopyBuffer(ox + 1, oy + 1, width, height);
+			end;
+		end;
+
+	procedure EditorCopyCopyBuffer(ox1, oy1, ox2, oy2: integer; doCut: boolean);
+		var
+			ix, iy, ip, ist, tx, ty: integer;
+		begin
+			EditorFreeCopyBuffer;
+			if ox2 < ox1 then begin
+				ix := ox1;
+				ox1 := ox2;
+				ox2 := ix;
+			end;
+			if oy2 < oy1 then begin
+				ix := oy1;
+				oy1 := oy2;
+				oy2 := ix;
+			end;
+
+			with copyBuffer do begin
+				Dec(ox1);
+				Dec(oy1);
+
+				width := ox2 - ox1;
+				height := oy2 - oy1;
+				statCount := 0;
+
+				{ Copy - Tiles, count stats }
+				GetMem(tiles, Integer(width) * Integer(height) * SizeOf(TTile));
+				ip := 0;
+				for iy := 1 to height do begin
+					for ix := 1 to width do begin
+						tx := ox1 + ix;
+						ty := oy1 + iy;
+
+						with tiles^[ip] do begin
+							Element := E_EMPTY;
+							Color := $0F;
+						end;
+
+						if (tx >= 1) and (ty >= 1) and (tx <= BOARD_WIDTH) and (ty <= BOARD_HEIGHT) then begin
+							ist := GetStatIdAt(tx, ty);
+							if ist <> 0 then begin
+								tiles^[ip] := Board.Tiles[tx][ty];
+								if ist > 0 then Inc(statCount);
+							end;
+						end;
+
+						Inc(ip);
+					end;
+				end;
+
+				{ Copy - Stats }
+				if statCount > 0 then begin
+					GetMem(stats, statCount * SizeOf(TStat));
+					ip := 0;
+					for iy := 1 to height do begin
+						for ix := 1 to width do begin
+							tx := ox1 + ix;
+							ty := oy1 + iy;
+							if (tx >= 1) and (ty >= 1) and (tx <= BOARD_WIDTH) and (ty <= BOARD_HEIGHT) then begin
+								ist := GetStatIdAt(tx, ty);
+								if ist > 0 then begin
+									Inc(ip);
+									EditorCopyStat(Board.Stats[ist], stats^[ip]);
+									with stats^[ip] do begin
+										X := ix;
+										Y := iy;
+									end;
+								end;
+							end;
+						end;
+					end;
+					{ if ip <> statCount then RunError(201); }
+				end;
+
+				if doCut then begin
+					for iy := 1 to height do
+						for ix := 1 to width do
+							EditorPlaceTile(ox1 + ix, oy1 + iy);
+				end;
+			end;
+		end;
+
+	procedure EditorUpdateCursorPos(drawCursor: boolean);
+		begin
+			if (InputDeltaX <> 0) or (InputDeltaY <> 0) then begin
+				Inc(cursorX, InputDeltaX);
+				if cursorX < 1 then
+					cursorX := 1;
+				if cursorX > BOARD_WIDTH then
+					cursorX := BOARD_WIDTH;
+
+				Inc(cursorY, InputDeltaY);
+				if cursorY < 1 then
+					cursorY := 1;
+				if cursorY > BOARD_HEIGHT then
+					cursorY := BOARD_HEIGHT;
+
+				if drawCursor then
+					VideoWriteText(cursorX - 1, cursorY - 1, $0F, #197);
+
+				if (InputKeyPressed = #0) and InputJoystickEnabled then
+					AccurateDelay(70);
+				InputShiftAccepted := false;
+			end;
+		end;
+
+	procedure EditorSelectAndCopyCopyBuffer(ox1, oy1: integer; doCut: boolean);
+		var
+			ix, iy, oldCx, oldCy: integer;
+			running: boolean;
+		procedure InvertLocal;
+			begin
+				VideoInvert(ox1 - 1, oy1 - 1, oldCx - 1, oldCy - 1);
+			end;
+		begin
+			running := true;
+
+			oldCx := cursorX;
+			oldCy := cursorY;
+
+			BoardDrawTile(ox1, oy1);
+			InvertLocal;
+
+			while running do begin
+				InputUpdate;
+
+				EditorUpdateCursorPos(false);
+				if (oldCx <> cursorX) or (oldCy <> cursorY) then begin
+					InvertLocal;
+					oldCx := cursorX;
+					oldCy := cursorY;
+					InvertLocal;
+				end;
+
+				case UpCase(InputKeyPressed) of
+					KEY_ESCAPE: begin
+						running := false;
+					end;
+					KEY_ENTER: begin
+						EditorCopyCopyBuffer(ox1, oy1, oldCx, oldCy, doCut);
+						running := false;
+					end;
+				end;
+			end;
+
+			EditorRefreshCopyBuffer(ox1, oy1, Abs(oldCx - ox1) + 1, Abs(oldCy - oy1) + 1);
+
+			cursorX := ox1;
+			cursorY := oy1;
+		end;
+
 	procedure EditorTypeCharacter(ch: byte);
 		var
 			i: integer;
@@ -849,6 +1103,7 @@ procedure EditorLoop;
 
 		for i := 1 to COPIED_TILES_COUNT do
 			EditorClearPattern(copiedTiles[i], true);
+		FillChar(copyBuffer, SizeOf(TEditorCopyBuffer), 0);
 
 		if World.Info.CurrentBoard <> 0 then
 			BoardChange(World.Info.CurrentBoard);
@@ -912,25 +1167,7 @@ procedure EditorLoop;
 					EditorRemoveTile(cursorX, cursorY);
 				end;
 
-				if (InputDeltaX <> 0) or (InputDeltaY <> 0) then begin
-					Inc(cursorX, InputDeltaX);
-					if cursorX < 1 then
-						cursorX := 1;
-					if cursorX > BOARD_WIDTH then
-						cursorX := BOARD_WIDTH;
-
-					Inc(cursorY, InputDeltaY);
-					if cursorY < 1 then
-						cursorY := 1;
-					if cursorY > BOARD_HEIGHT then
-						cursorY := BOARD_HEIGHT;
-
-					VideoWriteText(cursorX - 1, cursorY - 1, $0F, #197);
-
-					if (InputKeyPressed = #0) and InputJoystickEnabled then
-						AccurateDelay(70);
-					InputShiftAccepted := false;
-				end;
+				EditorUpdateCursorPos(true);
 
 				case UpCase(InputKeyPressed) of
 					'0'..'9': begin
@@ -1162,6 +1399,15 @@ procedure EditorLoop;
 						EditorEditBoardInfo;
 						TransitionDrawToBoard;
 					end;
+					KEY_CTRL_X: begin
+						EditorSelectAndCopyCopyBuffer(cursorX, cursorY, true);
+					end;
+					KEY_CTRL_C: begin
+						EditorSelectAndCopyCopyBuffer(cursorX, cursorY, false);
+					end;
+					KEY_CTRL_V: begin
+						EditorPasteCopyBuffer(cursorX, cursorY);
+					end;
 				end;
 			end;
 
@@ -1174,6 +1420,7 @@ procedure EditorLoop;
 			end;
 		until editorExitRequested;
 
+		EditorFreeCopyBuffer;
 		for i := 1 to COPIED_TILES_COUNT do
 			EditorClearPattern(copiedTiles[i], false);
 		InputKeyPressed := #0;
