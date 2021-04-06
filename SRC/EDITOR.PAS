@@ -911,6 +911,8 @@ procedure EditorLoop;
 						for ix := 1 to width do
 							EditorPlaceTile(ox1 + ix, oy1 + iy);
 				end;
+
+				EditorRefreshCopyBuffer(ox1, oy1, width, height);
 			end;
 		end;
 
@@ -977,10 +979,8 @@ procedure EditorLoop;
 				end;
 			end;
 
-			EditorRefreshCopyBuffer(ox1, oy1, Abs(oldCx - ox1) + 1, Abs(oldCy - oy1) + 1);
-
-			cursorX := ox1;
-			cursorY := oy1;
+			if cursorX > ox1 then cursorX := ox1;
+			if cursorY > oy1 then cursorY := oy1;
 		end;
 
 	procedure EditorTypeCharacter(ch: byte);
