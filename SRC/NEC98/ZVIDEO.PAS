@@ -43,6 +43,7 @@ interface
 	procedure VideoSetBorderColor(value: integer);
 	procedure VideoSetBlink(value: boolean);
 	procedure VideoMove(x, y, chars: integer; data: pointer; toVideo: boolean);
+	procedure VideoInvert(x1, y1, x2, y2: integer);
 
 implementation
 uses Dos, PC98;
@@ -136,6 +137,29 @@ procedure VideoMove(x, y, chars: integer; data: pointer; toVideo: boolean);
 			Move(Ptr($A000, offset)^, data^, chars * 2);
 			Move(Ptr($A200, offset)^, Ptr(Seg(data^), Ofs(data^) + (chars * 2))^, chars * 2);
 		end
+	end;
+
+procedure VideoInvert(x1, y1, x2, y2: integer);
+	var
+		ix, iy, offset: integer;
+	begin
+		if x2 < x1 then begin
+			ix := x1;
+			x1 := x2;
+			x2 := ix;
+		end;
+		if y2 < y1 then begin
+			ix := y1;
+			y1 := y2;
+			y2 := ix;
+		end;
+		for iy := y1 to y2 do begin
+			offset := ((iy * 80) + x1) shl 1;
+				for ix := x1 to x2 do begin
+				MemW[$A200:offset] := MemW[$A200:offset] xor $04;
+				Inc(offset, 2);
+			end;
+		end;
 	end;
 		
 begin

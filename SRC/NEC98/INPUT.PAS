@@ -51,13 +51,13 @@ interface
 		KEY_DELETE = #185;
 		KEY_HOME = #190;
 		KEY_END = #191;
+		KEY_CTRL_Z = #26;
+		KEY_CTRL_C = #3;
+		KEY_CTRL_X = #24;
+		KEY_CTRL_V = #22;
+		KEY_CTRL_Y = #25;
 		{}
-		KEY_CTRL_Z = #250;
-		KEY_CTRL_C = #251;
-		KEY_CTRL_X = #252;
-		KEY_CTRL_V = #253;
-		KEY_CTRL_Y = #254;
-		KEY_ALT_P = #255; { TODO: not working }
+		KEY_ALT_P = #255;
 	var
 		InputDeltaX, InputDeltaY: integer;
 		InputShiftPressed: boolean;
@@ -115,9 +115,7 @@ procedure InputUpdate;
 		InputJoystickMoved := false;
 		while KeyPressed do begin
 			InputKeyPressed := ReadKey;
-			if (UpCase(InputKeyPressed) = 'Y') and KeysCtrlHeld then
-				InputKeyPressed := KEY_CTRL_Y
-			else if (UpCase(InputKeyPressed) = 'P') and KeysAltHeld then
+			if (UpCase(InputKeyPressed) = 'P') and KeysAltHeld then
 				InputKeyPressed := KEY_ALT_P;
 			InputKeyBuffer := InputKeyBuffer + InputKeyPressed;
 		end;
