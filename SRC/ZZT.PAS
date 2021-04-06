@@ -69,8 +69,8 @@ procedure GameConfigure;
 		if IOResult = 0 then begin
 			Readln(cfgFile, ConfigWorldFile);
 			Readln(cfgFile, ConfigRegistration);
+			Close(cfgFile);
 		end;
-		Close(cfgFile);
 
 		if ConfigWorldFile[1] = '*' then begin
 			EditorEnabled := false;
