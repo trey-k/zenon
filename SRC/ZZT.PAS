@@ -26,7 +26,7 @@
 {$I-}
 {$M 49152,163840,655360}
 program ZZT;
-uses Crt, Dos, Video, Keys, Sounds, Input, TxtWind, GameVars, Elements, Editor, Oop, Game;
+uses Crt, Dos, EmsMem, Video, Keys, Sounds, Input, TxtWind, GameVars, Elements, Editor, Oop, Game;
 
 procedure ParseArguments;
 	var
@@ -43,6 +43,8 @@ procedure ParseArguments;
 					end;
 					'R': ResetConfig := true;
 				end;
+				if pArg = '/NOEMS' then
+					EmsForceDisable;
 			end else begin
 				StartupWorldFileName := pArg;
 				if (Length(StartupWorldFileName) > 4) and (StartupWorldFileName[Length(StartupWorldFileName) - 3] = '.') then begin

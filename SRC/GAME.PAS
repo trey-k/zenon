@@ -55,6 +55,7 @@ interface
 	procedure SidebarPromptString(prompt: string; extension: TString50; var filename: string; promptMode: byte);
 	procedure PauseOnError;
 	function DisplayIOError: boolean;
+	function DisplayEMSError(fatal: boolean): boolean;
 	procedure WorldUnload;
 	function WorldLoad(filename, extension: TString50; titleOnly: boolean): boolean;
 	procedure WorldSave(filename, extension: TString50);
@@ -107,7 +108,7 @@ const
 	LineChars: string[16] = #249#208#210#186#181#188#187#185#198#200#201#204#205#202#203#206;
 
 implementation
-uses Dos, Crt, Video, Sounds, Input, Elements, Editor, Oop;
+uses Dos, Crt, EmsMem, Video, Sounds, Input, Elements, Editor, Oop;
 
 procedure SidebarClearLine(y: integer);
 	begin
@@ -207,10 +208,12 @@ procedure BoardClose;
 			end;
 		end;
 
-		FreeMem(World.BoardData[World.Info.CurrentBoard], World.BoardLen[World.Info.CurrentBoard]);
+		EmsFree(World.BoardData[World.Info.CurrentBoard], World.BoardLen[World.Info.CurrentBoard]);
 		World.BoardLen[World.Info.CurrentBoard] := Ofs(ptr^) - Ofs(IoTmpBuf^);
-		GetMem(World.BoardData[World.Info.CurrentBoard], World.BoardLen[World.Info.CurrentBoard]);
-		Move(IoTmpBuf^, World.BoardData[World.Info.CurrentBoard]^, World.BoardLen[World.Info.CurrentBoard]);
+		EmsAllocate(World.BoardData[World.Info.CurrentBoard], World.BoardLen[World.Info.CurrentBoard]);
+		if not DisplayEMSError(true) then begin
+			EmsMoveTo(World.BoardLen[World.Info.CurrentBoard], IoTmpBuf, World.BoardData[World.Info.CurrentBoard]);
+		end;
 	end;
 
 procedure BoardOpen(boardId: integer);
@@ -222,7 +225,8 @@ procedure BoardOpen(boardId: integer);
 		if boardId > World.BoardCount then
 			boardId := World.Info.CurrentBoard;
 
-		ptr := World.BoardData[boardId];
+		EmsMoveFrom(World.BoardLen[boardId], World.BoardData[boardId], IoTmpBuf);
+		ptr := IoTmpBuf;
 
 		Move(ptr^, Board.Name, SizeOf(Board.Name));
 		AdvancePointer(ptr, SizeOf(Board.Name));
@@ -679,13 +683,45 @@ function DisplayIOError: boolean;
 		TextWindowFree(textWindow);
 	end;
 
+function DisplayEMSError(fatal: boolean): boolean;
+	var
+		errorNumStr: string[50];
+		textWindow: TTextWindowState;
+	begin
+		if EMSError = 0 then begin
+			DisplayEMSError := false;
+			exit;
+		end;
+
+		DisplayEMSError := true;
+
+		Str(EMSError, textWindow.Title);
+		if fatal then
+			textWindow.Title := 'Fatal Error # ' + textWindow.Title
+		else
+			textWindow.Title := 'Error # ' + textWindow.Title;
+		TextWindowInitState(textWindow);
+		TextWindowAppend(textWindow, '$Memory Error: ');
+		TextWindowAppend(textWindow, '');
+		TextWindowAppend(textWindow, 'This may be caused by running');
+		TextWindowAppend(textWindow, 'out of free memory space.');
+
+		TextWindowDrawOpen(textWindow);
+		TextWindowSelect(textWindow, false, false);
+		TextWindowDrawClose(textWindow);
+		TextWindowFree(textWindow);
+
+		if fatal then
+			RunError(203);
+	end;
+
 procedure WorldUnload;
 	var
 		i: integer;
 	begin
 		BoardClose;
 		for i := 0 to World.BoardCount do
-			FreeMem(World.BoardData[i], World.BoardLen[i]);
+			EmsFree(World.BoardData[i], World.BoardLen[i]);
 	end;
 
 function WorldLoad(filename, extension: TString50; titleOnly: boolean): boolean;
@@ -743,8 +779,11 @@ function WorldLoad(filename, extension: TString50; titleOnly: boolean): boolean;
 				for boardId := 0 to World.BoardCount do begin
 					SidebarAnimateLoading;
 					BlockRead(f, World.BoardLen[boardId], 2);
-					GetMem(World.BoardData[boardId], World.BoardLen[boardId]);
-					BlockRead(f, World.BoardData[boardId]^, World.BoardLen[boardId]);
+					EmsAllocate(World.BoardData[boardId], World.BoardLen[boardId]);
+					if not DisplayEMSError(true) then begin
+						BlockRead(f, IoTmpBuf^, World.BoardLen[boardId]);
+						EmsMoveTo(World.BoardLen[boardId], IoTmpBuf, World.BoardData[boardId]);
+					end;
 				end;
 
 				Close(f);
@@ -795,7 +834,8 @@ procedure WorldSave(filename, extension: TString50);
 				BlockWrite(f, World.BoardLen[i], 2);
 				if DisplayIOError then goto OnError;
 
-				BlockWrite(f, World.BoardData[i]^, World.BoardLen[i]);
+				EmsMoveFrom(World.BoardLen[i], World.BoardData[i], IoTmpBuf);
+				BlockWrite(f, IoTmpBuf^, World.BoardLen[i]);
 				if DisplayIOError then goto OnError;
 			end;
 		end;
@@ -1091,6 +1131,7 @@ function Difference(a, b: integer): integer;
 procedure GameUpdateSidebar;
 	var
 		numStr: string[8];
+		numStrEms: string[8];
 		i: integer;
 	begin
 		if GameStateElement = E_PLAYER then begin
@@ -1141,7 +1182,14 @@ procedure GameUpdateSidebar;
 
 			if DebugEnabled then begin
 				Str(MemAvail, numStr);
-				VideoWriteText(69, 4, $1E, 'm' + numStr + ' ');
+				if EmsAvailable then begin
+					Str(EmsPagesAvail, numStrEms);
+					VideoWriteText(75 - Length(numStr) - Length(numStrEms), 4, $1E,
+						'm' + numStrEms + 'p+' + numStr);
+				end else begin
+					VideoWriteText(77 - Length(numStr), 4, $1E,
+						'm' + numStr);
+				end;
 			end;
 		end;
 	end;

@@ -1,3 +1,3 @@
 @echo off
-otvdm %* > C:\Users\wolf\dev\zenon\reconstruction-of-zzt\log.txt
+otvdm %* > %~dp0\LOG.TXT
 exit

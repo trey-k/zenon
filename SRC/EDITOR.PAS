@@ -40,7 +40,7 @@ interface
 	function EditorSelectBoard(title: string; currentBoard: integer; titleScreenIsNone: boolean): integer;
 
 implementation
-uses Dos, Crt, Video, Sounds, Input, Elements, Oop, Game;
+uses Dos, Crt, EmsMem, Video, Sounds, Input, Elements, Oop, Game;
 
 type
 	TDrawMode = (DrawingOff, DrawingOn, TextEntry);
@@ -542,15 +542,18 @@ procedure EditorLoop;
 						if DisplayIOError then goto TransferEnd;
 
 						BoardClose;
-						FreeMem(World.BoardData[World.Info.CurrentBoard], World.BoardLen[World.Info.CurrentBoard]);
+						EmsFree(World.BoardData[World.Info.CurrentBoard], World.BoardLen[World.Info.CurrentBoard]);
 						BlockRead(f, World.BoardLen[World.Info.CurrentBoard], 2);
 						if not DisplayIOError then begin
-							GetMem(World.BoardData[World.Info.CurrentBoard], World.BoardLen[World.Info.CurrentBoard]);
-							BlockRead(f, World.BoardData[World.Info.CurrentBoard]^,
-								World.BoardLen[World.Info.CurrentBoard]);
+							EmsAllocate(World.BoardData[World.Info.CurrentBoard], World.BoardLen[World.Info.CurrentBoard]);
+							if EmsError = $00 then begin
+								BlockRead(f, IoTmpBuf^,
+									World.BoardLen[World.Info.CurrentBoard]);
+								EmsMoveTo(World.BoardLen[World.Info.CurrentBoard], IoTmpBuf, World.BoardData[World.Info.CurrentBoard]);
+							end;
 						end;
 
-						if DisplayIOError then begin
+						if DisplayIOError or DisplayEMSError(false) then begin
 							World.BoardLen[World.Info.CurrentBoard] := 0;
 							BoardCreate;
 							EditorDrawRefresh;
@@ -570,8 +573,8 @@ procedure EditorLoop;
 
 						BoardClose;
 						BlockWrite(f, World.BoardLen[World.Info.CurrentBoard], 2);
-						BlockWrite(f, World.BoardData[World.Info.CurrentBoard]^,
-							World.BoardLen[World.Info.CurrentBoard]);
+						EmsMoveFrom(World.BoardLen[World.Info.CurrentBoard], World.BoardData[World.Info.CurrentBoard], IoTmpBuf);
+						BlockWrite(f, IoTmpBuf^, World.BoardLen[World.Info.CurrentBoard]);
 						BoardOpen(World.Info.CurrentBoard);
 
 						if DisplayIOError then begin
@@ -1073,7 +1076,6 @@ procedure HighScoresAdd(score: integer);
 
 function EditorGetBoardName(boardId: integer; titleScreenIsNone: boolean): TString50;
 	var
-		boardData: pointer;
 		copiedName: TString50;
 	begin
 		if (boardId = 0) and titleScreenIsNone then
@@ -1081,8 +1083,7 @@ function EditorGetBoardName(boardId: integer; titleScreenIsNone: boolean): TStri
 		else if (boardId = World.Info.CurrentBoard) then
 			EditorGetBoardName := Board.Name
 		else begin
-			boardData := World.BoardData[boardId];
-			Move(boardData^, copiedName, SizeOf(copiedName));
+			EmsMoveFrom(SizeOf(copiedName), World.BoardData[boardId], @copiedName);
 			EditorGetBoardName := copiedName;
 		end;
 	end;
