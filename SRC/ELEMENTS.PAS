@@ -932,6 +932,9 @@ procedure ElementDuplicatorDraw(x, y: integer; var ch: byte);
 procedure ElementObjectTick(statId: integer);
 	var
 		retVal: boolean;
+		{ZENON TIMER}
+		timerTick: string;
+		{END}
 	begin
 		with Board.Stats[statId] do begin
 			if DataPos >= 0 then
@@ -943,12 +946,46 @@ procedure ElementObjectTick(statId: integer);
 				else
 					retVal := OopSend(-statId, 'THUD', false);
 			end;
+
+			{ZENON TIMER}
+			if (P3 > 0) and (P3 < 128) then begin
+				P3 := P3 - 1;
+				Str(P3, timerTick);
+				BoardDrawTile(X, Y);
+				retVal := OopSend(-statId, 'T' + timerTick, false);
+				if P3 > 1 then begin
+					if (P3 mod 2) = 0 then
+						SoundQueue(1, #248#1)
+					else
+						SoundQueue(1, #245#1);
+				end;
+			end;
+			if P3 > 128 then begin
+				P3 := P3 - 1;
+				Str(P3 - 128, timerTick);
+				retVal := OopSend(-statId, 'T' + timerTick, false);
+				if P3 = 128 then
+					P3 := 0;
+			end;
+			{END}
 		end;
 	end;
 
 procedure ElementObjectDraw(x, y: integer; var ch: byte);
 	begin
-		ch := Board.Stats[GetStatIdAt(x, y)].P1;
+		{ZENON TIMER}
+		with Board.Stats[GetStatIdAt(x, y)] do
+			if (P3 <= 1) or (P3 >= 128) then
+				ch := P1
+			else
+				if P3 < 10 then
+					ch := 48 + P3
+				else
+					if (P3 mod 2) = 0 then
+						ch := 47
+					else
+						ch := 92
+		{END}
 	end;
 
 procedure ElementObjectTouch(x, y: integer; sourceStatId: integer; var deltaX, deltaY: integer);
@@ -1454,6 +1491,11 @@ procedure ElementPlayerTick(statId: integer);
 					GameDebugPrompt;
 					InputKeyPressed := #0;
 				end;
+				{ZENON LIVEEDIT}
+				'E': begin
+					EditorLoop;
+				end;
+				{END}
 			end;
 
 			if World.Info.TorchTicks > 0 then begin

@@ -619,8 +619,8 @@ procedure EditorLoop;
 
 	begin
 		if World.Info.IsSave or (WorldGetFlagPosition('SECRET') >= 0) then begin
-			WorldUnload;
-			WorldCreate;
+			{WorldUnload;}
+			{WorldCreate;}
 		end;
 		InitElementsEditor;
 		CurrentTick := 0;
@@ -782,6 +782,9 @@ procedure EditorLoop;
 						EditorDrawSidebar;
 					end;
 					'Q', KEY_ESCAPE: begin
+						editorExitRequested := true;
+					end;
+					'E': begin
 						editorExitRequested := true;
 					end;
 					'B': begin

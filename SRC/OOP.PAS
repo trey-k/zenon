@@ -797,6 +797,17 @@ procedure OopExecute(statId: integer; var position: integer; name: TString50);
 								DataLen := Board.Stats[bindStatId].DataLen;
 								position := 0;
 							end;
+						{ZENON #TIMER <time 0-127> [SHOW]}
+						end else if OopWord = 'TIMER' then begin
+							OopReadValue(statId, position);
+							OopReadWord(statId, position);
+							if OopWord = 'SHOW' then
+								P3 := OopValue
+							else
+								P3 := OopValue + 128;
+							if OopValue = 0 then
+								BoardDrawTile(X, Y);
+						{END}
 						end else begin
 							textLine := OopWord;
 							if OopSend(statId, OopWord, false) then begin
