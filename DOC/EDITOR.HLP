@@ -99,3 +99,10 @@ the screen.  These are:
 [f5] Place advanced elements on the
      board.
 !-editadve;What are advanced elements?
+
+[Ctrl+X] Cut board area; use ENTER to
+         mark the second point.
+[Ctrl+C] Copy board area; see above.
+[Ctrl+V] Paste board area; the cursor
+         location is treated as the
+         top-left corner.
