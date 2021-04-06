@@ -104,8 +104,8 @@ procedure GameConfigure;
 {$IFDEF CONFREGI}
 			Readln(cfgFile, ConfigRegistration);
 {$ENDIF}
+			Close(cfgFile);
 		end;
-		Close(cfgFile);
 
 		if ConfigWorldFile[1] = '*' then begin
 			EditorEnabled := false;
