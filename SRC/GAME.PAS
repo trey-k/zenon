@@ -872,6 +872,7 @@ function WorldLoad(filename, extension: TString50; titleOnly: boolean): boolean;
 		ptr: pointer;
 		boardId: integer;
 		loadProgress: integer;
+		newLength: longint;
 	label OnError;
 	procedure SidebarAnimateLoading;
 		begin
@@ -927,6 +928,14 @@ function WorldLoad(filename, extension: TString50; titleOnly: boolean): boolean;
 				for boardId := 0 to World.BoardCount do begin
 					SidebarAnimateLoading;
 					BlockRead(f, World.BoardLen[boardId], 2);
+
+					{ Try to un-corrupt Super Locked worlds. }
+					if (boardId = World.BoardCount) and (World.BoardLen[boardId] <= 51) then begin
+						newLength := FileSize(f) - FilePos(f);
+						if (newLength > 51) and (newLength <= 32767) then
+							World.BoardLen[boardId] := newLength;
+					end;
+
 					if ExtMemGet(World.BoardData[boardId], World.BoardLen[boardId]) then begin
 						case EnsureIoTmpBufSize(World.BoardLen[boardId]) of
 							0, 1: begin end;

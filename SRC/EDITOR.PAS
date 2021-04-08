@@ -105,6 +105,30 @@ procedure EditorCopyStat(var fromStat: TStat; var toStat: TStat);
 		end;
 	end;
 
+procedure EditorWorldCanOpenCheck(closeSavesSilently: boolean);
+	var
+		isSecret: boolean;
+	begin
+		{ Secret worlds: warn always }
+		{ Savegames: error if non-debug, warn if debug }
+		isSecret := (WorldGetFlagPosition('SECRET') >= 0);
+		if (World.Info.IsSave and (not closeSavesSilently)) or isSecret then begin
+			SidebarClearLine(3);
+			SidebarClearLine(4);
+			SidebarClearLine(5);
+			VideoWriteText(63, 4, $1E, 'World marked as');
+			if World.Info.IsSave then
+				VideoWriteText(63, 5, $1E, ' a saved game!')
+			else
+				VideoWriteText(63, 5, $1E, '    locked!');
+			PauseOnError;
+		end;
+		if World.Info.IsSave and (not DebugEnabled) then begin
+			WorldUnload;
+			WorldCreate;
+		end;
+	end;
+
 procedure EditorLoop;
 	var
 		selectedCategory: integer;
@@ -1085,10 +1109,7 @@ procedure EditorLoop;
 		end;
 
 	begin
-		if World.Info.IsSave or (WorldGetFlagPosition('SECRET') >= 0) then begin
-			WorldUnload;
-			WorldCreate;
-		end;
+		EditorWorldCanOpenCheck(true);
 		InitElementsEditor;
 		CurrentTick := 0;
 		wasModified := false;
@@ -1209,21 +1230,7 @@ procedure EditorLoop;
 					'L': begin
 						EditorAskSaveChanged;
 						if (InputKeyPressed <> KEY_ESCAPE) and GameWorldLoad('.ZZT') then begin
-							if World.Info.IsSave or (WorldGetFlagPosition('SECRET') >= 0) then begin
-								if not DebugEnabled then begin
-									SidebarClearLine(3);
-									SidebarClearLine(4);
-									SidebarClearLine(5);
-									VideoWriteText(63, 4, $1E, 'Can not edit');
-									if World.Info.IsSave then
-										VideoWriteText(63, 5, $1E, 'a saved game!')
-									else
-										VideoWriteText(63, 5, $1E, '  ' + World.Info.Name + '!');
-									PauseOnError;
-									WorldUnload;
-									WorldCreate;
-								end;
-							end;
+							EditorWorldCanOpenCheck(false);
 							wasModified := false;
 							EditorDrawRefresh;
 						end;
