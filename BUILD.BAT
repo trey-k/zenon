@@ -1,40 +1,34 @@
 @echo off
 if not exist BIN mkdir BIN
-del BIN\*.*
+del /Q BIN\*.*
 if not exist DIST mkdir DIST
-del DIST\*.*
+del /Q DIST\*.*
 echo.
-echo [ Building DATPACK.EXE ]
-echo.
-start /wait /MIN logger.bat C:\TP\TPC /B /EBIN TOOLS\DATPACK.PAS
-type log.txt
-echo.
-echo [ Building ZZT.DAT ]
-echo.
+echo 	[ Building DATPACK.EXE ]
+call :logger TPC /B /EBIN TOOLS\DATPACK.PAS
+echo 	[ Building ZZT.DAT ]
 cd DOC
-start /wait /MIN ..\logger.bat ..\BIN\DATPACK.EXE /C ..\BIN\ZZT.DAT *.*
+call :logger ..\BIN\DATPACK.EXE /C ..\BIN\ZZT.DAT *.*
 cd ..
-type log.txt
-echo.
-echo [ Building ZZT.EXE ]
-echo.
-start /wait /MIN logger.bat C:\TP\TPC /B /EBIN /GD /ISRC /USRC SRC\ZZT.PAS
-type log.txt
-echo.
-echo [ Compressing ZZT.EXE ]
-echo.
+echo 	[ Building ZZT.EXE ]
+call :logger TPC /B /EBIN /GD /ISRC /USRC SRC\ZZT.PAS
+echo 	[ Compressing ZZT.EXE ]
 cd BIN
-start /wait /MIN ..\logger.bat ..\TOOLS\LZEXE.EXE ZZT.EXE
+call :logger ..\TOOLS\LZEXE.EXE ZZT.EXE
 cd ..
-type log.txt
-
+echo 	[ Creating DIST/ ]
 echo.
-echo [ Creating DIST/ ]
-echo.
-
 copy BIN\ZZT.EXE DIST\ZZT.EXE
 copy BIN\ZZT.DAT DIST\ZZT.DAT
 copy RES\ZZT.CFG DIST\ZZT.CFG
 copy RES\DEMO.ZZT DIST\DEMO.ZZT
 copy LICENSE.TXT DIST\LICENSE.TXT
-
+del LOG.TXT
+goto done
+exit
+:logger
+echo.
+start /wait /MIN %~dp0\LOGGER.BAT %*
+type %~dp0\LOG.TXT
+echo.
+:done
