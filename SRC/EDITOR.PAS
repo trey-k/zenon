@@ -833,6 +833,33 @@ procedure EditorLoop;
 			end;
 		end;
 
+	procedure EditorAskAndPasteCopyBuffer(ox, oy: integer);
+		procedure InvertSel;
+			begin
+				Dec(ox);
+				Dec(oy);
+				VideoInvert(ox, oy, ox + copyBuffer.width, oy + copyBuffer.height);
+				Inc(ox);
+				Inc(oy);
+			end;
+		begin
+			InvertSel;
+			while true do begin
+				InputReadWaitKey;
+				case UpCase(InputKeyPressed) of
+					KEY_ENTER: begin
+						InvertSel;
+						EditorPasteCopyBuffer(ox, oy);
+						exit;
+					end;
+					KEY_ESCAPE: begin
+						InvertSel;
+						exit;
+					end;
+				end;
+			end;
+		end;
+
 	procedure EditorCopyCopyBuffer(ox1, oy1, ox2, oy2: integer; doCut: boolean);
 		var
 			ix, iy, ip, ist, tx, ty: integer;
@@ -1356,7 +1383,7 @@ procedure EditorLoop;
 						EditorSelectAndCopyCopyBuffer(cursorX, cursorY, false);
 					end;
 					KEY_CTRL_V: begin
-						EditorPasteCopyBuffer(cursorX, cursorY);
+						EditorAskAndPasteCopyBuffer(cursorX, cursorY);
 					end;
 				end;
 			end;
