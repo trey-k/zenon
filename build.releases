@@ -1,0 +1,6 @@
+-a tp55-i8086-msdos-dos -d EXTCHEAT -d DEBUGWND -d EDITOR -d SUBDIRS -d PRINTTXT -d ZETAEMU -g -e ZZT -o zzt.zip -p build.properties
+-a tp55-i8086-msdos-dos -d SUBDIRS -d PRINTTXT -d ZETAEMU -e ZZTRUN -o zzt.zip -p build.properties
+-a tp55-i8086-msdos-nec98 -d EXTCHEAT -d DEBUGWND -d EDITOR -d SUBDIRS -d NEC98 -g -e ZZT -o zztpc98.zip -p build.properties
+-a tp55-i8086-msdos-nec98 -d SUBDIRS -d NEC98 -e ZZTRUN -o zztpc98.zip -p build.properties
+-a fpc-i8086-msdos-dos -d EXTCHEAT -d DEBUGWND -d EDITOR -d SUBDIRS -d PRINTTXT -d ZETAEMU -e ZZTL -o zztlibre.zip -p build.properties
+-a fpc-i8086-msdos-dos -d SUBDIRS -d PRINTTXT -d ZETAEMU -e ZZTLRUN -o zztlibre.zip -p build.properties

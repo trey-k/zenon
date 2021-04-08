@@ -30,10 +30,12 @@ const
 	MAX_FILES = 24;
 	MAX_HLP_LINE_LENGTH = 50;
 	MAX_HLP_LINES = 1024;
+	RES_DATA_VERSION = -2;
 type
 	TResourceDataHeader = record
+		Version: integer;
 		EntryCount: integer;
-		Name: array[1 .. MAX_FILES] of string[50];
+		Name: array[1 .. MAX_FILES] of string[12];
 		FileOffset: array[1 .. MAX_FILES] of longint;
 	end;
 
@@ -139,6 +141,7 @@ procedure PackFile;
 			end else AddFile(fAddedFn);
 		end;
 		Hdr.EntryCount := io - 1;
+		Hdr.Version := RES_DATA_VERSION;
 
 		Seek(f, 0);
 		BlockWrite(f, Hdr, SizeOf(Hdr));
@@ -159,9 +162,16 @@ procedure UnpackFile;
 		Reset(f, 1);
 		BlockRead(f, Hdr, SizeOf(Hdr));
 
+		if Hdr.Version <> RES_DATA_VERSION then begin
+			Writeln('Error: Unsupported version! ', Hdr.Version);
+			Close(f);
+			exit;
+		end;
+
 		if Hdr.EntryCount > MAX_FILES then begin
 			Writeln('Error: Too many files! ', Hdr.EntryCount,
  			  ' > ', MAX_FILES, ' (Corrupt file?)');
+			Close(f);
 			exit;
 		end;
 

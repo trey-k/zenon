@@ -28,6 +28,7 @@ unit Oop;
 
 interface
 	uses GameVars;
+	function OopStringToWord(input: TString50): TString50;
 	function WorldGetFlagPosition(name: TString50): integer;
 	procedure WorldSetFlag(name: TString50);
 	procedure WorldClearFlag(name: TString50);
@@ -35,11 +36,22 @@ interface
 	procedure OopExecute(statId: integer; var position: integer; name: TString50);
 
 implementation
-uses Sounds, TxtWind, Game, Elements;
+uses
+{$IFDEF DEBUGWND}
+DebugWnd,
+{$ENDIF}
+Sounds, TxtWind, Game, Elements;
 
 procedure OopError(statId: integer; message: string);
 	begin
 		with Board.Stats[statId] do begin
+{$IFDEF DEBUGWND}
+			if DebugEnabled then begin
+				DebugShowElementMessage(message, X, Y);
+				DataPos := -1;
+				exit;
+			end;
+{$ENDIF}
 			DisplayMessage(200, 'ERR: ' + message);
 			SoundQueue(5, #80#10);
 			DataPos := -1;
@@ -50,7 +62,13 @@ procedure OopReadChar(statId: integer; var position: integer);
 	begin
 		with Board.Stats[statId] do begin
 			if (position >= 0) and (position < DataLen) then begin
-				Move(Ptr(Seg(Data^), Ofs(Data^) + position)^, OopChar, 1);
+				{$IFNDEF FPC}
+				{ On Turbo Pascal, the array pointer is actually }
+				{ a poiter to a string. }
+				OopChar := Data^[position];
+				{$ELSE}
+				OopChar := Data[position];
+				{$ENDIF}
 				Inc(position);
 			end else begin
 				OopChar := #0
@@ -59,8 +77,10 @@ procedure OopReadChar(statId: integer; var position: integer);
 	end;
 
 procedure OopReadWord(statId: integer; var position: integer);
+	var
+		wordPos: byte;
 	begin
-		OopWord := '';
+		wordPos := 0;
 		repeat
 			OopReadChar(statId, position);
 		until OopChar <> ' ';
@@ -69,34 +89,43 @@ procedure OopReadWord(statId: integer; var position: integer);
 			while ((OopChar >= 'A') and (OopChar <= 'Z')) or (OopChar = ':')
 				or ((OopChar >= '0') and (OopChar <= '9')) or (OopChar = '_') do
 			begin
-				OopWord := OopWord + OopChar;
+				if wordPos <= OOP_TOKEN_LENGTH then begin
+					Inc(wordPos);
+					OopWord[wordPos] := OopChar;
+				end;
 				OopReadChar(statId, position);
 				OopChar := UpCase(OopChar);
 			end;
 		end;
+		OopWord[0] := Chr(wordPos);
 		if position > 0 then
 			Dec(position);
 	end;
 
 procedure OopReadValue(statId: integer; var position: integer);
 	var
-		s: string[20];
+		s: string[OOP_TOKEN_LENGTH];
 		code: integer;
+		wordPos: byte;
 	begin
-		s := '';
+		wordPos := 0;
 		repeat
 			OopReadChar(statId, position)
 		until OopChar <> ' ';
 
 		OopChar := UpCase(OopChar);
 		while (OopChar >= '0') and (OopChar <= '9') do begin
-			s := s + OopChar;
+			if wordPos <= OOP_TOKEN_LENGTH then begin
+				Inc(wordPos);
+				s[wordPos] := OopChar;
+			end;
 			OopReadChar(statId, position);
 			OopChar := UpCase(OopChar);
 		end;
 
+		s[0] := Chr(wordPos);
 		if position > 0 then
-			position := position - 1;
+			Dec(position);
 
 		if Length(s) <> 0 then
 			Val(s, OopValue, code)
@@ -179,21 +208,32 @@ procedure OopReadDirection(statId: integer; var position: integer; var dx, dy: i
 			OopError(statId, 'Bad direction');
 	end;
 
-function OopFindString(statId: integer; s: string): integer;
+function OopFindString(statId: integer; startPos: integer; s: string): integer;
 	var
 		pos, wordPos, cmpPos: integer;
+		maxPos: integer;
 	label NoMatch;
 	begin
+		for pos := 1 to Length(s) do
+			s[pos] := UpCase(s[pos]);
 		with Board.Stats[statId] do begin
-			pos := 0;
-			while pos <= DataLen do begin
+			pos := startPos;
+			maxPos := DataLen - Length(s);
+			while pos <= maxPos do begin
 				wordPos := 1;
 				cmpPos := pos;
 				repeat
-					OopReadChar(statId, cmpPos);
-					if UpCase(s[wordPos]) <> UpCase(OopChar) then
+					{$IFNDEF FPC}
+					{ On Turbo Pascal, the array pointer is actually }
+					{ a poiter to a string. }
+					OopChar := Data^[cmpPos];
+					{$ELSE}
+					OopChar := Data[cmpPos];
+					{$ENDIF}
+					if s[wordPos] <> UpCase(OopChar) then
 						goto NoMatch;
-					wordPos := wordPos + 1;
+					Inc(wordPos);
+					Inc(cmpPos);
 				until wordPos > Length(s);
 
 				{ string matches }
@@ -208,7 +248,7 @@ function OopFindString(statId: integer; s: string): integer;
 				end;
 
 			NoMatch:
-				pos := pos + 1;
+				Inc(pos);
 			end;
 			OopFindString := -1;
 		end;
@@ -219,7 +259,7 @@ function OopIterateStat(statId: integer; var iStat: integer; lookup: string): bo
 		pos: integer;
 		found: boolean;
 	begin
-		iStat := iStat + 1;
+		Inc(iStat);
 		found := false;
 
 		if lookup = 'ALL' then begin
@@ -230,7 +270,7 @@ function OopIterateStat(statId: integer; var iStat: integer; lookup: string): bo
 				if iStat <> statId then
 					found := true
 				else begin
-					iStat := iStat + 1;
+					Inc(iStat);
 					found := (iStat <= Board.StatCount);
 				end;
 			end;
@@ -252,7 +292,7 @@ function OopIterateStat(statId: integer; var iStat: integer; lookup: string): bo
 				end;
 
 				if not found then
-					iStat := iStat + 1;
+					Inc(iStat);
 			end;
 		end;
 
@@ -289,7 +329,7 @@ function OopFindLabel(statId: integer; sendLabel: string; var iStat, iDataPos: i
 			if objectMessage = 'RESTART' then begin
 				iDataPos := 0;
 			end else begin
-				iDataPos := OopFindString(iStat, labelPrefix + objectMessage);
+				iDataPos := OopFindString(iStat, 0, labelPrefix + objectMessage);
 				{ if lookup target exists, there may be more stats }
 				if (iDataPos < 0) and (targetSplitPos > 0) then
 					goto FindNextStat;
@@ -318,7 +358,7 @@ procedure WorldSetFlag(name: TString50);
 		if WorldGetFlagPosition(name) < 0 then begin
 			i := 1;
 			while (i < MAX_FLAG) and (Length(World.Info.Flags[i]) <> 0) do
-				i := i + 1;
+				Inc(i);
 			World.Info.Flags[i] := name;
 		end;
 	end;
@@ -335,15 +375,21 @@ function OopStringToWord(input: TString50): TString50;
 	var
 		output: TString50;
 		i: integer;
+		outPos: byte;
 	begin
 		output := '';
+		outPos := 0;
 		for i := 1 to Length(input) do begin
 			if ((input[i] >= 'A') and (input[i] <= 'Z'))
-				or ((input[i] >= '0') and (input[i] <= '9')) then
-				output := output + input[i]
-			else if ((input[i] >= 'a') and (input[i] <= 'z')) then
-				output := output + Chr(Ord(input[i]) - $20);
+				or ((input[i] >= '0') and (input[i] <= '9')) then begin
+				Inc(outPos);
+				output[outPos] := input[i];
+			end else if ((input[i] >= 'a') and (input[i] <= 'z')) then begin
+				Inc(outPos);
+				output[outPos] := Chr(Ord(input[i]) - $20);
+			end;
 		end;
+		output[0] := Chr(outPos);
 		OopStringToWord := output;
 	end;
 
@@ -380,11 +426,14 @@ function OopParseTile(var statId, position: integer; var tile: TTile): boolean;
 		end;
 	end;
 
-function GetColorForTileMatch(var tile: TTile): byte;
+function GetColorForTileMatch(tile: TTile): byte;
+	var
+		defColor: byte;
 	begin
-		if ElementDefs[tile.Element].Color < COLOR_SPECIAL_MIN then
-			GetColorForTileMatch := ElementDefs[tile.Element].Color and $07
-		else if ElementDefs[tile.Element].Color = COLOR_WHITE_ON_CHOICE then
+		defColor := ElementDefs[tile.Element].Color;
+		if defColor < COLOR_SPECIAL_MIN then
+			GetColorForTileMatch := defColor and $07
+		else if defColor = COLOR_WHITE_ON_CHOICE then
 			GetColorForTileMatch := ((tile.Color shr 4) and $0F) + 8
 		else
 			GetColorForTileMatch := (tile.Color and $0F);
@@ -394,10 +443,10 @@ function FindTileOnBoard(var x, y: integer; tile: TTile): boolean;
 	begin
 		FindTileOnBoard := false;
 		while true do begin
-			x := x + 1;
+			Inc(x);
 			if x > BOARD_WIDTH then begin
 				x := 1;
-				y := y + 1;
+				Inc(y);
 				if y > BOARD_HEIGHT then
 					exit;
 			end;
@@ -410,38 +459,42 @@ function FindTileOnBoard(var x, y: integer; tile: TTile): boolean;
 		end;
 	end;
 
-procedure OopPlaceTile(x, y: integer; var tile: TTile);
+procedure OopPlaceTile(x, y: integer; tile: TTile);
 	var
-		color: byte;
+		dstColor: byte;
 	begin
-		if Board.Tiles[x][y].Element <> E_PLAYER then begin
-			color := tile.Color;
-			if ElementDefs[tile.Element].Color < COLOR_SPECIAL_MIN then
-				color := ElementDefs[tile.Element].Color
-			else begin
-				if color = 0 then
-					color := Board.Tiles[x][y].Color;
+		with Board.Tiles[x][y] do begin
+			if Element <> E_PLAYER then begin
+				dstColor := ElementDefs[tile.Element].Color;
+				if dstColor >= COLOR_SPECIAL_MIN then begin
+					dstColor := tile.Color;
 
-				if color = 0 then
-					color := $0F;
+					if dstColor = 0 then begin
+						dstColor := Color;
 
-				if ElementDefs[tile.Element].Color = COLOR_WHITE_ON_CHOICE then
-					color := ((color - 8) * $10) + $0F;
-			end;
+						if dstColor = 0 then begin
+							dstColor := $0F;
+						end;
+					end;
 
-			if Board.Tiles[x][y].Element = tile.Element then
-				Board.Tiles[x][y].Color := color
-			else begin
-				BoardDamageTile(x, y);
-				if ElementDefs[tile.Element].Cycle >= 0 then begin
-					AddStat(x, y, tile.Element, color, ElementDefs[tile.Element].Cycle, StatTemplateDefault);
-				end else begin
-					Board.Tiles[x][y].Element := tile.Element;
-					Board.Tiles[x][y].Color := color;
+					if ElementDefs[tile.Element].Color = COLOR_WHITE_ON_CHOICE then
+						dstColor := ((dstColor - 8) * $10) + $0F;
 				end;
-			end;
 
-			BoardDrawTile(x, y);
+				if Element = tile.Element then
+					Color := dstColor
+				else begin
+					BoardDamageTile(x, y);
+					if ElementDefs[tile.Element].Cycle >= 0 then begin
+						AddStat(x, y, tile.Element, dstColor, ElementDefs[tile.Element].Cycle, StatTemplateDefault);
+					end else begin
+						Element := tile.Element;
+						Color := dstColor;
+					end;
+				end;
+
+				BoardDrawTile(x, y);
+			end;
 		end;
 	end;
 
@@ -480,13 +533,18 @@ function OopCheckCondition(statId: integer; var position: integer): boolean;
 function OopReadLineToEnd(statId: integer; var position: integer) : string;
 	var
 		s: string;
+		sPos: byte;
 	begin
-		s := '';
+		sPos := 0;
 		OopReadChar(statId, position);
 		while (OopChar <> #0) and (OopChar <> #13) do begin
-			s := s + OopChar;
+			if sPos < 255 then begin
+				Inc(sPos);
+				s[sPos] := OopChar;
+			end;
 			OopReadChar(statId, position);
 		end;
+		s[0] := Chr(sPos);
 		OopReadLineToEnd := s;
 	end;
 
@@ -608,7 +666,7 @@ procedure OopExecute(statId: integer; var position: integer; name: TString50);
 					if Length(OopWord) = 0 then
 						goto ReadInstruction;
 					Inc(insCount);
-					if Length(OopWord) <> 0 then begin
+					{ if Length(OopWord) <> 0 then begin // already checked above }
 						if OopWord = 'GO' then begin
 							OopReadDirection(statId, position, deltaX, deltaY);
 
@@ -687,7 +745,7 @@ procedure OopExecute(statId: integer; var position: integer; name: TString50);
 										OopValue := -OopValue;
 
 									if (counterPtr^ + OopValue) >= 0 then begin
-										counterPtr^ := counterPtr^ + OopValue;
+										Inc(counterPtr^, OopValue);
 									end else begin
 										goto ReadCommand;
 									end;
@@ -726,7 +784,7 @@ procedure OopExecute(statId: integer; var position: integer; name: TString50);
 
 									Char(labelPtr^) := ':';
 
-									labelDataPos := OopFindString(labelStatId, #13#39 + OopWord + #13);
+									labelDataPos := OopFindString(labelStatId, labelDataPos + 1, #13#39 + OopWord + #13);
 								until labelDataPos <= 0;
 						end else if OopWord = 'LOCK' then begin
 							P2 := 1;
@@ -739,8 +797,7 @@ procedure OopExecute(statId: integer; var position: integer; name: TString50);
 						end else if OopWord = 'BECOME' then begin
 							if OopParseTile(statId, position, argTile) then begin
 								replaceStat := true;
-								replaceTile.Element := argTile.Element;
-								replaceTile.Color := argTile.Color;
+								replaceTile := argTile;
 							end else begin
 								OopError(statId, 'Bad #BECOME');
 							end;
@@ -798,9 +855,15 @@ procedure OopExecute(statId: integer; var position: integer; name: TString50);
 							OopReadWord(statId, position);
 							bindStatId := 0;
 							if OopIterateStat(statId, bindStatId, OopWord) then begin
-								FreeMem(Data, DataLen);
-								Data := Board.Stats[bindStatId].Data;
-								DataLen := Board.Stats[bindStatId].DataLen;
+								if statId <> bindStatId then begin
+									FreeStatDataMem(statId, true);
+									Data := Board.Stats[bindStatId].Data;
+									DataLen := Board.Stats[bindStatId].DataLen;
+{$IFDEF DEBUGWND}
+								end else if DebugCompatEnabled then begin
+									DebugShowElementMessage('Illegal double free (self-#BIND)', X, Y);
+{$ENDIF}
+								end;
 								position := 0;
 							end;
 						{ZENON #TIMER <time 0-127> [SHOW]}
@@ -824,7 +887,7 @@ procedure OopExecute(statId: integer; var position: integer; name: TString50);
 								end;
 							end;
 						end;
-					end;
+					{ end; }
 
 					if lineFinished then
 						OopSkipLine(statId, position);
@@ -878,5 +941,4 @@ procedure OopExecute(statId: integer; var position: integer; name: TString50);
 		end;
 	end;
 
-begin
 end.

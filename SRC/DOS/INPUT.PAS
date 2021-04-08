@@ -30,6 +30,9 @@ interface
 		KEY_BACKSPACE = #8;
 		KEY_TAB = #9;
 		KEY_ENTER = #13;
+		KEY_CTRL_C = #3;
+		KEY_CTRL_V = #22;
+		KEY_CTRL_X = #24;
 		KEY_CTRL_Y = #25;
 		KEY_ESCAPE = #27;
 		KEY_ALT_P = #153;
@@ -65,7 +68,6 @@ interface
 		InputMouseButtonX, InputMouseButtonY: integer;
 		InputJoystickMoved: boolean;
 		JoystickXInitial, JoystickYInitial: integer;
-		InputLastDeltaX, InputLastDeltaY: integer;
 	procedure InputUpdate;
 	procedure InputInitDevices;
 	procedure InputReadWaitKey;
@@ -98,7 +100,7 @@ procedure InputJoystickGetCoords(var x, y: integer);
 			x := x + (Port[PORT_JOYSTICK] and 1);
 			y := y + (Port[PORT_JOYSTICK] and 2);
 		until ((Port[PORT_JOYSTICK] and 3) = 0) or ((TimerTicks - startTicks) > 3);
-		y := y div 2;
+		y := y shr 1;
 		if (TimerTicks - startTicks) > 3 then begin
 			x := -1;
 			y := -1;
@@ -170,10 +172,10 @@ procedure InputCalibrateJoystick;
 			JoystickXMax, JoystickYMax
 		) then exit;
 
-		JoystickXMin := JoystickXMin - JoystickXCenter;
-		JoystickXMax := JoystickXMax - JoystickXCenter;
-		JoystickYMin := JoystickYMin - JoystickYCenter;
-		JoystickYMax := JoystickYMax - JoystickYCenter;
+		Dec(JoystickXMin, JoystickXCenter);
+		Dec(JoystickXMax, JoystickXCenter);
+		Dec(JoystickYMin, JoystickYCenter);
+		Dec(JoystickYMax, JoystickYCenter);
 
 		{ if calibration valid range -> successful }
 		if (JoystickXMin < 1) and (JoystickXMax > 1)
@@ -236,9 +238,9 @@ procedure InputUpdate;
 			InputKeyPressed := #0;
 		end;
 
+		KeysUpdateModifiers;
 		if (InputDeltaX <> 0) or (InputDeltaY <> 0) then begin
 			{ keyboard movement }
-			KeysUpdateModifiers;
 			InputShiftPressed := KeysShiftHeld;
 		end else if InputJoystickEnabled then begin
 			InputJoystickGetCoords(joyXraw, joyYraw);
@@ -273,8 +275,8 @@ procedure InputUpdate;
 		end else if InputMouseEnabled then begin
 			regs.AX := $0B;
 			Intr($33, regs);
-			InputMouseX := InputMouseX + Integer(regs.CX);
-			InputMouseY := InputMouseY + Integer(regs.DX);
+			Inc(InputMouseX, Integer(regs.CX));
+			Inc(InputMouseY, Integer(regs.DX));
 
 			if Abs(InputMouseX) > Abs(InputMouseY) then begin
 				if Abs(InputMouseX) > InputMouseActivationX then begin
@@ -319,21 +321,20 @@ procedure InputUpdate;
 				InputMouseButtonY := 0;
 			end;
 		end;
-
-		if (InputDeltaX <> 0) or (InputDeltaY <> 0) then begin
-			InputLastDeltaX := InputDeltaX;
-			InputLastDeltaY := InputDeltaY;
-		end;
 	end;
 
 function InputInitMouse: boolean;
 	var
+		vec: pointer;
 		regs: Registers;
 	begin
-		regs.AX := 0;
-		Intr($33, regs);
-		InputInitMouse := (regs.AX = 0);
-		InputInitMouse := true;
+		InputInitMouse := false;
+		GetIntVec($33, vec);
+		if Seg(vec) <> $0000 then begin
+			regs.AX := 0;
+			Intr($33, regs);
+			InputInitMouse := (regs.AX <> 0);
+		end;
 	end;
 
 procedure InputInitDevices;
@@ -389,8 +390,6 @@ procedure InputReadWaitKey;
 	end;
 
 begin
-	InputLastDeltaX := 0;
-	InputLastDeltaY := 0;
 	InputDeltaX := 0;
 	InputDeltaY := 0;
 	InputShiftPressed := false;

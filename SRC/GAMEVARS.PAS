@@ -26,7 +26,7 @@
 unit GameVars;
 
 interface
-	uses EmsMem;
+	uses ExtMem;
 	const
 		MAX_STAT = 150;
 		MAX_ELEMENT = 53;
@@ -40,6 +40,14 @@ interface
 		TORCH_DX = 8;
 		TORCH_DY = 5;
 		TORCH_DIST_SQR = 50;
+		OOP_TOKEN_LENGTH = 20;
+		IO_BUFFER_DEFAULT_SIZE = 20000;
+		IO_BUFFER_MAXIMUM_SIZE = 65500;
+		IO_BUFFER_SIZE_INCREMENT = 500;
+		{ UI-only }
+		MAX_BOARD_NAME_LENGTH = 42;
+		MAX_HIGH_SCORE_NAME_LENGTH = 34;
+		EditorPatternCount = 6;
 	type
 		TString50 = string[50];
 		TCoord = record
@@ -86,7 +94,12 @@ interface
 			Follower: integer;
 			Leader: integer;
 			Under: TTile;
+			{$IFNDEF FPC}
 			Data: ^string;
+			{$ELSE}
+			{ Free Pascal allows pointers to act as arrays. }
+			Data: ^char;
+			{$ENDIF}
 			DataPos: integer;
 			DataLen: integer;
 			unk1, unk2: pointer;
@@ -137,7 +150,8 @@ interface
 		end;
 		TWorld = record
 			BoardCount: integer;
-			BoardData: array[0 .. MAX_BOARD] of EmsPointer;
+			{ TODO: This shifts the memory layout. Can we make this pointer-sized again? }
+			BoardData: array[0 .. MAX_BOARD] of TExtMemBlock;
 			BoardLen: array[0 .. MAX_BOARD] of word;
 			Info: TWorldInfo;
 			EditorStatSettings: array[0 .. MAX_ELEMENT] of TEditorStatSetting;
@@ -147,14 +161,12 @@ interface
 			Score: integer;
 		end;
 		THighScoreList = array[1 .. HIGH_SCORE_COUNT] of THighScoreEntry;
-		TIoTmpBuf = array[0 .. 19999] of byte;
 	var
 		PlayerDirX: integer;
 		PlayerDirY: integer;
 		unkVar_0476: integer;
 		unkVar_0478: integer;
 
-		TransitionTable: array[1 .. 80*25] of TCoord;
 		LoadedGameFileName: TString50;
 		SavedGameFileName: TString50;
 		SavedBoardFileName: TString50;
@@ -172,21 +184,25 @@ interface
 		MessageFakeNotShown: boolean;
 		MessageGemNotShown: boolean;
 		MessageEnergizerNotShown: boolean;
-		unkVar_4ABA: array[0 .. 14] of byte;
+
+		IoTmpBufSize: integer; { Borrowed: unkVar_4ABA[0..1] }
+		unkVar_4ABA: array[2 .. 14] of byte;
 
 		GameTitleExitRequested: boolean;
 		GamePlayExitRequested: boolean;
 		GameStateElement: integer;
 		ReturnBoardId: integer;
 
-		TransitionTableSize: integer;
 		TickSpeed: byte;
 
-		IoTmpBuf: ^TIoTmpBuf;
+		IoTmpBuf: pointer;
 
 		ElementDefs: array[0 .. MAX_ELEMENT] of TElementDef;
-		EditorPatternCount: integer;
-		EditorPatterns: array[1 .. 10] of byte;
+		{ Anything after ElementDefs cannot be reached by the die-move trick. }
+
+{$IFDEF EDITOR}
+		EditorPatterns: array[1 .. EditorPatternCount] of byte;
+{$ENDIF}
 
 		TickTimeDuration: integer;
 		CurrentTick: integer;
@@ -198,13 +214,15 @@ interface
 		InitialTextAttr: byte;
 
 		OopChar: char;
-		OopWord: string[20];
+		OopWord: string[OOP_TOKEN_LENGTH];
 		OopValue: integer;
 
 		DebugEnabled: boolean;
 
 		HighScoreList: THighScoreList;
+{$IFDEF CONFREGI}
 		ConfigRegistration: string;
+{$ENDIF}
 		ConfigWorldFile: TString50;
 		EditorEnabled: boolean;
 		GameVersion: TString50;
@@ -212,9 +230,21 @@ interface
 		ResetConfig: boolean; { This flag is a remnant from ZZT 3.0. }
 		JustStarted: boolean;
 
+{$IFDEF WORLDDSC}
 		WorldFileDescCount: integer;
 		WorldFileDescKeys: array[1 .. 10] of TString50;
 		WorldFileDescValues: array[1 .. 10] of TString50;
+{$ENDIF}
+
+{$IFDEF EXTCHEAT}
+		CheatColorModifiers: array[0 .. MAX_ELEMENT] of byte;
+		CheatCharModifiers: array[0 .. MAX_ELEMENT] of char;
+		CheatNoClip: boolean;
+		CheatFreeze: boolean;
+{$ENDIF}
+{$IFDEF DEBUGWND}
+		DebugCompatEnabled: boolean;
+{$ENDIF}
 	const
 		E_EMPTY = 0;
 		E_BOARD_EDGE = 1;
@@ -286,5 +316,4 @@ interface
 
 implementation
 
-begin
 end.

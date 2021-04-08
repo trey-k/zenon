@@ -1,15 +1,16 @@
 $The ZZT Editor
 
 Help is available on the following topics:
-!start;Getting Started
-!cmds;Editor Commands
+
+!start;Getting started
+!cmds;Editor commands
 !-creature;Creatures
 !-terrain;Terrains
 !-item;Items
 !-lang;ZZT-OOP Programming Language
 !-info;Board information menu
 
-:start;Getting started:
+:start;Getting started
 
    The ZZT Editor is a tool for
 creating silly ZZT game worlds.
@@ -35,7 +36,7 @@ pace.  The results will be well worth the
 effort.
 
 
-:cmds;Editing commands:
+:cmds;Editor commands
 
 [L]  Load a world from disk.
 [S]  Save a world to disk.
@@ -60,22 +61,34 @@ effort.
      mode is on, the current pattern will
      automatically be placed wherever the
      cursor is moved.
-[P]  Select pattern.
-[C]  Select color.
+[P]  Select pattern. Hold Shift to move
+     backwards.
+[C]  Select foreground color.
+[Shift+C] Select background color.
 
    Some useful commands are not listed on
 the screen.  These are:
 
+[0-9] Pick a memorized pattern slot,
+     from the first to the tenth.
 [Z]  Clear board.
 [X]  Fill in bounded region with
      current pattern - just draw the
      outline of a shape and use this
      command to fill it in.
+[Delete] Remove the pattern on top
+     of the cursor.
+[D]  Disable ZZT's default coloring
+     rules. This allows you to use
+     non-standard colors for certain
+     objects which don't allow it
+     otherwise.
 [Enter] Modify object under cursor:
      Allows you to change the
-     properties of an object
-     that has already been
-     placed.
+     properties of an object that
+     has already been placed. It also
+     copies the object to the pattern
+     list, allowing it to be re-used.
 [N]  New: Create a new world.
 [T]  Transfer:  Import or Export boards.
      Allows individual boards to be
@@ -83,3 +96,13 @@ the screen.  These are:
      A board from one world can be
      written to a file, then read back
      into a different world.
+[f5] Place advanced elements on the
+     board.
+!-editadve;What are advanced elements?
+
+[Ctrl+X] Cut board area; use ENTER to
+         mark the second point.
+[Ctrl+C] Copy board area; see above.
+[Ctrl+V] Paste board area; the cursor
+         location is treated as the
+         top-left corner.

@@ -1,0 +1,56 @@
+$Cheats
+
+ZZT offers a variety of commands as part
+of the built-in debug console.
+
+First of all, you can use it to set and
+clear flags. For this, use the following
+syntax:
+
+   +FLAG <= #set FLAG
+   -FLAG <= #clear FLAG
+
+Other than that, you can use the console
+to impact your gaming experience. Please
+remember to use the features below with
+responsibility! (Or just have fun.)
+
+For most commands, you can invert their
+effect by prepending "NO" - for example,
+"KEYS" grants the player all keys, while
+"NOKEYS" removes them.
+
+$General cheats
+
+Name        | Functionality
+------------+----------------------------
+HEALTH [x]  | Add [x] health. (Def. 50)
+AMMO [x]    | Add [x] ammo. (Def. 5)
+KEYS        | Add all keys.
+KEYS [col]  | Add a key of color [col].
+TORCHES [x] | Add [x] torches. (Def. 3)
+TIME [x]    | Add [x] time. (Def. 30)
+GEMS [x]    | Add [x] gems. (Def. 5)
+ZAP         | Remove neighboring tiles.
+(NO)DARK    | Toggle board darkness.
+(NO)BLINK   | Toggle video card blink.
+SPEED [x]   | Change player speed. If
+            | [x] (0-8), set speed.
+
+$Editor build-specific cheats
+
+Name        | Functionality
+------------+----------------------------
+DEBUG       | Enable debug mode.
+(NODEBUG)   |
+DCOMPAT     | Enable ZZT 3.2 compat-
+            | related errors.
+SHOW [el]   | Make all tiles of type
+(NOSHOW)    | [el] blink.
+NOSHOW ALL  | Undo all SHOW commands.
+NOCLIP      | Enable walking through
+(CLIP)      | walls.
+(NO)FREEZE  | Freeze non-player tiles.
+PASSAGE     | Teleport to any selected
+            | board.
+FLAGS       | Print all set flags.

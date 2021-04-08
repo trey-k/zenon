@@ -24,27 +24,43 @@
 }
 
 {$I-}
-{$M 49152,163840,655360}
+{$IFNDEF FPC}
+{$IFDEF NEC98}
+{$M 24576,163840,655360}
+{$ELSE}
+{$M 20480,163840,655360}
+{$ENDIF}
+{$ENDIF}
 program ZZT;
-uses Crt, Dos, EmsMem, Video, Keys, Sounds, Input, TxtWind, GameVars, Elements, Editor, Oop, Game;
+uses 
+{$IFDEF NEC98}
+Pc98,
+{$ELSE}
+Crt,
+{$ENDIF}
+Dos, ExtMem, ZVideo, Keys, Sounds, Input, TxtWind, GameVars, Elements, Editor, Oop, Game;
 
 procedure ParseArguments;
 	var
 		i: integer;
 		pArg: string;
+		enableEms: boolean;
+		enableXms: boolean;
 	begin
+		enableEms := true;
+		enableXms := true;
+
 		for i := 1 to ParamCount do begin
 			pArg := ParamStr(i);
 			if pArg[1] = '/' then begin
 				case UpCase(pArg[2]) of
-					'T': begin
-						SoundTimeCheckCounter := 0;
-						UseSystemTimeForElapsed := false;
-					end;
 					'R': ResetConfig := true;
 				end;
+
 				if pArg = '/NOEMS' then
-					EmsForceDisable;
+					enableEms := false
+				else if pArg = '/NOXMS' then
+					enableXms := false;
 			end else begin
 				StartupWorldFileName := pArg;
 				if (Length(StartupWorldFileName) > 4) and (StartupWorldFileName[Length(StartupWorldFileName) - 3] = '.') then begin
@@ -52,7 +68,20 @@ procedure ParseArguments;
 				end;
 			end;
 		end;
+
+		ExtMemInstall(enableEms, enableXms);
 	end;
+
+{$IFNDEF NEC98}
+procedure WritelnCentered(s: string);
+	var
+		y: byte;
+	begin
+		y := WhereY;
+		GotoXY(1 + ((80 - Length(s)) shr 1), y);
+		Writeln(s);
+	end;
+{$ENDIF}
 
 procedure GameConfigure;
 	var
@@ -62,16 +91,22 @@ procedure GameConfigure;
 	begin
 		ParsingConfigFile := true;
 		EditorEnabled := true;
+{$IFDEF CONFREGI}
 		ConfigRegistration := '';
+{$ENDIF}
 		ConfigWorldFile := '';
-		GameVersion := '3.2';
+		GameVersion := '%VERSION%';
 
 		Assign(cfgFile, 'zzt.cfg');
 		Reset(cfgFile);
 		if IOResult = 0 then begin
 			Readln(cfgFile, ConfigWorldFile);
+{$IFDEF CONFREGI}
 			Readln(cfgFile, ConfigRegistration);
+{$ENDIF}
+			Close(cfgFile);
 		end;
+
 		if ConfigWorldFile[1] = '*' then begin
 			EditorEnabled := false;
 			ConfigWorldFile := Copy(ConfigWorldFile, 2, Length(ConfigWorldFile) - 1);
@@ -86,19 +121,17 @@ procedure GameConfigure;
 
 		ParsingConfigFile := false;
 
+{$IFNDEF NEC98}
 		Window(1, 1, 80, 25);
 		TextBackground(Black);
 		ClrScr;
 		TextColor(White);
 		TextColor(White);
 		Writeln;
-		Writeln('                                 <=-  ZZT  -=>');
+		WritelnCentered('<=-  %NAME%  -=>');
 		TextColor(Yellow);
-		if Length(ConfigRegistration) = 0 then
-			Writeln('                             Shareware version 3.2')
-		else
-			Writeln('                                  Version  3.2');
-		Writeln('                            Created by Tim Sweeney');
+		WritelnCentered('Version %VERSION%');
+		WritelnCentered('%CONFIG_SUBTITLE%');
 		GotoXY(1, 7);
 		TextColor(Blue);
 		Write('================================================================================');
@@ -108,7 +141,9 @@ procedure GameConfigure;
 		GotoXY(30, 7);
 		Write(' Game Configuration ');
 		GotoXY(1, 25);
-		Write(' Copyright (c) 1991 Epic MegaGames                         Press ... to abort');
+		Write(' %COPYRIGHT% ');
+		GotoXY(59, 25);
+		Write(' Press ... to abort ');
 		TextColor(Black);
 		TextBackground(LightGray);
 		GotoXY(66, 25);
@@ -118,17 +153,23 @@ procedure GameConfigure;
 		TextBackground(Black);
 		ClrScr;
 		TextColor(Yellow);
+{$ENDIF}
 		if not InputConfigure then
 			GameTitleExitRequested := true
 		else begin
+{$IFNDEF NEC98}
 			TextColor(LightGreen);
+{$ENDIF}
 			if not VideoConfigure then
 				GameTitleExitRequested := true;
 		end;
+{$IFNDEF NEC98}
 		Window(1, 1, 80, 25);
+{$ENDIF}
 	end;
 
 begin
+{$IFDEF WORLDDSC}
 	WorldFileDescCount := 7;
 	WorldFileDescKeys[1] := 'TOWN';
 	WorldFileDescValues[1] := 'TOWN       The Town of ZZT';
@@ -144,54 +185,62 @@ begin
 	WorldFileDescValues[6] := 'BEST       The Best of ZZT';
 	WorldFileDescKeys[7] := 'TOUR';
 	WorldFileDescValues[7] := 'TOUR       Guided Tour ZZT'#39's Other Worlds';
+{$ENDIF}
 
 	Randomize;
+{$IFNDEF NEC98}
 	SetCBreak(false);
 	InitialTextAttr := TextAttr;
+{$ENDIF}
 
 	StartupWorldFileName := 'TOWN';
+{$IFDEF SUBDIRS}
+	ResourceDataFileName := FExpand('ZZT.DAT');
+{$ELSE}
 	ResourceDataFileName := 'ZZT.DAT';
+{$ENDIF}
 	ResetConfig := false;
 	GameTitleExitRequested := false;
+	IoTmpBufSize := IO_BUFFER_DEFAULT_SIZE;
 	GameConfigure;
 	ParseArguments;
 
 	if not GameTitleExitRequested then begin
-		VideoInstall(80, Blue);
-		OrderPrintId := @GameVersion;
-		TextWindowInit(5, 3, 50, 18);
-		New(IoTmpBuf);
+		VideoInstall(Blue);
+		{ OrderPrintId := @GameVersion; }
+		TextWindowInit; { (5, 3, 50, 18) }
+		GetMem(IoTmpBuf, IoTmpBufSize);
 
 		VideoHideCursor;
 		ClrScr;
 
 		TickSpeed := 4;
 		DebugEnabled := false;
+{$IFDEF EXTCHEAT}
+		CheatNoClip := false;
+		CheatFreeze := false;
+{$ENDIF}
+{$IFDEF DEBUGWND}
+		DebugCompatEnabled := false;
+{$ENDIF}
 		SavedGameFileName := 'SAVED';
 		SavedBoardFileName := 'TEMP';
-		GenerateTransitionTable;
 		WorldCreate;
 
 		GameTitleLoop;
 
-		Dispose(IoTmpBuf);
+		FreeMem(IoTmpBuf, IoTmpBufSize);
+		ExtMemUninstall;
 	end;
 
 	SoundUninstall;
 	SoundClearQueue;
 
 	VideoUninstall;
-	Port[PORT_CGA_PALETTE] := 0;
+{$IFNDEF NEC98}
 	TextAttr := InitialTextAttr;
+{$ENDIF}
 	ClrScr;
-
-	if Length(ConfigRegistration) = 0 then begin
-		GamePrintRegisterMessage;
-	end else begin
-		Writeln;
-		Writeln('  Registered version -- Thank you for playing ZZT.');
-		Writeln;
-	end;
 
 	VideoShowCursor;
 end.
