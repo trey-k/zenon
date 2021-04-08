@@ -934,6 +934,7 @@ procedure ElementObjectTick(statId: integer);
 		retVal: boolean;
 		{ZENON TIMER}
 		timerTick: string;
+		showTimer: boolean;
 		{END}
 	begin
 		with Board.Stats[statId] do begin
@@ -948,24 +949,22 @@ procedure ElementObjectTick(statId: integer);
 			end;
 
 			{ZENON TIMER}
-			if (P3 > 0) and (P3 < 128) then begin
+			if P3 > 0 then begin
 				P3 := P3 - 1;
-				Str(P3, timerTick);
-				BoardDrawTile(X, Y);
-				retVal := OopSend(-statId, 'T' + timerTick, false);
-				if P3 > 1 then begin
-					if (P3 mod 2) = 0 then
-						SoundQueue(1, #248#1)
-					else
-						SoundQueue(1, #245#1);
+				showTimer := not (((P3 shr 7) and 1) = 1); {P3 < $80}
+				Str(P3 mod $80, timerTick);
+				if showTimer then begin 
+					BoardDrawTile(X, Y);
+					if P3 > 1 then
+						if (P3 mod 2) = 0 then
+							SoundQueue(1, #248#1)
+						else
+							SoundQueue(1, #245#1);
+				end else begin
+					if P3 = $80 then
+						P3 := 0;
 				end;
-			end;
-			if P3 > 128 then begin
-				P3 := P3 - 1;
-				Str(P3 - 128, timerTick);
 				retVal := OopSend(-statId, 'T' + timerTick, false);
-				if P3 = 128 then
-					P3 := 0;
 			end;
 			{END}
 		end;
@@ -975,7 +974,7 @@ procedure ElementObjectDraw(x, y: integer; var ch: byte);
 	begin
 		{ZENON TIMER}
 		with Board.Stats[GetStatIdAt(x, y)] do
-			if (P3 <= 1) or (P3 >= 128) then
+			if (P3 < 1) or (P3 > $80) then
 				ch := P1
 			else
 				if P3 < 10 then

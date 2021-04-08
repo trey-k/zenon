@@ -361,7 +361,13 @@ function OopParseTile(var statId, position: integer; var tile: TTile): boolean;
 				tile.Color := i + $08;
 				OopReadWord(statId, position);
 				goto ColorFound;
+			{ZENON RANDOM}
+			end else if OopWord = 'RANDOM' then begin
+				tile.Color := Random(7) + $09;
+				OopReadWord(statId, position);
+				goto ColorFound;
 			end;
+			{END}
 		end;
 	ColorFound:
 
@@ -804,7 +810,7 @@ procedure OopExecute(statId: integer; var position: integer; name: TString50);
 							if OopWord = 'SHOW' then
 								P3 := OopValue
 							else
-								P3 := OopValue + 128;
+								P3 := OopValue + $80;
 							if OopValue = 0 then
 								BoardDrawTile(X, Y);
 						{END}
