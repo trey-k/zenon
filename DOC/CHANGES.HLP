@@ -12,6 +12,9 @@ $< ClassicZoo dev >
     files in the code editor.
   + Added rudimentary text file editor.
     Press [!] to open a text file.
+* The editor's board selection menu will
+  now ignore hyperlinks. (Useful for
+  "Super Lock" affected worlds.)
 * Tweaks to editor behaviour: opening
   locked worlds now emits a warning only,
   opening savefiles always emits one.

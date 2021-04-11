@@ -124,7 +124,7 @@ function FileSelect(title, extension: TString50): TFilenameString;
 			TextWindowAppend(textWindow, 'Exit');
 
 			TextWindowDrawOpen(textWindow);
-			TextWindowSelect(textWindow, true, false);
+			TextWindowSelect(textWindow, TWS_HYPERLINK_AS_SELECT);
 			TextWindowDrawClose(textWindow);
 
 			if (textWindow.LinePos = textWindow.LineCount) or TextWindowRejected then begin

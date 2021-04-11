@@ -38,6 +38,10 @@ interface
 		TextWindowHeight = 18;
 		MAX_LINE_LENGTH_EDIT = 58;
 		MAX_LINE_LENGTH = 50;
+		{ TextWindowSelect flags }
+		TWS_HYPERLINK_AS_SELECT = $01;
+		TWS_VIEWING_FILE = $02;
+		TWS_IGNORE_HYPERLINKS = $04;
 	type
 		TExtensionString = string[4];
 		TTextWindowLine = string[MAX_LINE_LENGTH_EDIT];
@@ -81,7 +85,7 @@ interface
 	procedure TextWindowAppendEdit(var state: TTextWindowState; line: TTextWindowLine);
 	procedure TextWindowFree(var state: TTextWindowState);
 	procedure TextWindowFreeEdit(var state: TTextWindowState);
-	procedure TextWindowSelect(var state: TTextWindowState; hyperlinkAsSelect, viewingFile: boolean);
+	procedure TextWindowSelect(var state: TTextWindowState; flags: byte);
 	procedure TextWindowEdit(var state: TTextWindowState; extension: TExtensionString; syntaxHighlighting: boolean);
 	procedure TextWindowOpenFile(filename: TFilenameString; var state: TTextWindowState; editing, showError: boolean);
 	procedure TextWindowSaveFile(filename: TFilenameString; var state: TTextWindowState);
@@ -334,15 +338,18 @@ procedure TextWindowPrint(var state: TTextWindowState);
 	end;
 {$ENDIF}
 
-procedure TextWindowSelect(var state: TTextWindowState; hyperlinkAsSelect, viewingFile: boolean);
+procedure TextWindowSelect(var state: TTextWindowState; flags: byte);
 	var
 		newLinePos: integer;
-		unk1: integer;
+		viewingFile: boolean;
+		unk1: boolean;
 		iLine, iChar: integer;
 		pointerStr: string[20];
 	label LabelMatched;
 	label LabelNotMatched;
 	begin
+		viewingFile := (flags and TWS_VIEWING_FILE) <> 0;
+
 		with state do begin
 			TextWindowRejected := false;
 			Hyperlink := '';
@@ -354,7 +361,7 @@ procedure TextWindowSelect(var state: TTextWindowState; hyperlinkAsSelect, viewi
 					Inc(newLinePos, InputDeltaY);
 				end else if InputShiftPressed or (InputKeyPressed = KEY_ENTER) then begin
 					InputShiftAccepted := true;
-					if (Lines[LinePos]^[1]) = '!' then begin
+					if ((flags and TWS_IGNORE_HYPERLINKS) = 0) and ((Lines[LinePos]^[1]) = '!') then begin
 						pointerStr := Copy(Lines[LinePos]^, 2, Length(Lines[LinePos]^) - 1);
 
 						if Pos(';', pointerStr) > 0 then begin
@@ -375,7 +382,7 @@ procedure TextWindowSelect(var state: TTextWindowState; hyperlinkAsSelect, viewi
 								InputShiftPressed := false;
 							end;
 						end else begin
-							if hyperlinkAsSelect then begin
+							if (flags and TWS_HYPERLINK_AS_SELECT) <> 0 then begin
 								Hyperlink := pointerStr;
 							end else begin
 								pointerStr := ':' + pointerStr;
@@ -418,7 +425,7 @@ procedure TextWindowSelect(var state: TTextWindowState; hyperlinkAsSelect, viewi
 					LinePos := newLinePos;
 					TextWindowDraw(state, false, viewingFile);
 					if (Lines[LinePos]^[1]) = '!' then
-						if hyperlinkAsSelect then
+						if (flags and TWS_HYPERLINK_AS_SELECT) <> 0 then
 							TextWindowDrawTitle($1E, #174'Press ENTER to select this'#175)
 						else
 							TextWindowDrawTitle($1E, #174'Press ENTER for more info'#175);
@@ -929,7 +936,7 @@ procedure TextWindowDisplayFile(filename: TFilenameString; title: TTextWindowLin
 		state.Selectable := false;
 		if state.LineCount > 0 then begin
 			TextWindowDrawOpen(state);
-			TextWindowSelect(state, false, true);
+			TextWindowSelect(state, TWS_VIEWING_FILE);
 			TextWindowDrawClose(state);
 		end;
 		TextWindowFree(state);

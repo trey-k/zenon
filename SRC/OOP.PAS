@@ -900,7 +900,7 @@ procedure OopExecute(statId: integer; var position: integer; name: TString50);
 
 				textWindow.Title := name;
 				TextWindowDrawOpen(textWindow);
-				TextWindowSelect(textWindow, true, false);
+				TextWindowSelect(textWindow, TWS_HYPERLINK_AS_SELECT);
 				TextWindowDrawClose(textWindow);
 				TextWindowFree(textWindow);
 

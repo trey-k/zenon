@@ -478,7 +478,7 @@ procedure EditorLoop;
 
 				state.Lines[10]^ := '          Quit!';
 
-				TextWindowSelect(state, false, false);
+				TextWindowSelect(state, 0);
 				if (InputKeyPressed = KEY_ENTER) and (state.LinePos <> 10) then begin
 					wasModified := true;
 					case state.LinePos of
@@ -1496,7 +1496,7 @@ procedure HighScoresDisplay(linePos: integer);
 		if (state.LineCount > 2) then begin
 			state.Title := 'High scores for ' + World.Info.Name;
 			TextWindowDrawOpen(state);
-			TextWindowSelect(state, false, true);
+			TextWindowSelect(state, TWS_VIEWING_FILE);
 			TextWindowDrawClose(state);
 		end;
 		TextWindowFree(state);
@@ -1623,7 +1623,7 @@ function EditorSelectBoard(title: string; currentBoard: integer; titleScreenIsNo
 		end;
 		TextWindowAppend(textWindow, 'Add new board');
 		if not windowAlreadyOpen then TextWindowDrawOpen(textWindow);
-		TextWindowSelect(textWindow, false, false);
+		TextWindowSelect(textWindow, TWS_IGNORE_HYPERLINKS);
 		if not windowAlreadyOpen then TextWindowDrawClose(textWindow);
 		TextWindowFree(textWindow);
 		if InputKeyPressed = KEY_ESCAPE then

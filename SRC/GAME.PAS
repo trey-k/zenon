@@ -293,7 +293,7 @@ procedure DebugBoardIllegalElements;
 					end;
 		if count > 0 then begin
 			TextWindowDrawOpen(textWindow);
-			TextWindowSelect(textWindow, false, false);
+			TextWindowSelect(textWindow, 0);
 			TextWindowDrawClose(textWindow);
 			TextWindowFree(textWindow);
 		end;
@@ -852,7 +852,7 @@ function DisplayIOError: boolean;
 		TextWindowAppend(textWindow, 'for saving the game!');
 
 		TextWindowDrawOpen(textWindow);
-		TextWindowSelect(textWindow, false, false);
+		TextWindowSelect(textWindow, 0);
 		TextWindowDrawClose(textWindow);
 		TextWindowFree(textWindow);
 	end;
@@ -1737,7 +1737,7 @@ procedure DebugPromptFlagWindow;
 		end;
 
 		TextWindowDrawOpen(textWindow);
-		TextWindowSelect(textWindow, false, false);
+		TextWindowSelect(textWindow, 0);
 		TextWindowDrawClose(textWindow);
 		TextWindowFree(textWindow);
 	end;
