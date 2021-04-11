@@ -556,7 +556,10 @@ procedure EditorLoop;
 
 				for iLine := 1 to state.LineCount do
 					Inc(DataLen, Length(state.Lines[iLine]^) + 1);
-				GetMem(Data, DataLen);
+
+				if DataLen > 0 then begin
+					GetMem(Data, DataLen);
+				end;
 
 				{ Update every bound object to have our possibly new pointer
 					and new DataLen. }
