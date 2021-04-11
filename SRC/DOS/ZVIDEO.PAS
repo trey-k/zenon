@@ -29,7 +29,8 @@ unit ZVideo;
 interface
 	type
 		TVideoLine = string[80];
-		TScreenCopyLine = string[160];
+		{ Was 160 in ZZT 3.2. }
+		TScreenCopyLine = string[100];
 		TVideoWriteTextProc = procedure(x, y, color: byte; text: TVideoLine);
 	const
 		PORT_CGA_MODE = $03D8;

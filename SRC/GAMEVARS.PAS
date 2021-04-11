@@ -50,6 +50,7 @@ interface
 		EditorPatternCount = 6;
 	type
 		TString50 = string[50];
+		TFilenameString = string[128];
 		TCoord = record
 			X: integer;
 			Y: integer;

@@ -34,8 +34,9 @@ interface
 	procedure HighScoresLoad;
 	procedure HighScoresSave;
 	procedure HighScoresDisplay(linePos: integer);
-	procedure EditorOpenEditTextWindow(var state: TTextWindowState; syntaxHighlighting: boolean);
-	procedure EditorEditHelpFile;
+	procedure EditorOpenEditTextWindow(var state: TTextWindowState; extension: TExtensionString;
+		syntaxHighlighting: boolean);
+	procedure EditorEditTextFile;
 	procedure HighScoresAdd(score: integer);
 	function EditorGetBoardName(boardId: integer; titleScreenIsNone: boolean): TString50;
 	function EditorSelectBoard(title: string; currentBoard: integer; titleScreenIsNone: boolean;
@@ -552,7 +553,7 @@ procedure EditorLoop;
 					FillChar(affectedStats, Board.StatCount + 1, false);
 				end;
 
-				EditorOpenEditTextWindow(state, true);
+				EditorOpenEditTextWindow(state, '.TXT', true);
 
 				for iLine := 1 to state.LineCount do
 					Inc(DataLen, Length(state.Lines[iLine]^) + 1);
@@ -1389,7 +1390,7 @@ procedure EditorLoop;
 						EditorFloodFill(cursorX, cursorY, Board.Tiles[cursorX][cursorY]);
 					end;
 					'!': begin
-						EditorEditHelpFile;
+						EditorEditTextFile;
 						EditorDrawSidebar;
 					end;
 					'T': begin
@@ -1501,7 +1502,8 @@ procedure HighScoresDisplay(linePos: integer);
 		TextWindowFree(state);
 	end;
 
-procedure EditorOpenEditTextWindow(var state: TTextWindowState; syntaxHighlighting: boolean);
+procedure EditorOpenEditTextWindow(var state: TTextWindowState; extension: TExtensionString;
+	syntaxHighlighting: boolean);
 	begin
 		SidebarClear;
 		VideoWriteText(61, 7, $30, ' Return ');
@@ -1524,27 +1526,40 @@ procedure EditorOpenEditTextWindow(var state: TTextWindowState; syntaxHighlighti
 		VideoWriteText(69, 18, $1F, ' Copy');
 		VideoWriteText(61, 19, $70, ' Ctrl-V ');
 		VideoWriteText(69, 19, $1F, ' Paste');
-		VideoWriteText(61, 21, $30, ' Esc ');
-		VideoWriteText(66, 21, $1F, ' Exit editor');
-		TextWindowEdit(state, syntaxHighlighting);
+		VideoWriteText(61, 21, $30, ' Ctrl-O ');
+		VideoWriteText(69, 21, $1F, ' Open file');
+		VideoWriteText(61, 22, $70, ' Ctrl-S ');
+		VideoWriteText(69, 22, $1F, ' Save file');
+		VideoWriteText(61, 23, $30, ' Esc ');
+		VideoWriteText(66, 23, $1F, ' Exit editor');
+		TextWindowEdit(state, extension, syntaxHighlighting);
 	end;
 
-procedure EditorEditHelpFile;
+procedure EditorEditTextFile;
 	var
 		textWindow: TTextWindowState;
-		filename: TString50;
+		filename: TFilenameString;
+		extension: TExtensionString;
+		i: integer;
 	begin
-		filename := '';
-		SidebarPromptString('File to edit', '.HLP', filename, PROMPT_ALPHANUM);
-		if Length(filename) <> 0 then begin
-			TextWindowOpenFile('*' + filename + '.HLP', textWindow, true);
-			textWindow.Title := 'Editing ' + filename;
-			TextWindowDrawOpen(textWindow);
-			EditorOpenEditTextWindow(textWindow, false);
-			TextWindowSaveFile(filename + '.HLP', textWindow);
-			TextWindowDrawClose(textWindow);
-			TextWindowFreeEdit(textWindow);
+		TextWindowInitState(textWindow);
+		TextWindowPromptFilename('File to open?', filename);
+
+		if Length(filename) <> 0 then
+			TextWindowOpenFile('*' + filename, textWindow, true, true);
+
+		extension := '.HLP';
+		for i := Length(filename) downto (Length(filename) - 4) do begin
+			if (i >= 1) and (filename[i] = '.') then begin
+				extension := Copy(filename, i, 4);
+			end;
 		end;
+
+		textWindow.Title := filename;
+		TextWindowDrawOpen(textWindow);
+		EditorOpenEditTextWindow(textWindow, extension, false);
+		TextWindowDrawClose(textWindow);
+		TextWindowFreeEdit(textWindow);
 	end;
 
 procedure HighScoresAdd(score: integer);

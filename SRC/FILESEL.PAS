@@ -29,15 +29,15 @@ unit FileSel;
 
 interface
 	uses GameVars;
-	function FileExists(name: string): boolean;
-	function FileSelect(title, extension: TString50): string;
+	function FileExists(name: TFilenameString): boolean;
+	function FileSelect(title, extension: TString50): TFilenameString;
 
 implementation
 uses Dos, TxtWind;
 const
 	PATH_PREVIEW_LENGTH = 24;
 
-function FileExists(name: string): boolean;
+function FileExists(name: TFilenameString): boolean;
 	var
 		f: file;
 	begin
@@ -51,18 +51,18 @@ function FileExists(name: string): boolean;
 		end;
 	end;
 
-function FileSelect(title, extension: TString50): string;
+function FileSelect(title, extension: TString50): TFilenameString;
 	var
 		textWindow: TTextWindowState;
 		fileSearchRec: SearchRec;
-		entryName: string;
+		entryName: TFilenameString;
 {$IFDEF WORLDDSC}
 		useWorldFileDesc: boolean;
 {$ENDIF}
 		searching: boolean;
 		i: integer;
-		curPath: string;
-		startPath: string;
+		curPath: TFilenameString;
+		startPath: TFilenameString;
 		previewPath: string[PATH_PREVIEW_LENGTH + 4];
 	begin
 		searching := true;
@@ -107,7 +107,7 @@ function FileSelect(title, extension: TString50): string;
 			FindFirst('*' + extension, AnyFile, fileSearchRec);
 			while DosError = 0 do begin
 				if (fileSearchRec.Attr and Directory) = 0 then begin
-					entryName := Copy(fileSearchRec.Name, 1, Length(fileSearchRec.name) - 4);
+					entryName := Copy(fileSearchRec.Name, 1, Length(fileSearchRec.name) - Length(extension));
 
 {$IFDEF WORLDDSC}
 					if useWorldFileDesc then

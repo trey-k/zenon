@@ -7,6 +7,11 @@ Legend:
 
 $< ClassicZoo dev >
 
++ Text/code editor improvements.
+  + Added support for opening and saving
+    files in the code editor.
+  + Added rudimentary text file editor.
+    Press [!] to open a text file.
 * Tweaks to editor behaviour: opening
   locked worlds now emits a warning only,
   opening savefiles always emits one.

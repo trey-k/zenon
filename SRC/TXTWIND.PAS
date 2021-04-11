@@ -24,10 +24,11 @@
 }
 
 {$I-}
+{$V-}
 unit TxtWind;
 
 interface
-	uses ZVideo;
+	uses GameVars, ZVideo;
 	const
 		MAX_TEXT_WINDOW_LINES = 1024;
 		MAX_RESOURCE_DATA_FILES = 24;
@@ -38,6 +39,7 @@ interface
 		MAX_LINE_LENGTH_EDIT = 58;
 		MAX_LINE_LENGTH = 50;
 	type
+		TExtensionString = string[4];
 		TTextWindowLine = string[MAX_LINE_LENGTH_EDIT];
 		TTextWindowState = record
 			Selectable: boolean;
@@ -47,7 +49,9 @@ interface
 			Hyperlink: string[20];
 			Title: TTextWindowLine;
 			LoadedFilename: string[50];
-			ScreenCopy: array[1 .. 25] of TScreenCopyLine;
+			{ This used to be 25. This messes with the stack layout, but hopefully
+			  nothing decides to exploit it. }
+			ScreenCopy: array[1 .. (TextWindowHeight + 1)] of TScreenCopyLine;
 		end;
 		TResourceDataHeader = record
 			Version: integer;
@@ -65,9 +69,10 @@ interface
 		TextWindowStrInnerSep: TVideoLine;
 		TextWindowStrInnerArrows: TVideoLine;
 		TextWindowRejected: boolean;
-		ResourceDataFileName: string[128];
+		ResourceDataFileName: TFilenameString;
 		ResourceDataHeader: TResourceDataHeader;
 		{ OrderPrintId: ^string; }
+	procedure TextWindowPromptFilename(title: TString50; var filename: TFilenameString);
 	procedure TextWindowInitState(var state: TTextWindowState);
 	procedure TextWindowDrawOpen(var state: TTextWindowState);
 	procedure TextWindowDrawClose(var state: TTextWindowState);
@@ -77,17 +82,17 @@ interface
 	procedure TextWindowFree(var state: TTextWindowState);
 	procedure TextWindowFreeEdit(var state: TTextWindowState);
 	procedure TextWindowSelect(var state: TTextWindowState; hyperlinkAsSelect, viewingFile: boolean);
-	procedure TextWindowEdit(var state: TTextWindowState; syntaxHighlighting: boolean);
-	procedure TextWindowOpenFile(filename: TTextWindowLine; var state: TTextWindowState; editing: boolean);
-	procedure TextWindowSaveFile(filename: TTextWindowLine; var state: TTextWindowState);
-	procedure TextWindowDisplayFile(filename, title: string);
+	procedure TextWindowEdit(var state: TTextWindowState; extension: TExtensionString; syntaxHighlighting: boolean);
+	procedure TextWindowOpenFile(filename: TFilenameString; var state: TTextWindowState; editing, showError: boolean);
+	procedure TextWindowSaveFile(filename: TFilenameString; var state: TTextWindowState);
+	procedure TextWindowDisplayFile(filename: TFilenameString; title: TTextWindowLine);
 	procedure TextWindowInit;
 
 implementation
 {$IFDEF PRINTTXT}
-uses Sounds, Input, Keys, Printer, Game;
+uses Sounds, Input, Keys, Printer, FileSel, Game;
 {$ELSE}
-uses Sounds, Input, Keys, Game;
+uses Sounds, Input, Keys, FileSel, Game;
 {$ENDIF}
 type
 	TTextWindowLineBuffer = array[1 .. MAX_TEXT_WINDOW_LINES] of ^TTextWindowLine;
@@ -99,6 +104,23 @@ function UpCaseString(input: string): string;
 		for i := 1 to Length(input) do
 			input[i] := UpCase(input[i]);
 		UpCaseString := input;
+	end;
+
+procedure TextWindowPromptFilename(title: TString50; var filename: TFilenameString);
+	begin
+		SidebarClearLine(3);
+		SidebarClearLine(4);
+		SidebarClearLine(5);
+
+		VideoWriteText(63, 3, $1F, title);
+		VideoWriteText(63, 5, $0F, '            ');
+
+		filename := '';
+		PromptString(63, 5, $1E, $0F, 12, 128, PROMPT_ANY, filename);
+
+		SidebarClearLine(3);
+		SidebarClearLine(4);
+		SidebarClearLine(5);
 	end;
 
 procedure TextWindowInitState(var state: TTextWindowState);
@@ -342,7 +364,7 @@ procedure TextWindowSelect(var state: TTextWindowState; hyperlinkAsSelect, viewi
 						if pointerStr[1] = '-' then begin
 							Delete(pointerStr, 1, 1);
 							TextWindowFree(state);
-							TextWindowOpenFile(pointerStr, state, false);
+							TextWindowOpenFile(pointerStr, state, false, false);
 							if state.LineCount = 0 then
 								exit
 							else begin
@@ -412,7 +434,7 @@ procedure TextWindowSelect(var state: TTextWindowState; hyperlinkAsSelect, viewi
 		end;
 	end;
 
-procedure TextWindowEdit(var state: TTextWindowState; syntaxHighlighting: boolean);
+procedure TextWindowEdit(var state: TTextWindowState; extension: TExtensionString; syntaxHighlighting: boolean);
 	var
 		newLinePos: integer;
 		insertMode: boolean;
@@ -425,6 +447,7 @@ procedure TextWindowEdit(var state: TTextWindowState; syntaxHighlighting: boolea
 		copyBufferLines: integer;
 		forceFullRedraw: boolean;
 		shiftHeld: boolean;
+		textFilename: TFilenameString;
 	procedure DrawLineEdit(lpos: integer);
 		var
 			i, lineX, lineY: integer;
@@ -729,6 +752,23 @@ procedure TextWindowEdit(var state: TTextWindowState; syntaxHighlighting: boolea
 						end;
 						forceFullRedraw := true;
 					end;
+					KEY_CTRL_O: begin
+						textFilename := FileSelect('Text Files', extension);
+						if (InputKeyPressed <> KEY_ESCAPE) and (Length(textFilename) <> 0) then begin
+							TextWindowFreeEdit(state);
+							TextWindowOpenFile('*' + textFilename + extension, state, true, true);
+							forceFullRedraw := true;
+						end;
+						InputKeyPressed := #0;
+					end;
+					KEY_CTRL_S: begin
+						textFilename := '';
+						SidebarPromptString('Filename', extension, textFilename, PROMPT_ALPHANUM);
+						if Length(textFilename) > 0 then begin
+							TextWindowSaveFile(textFilename + extension, state);
+						end;
+						InputKeyPressed := #0;
+					end;
 				else
 					if (InputKeyPressed >= #32) and (InputKeyPressed < #127) then
 						InsertCharacter(InputKeyPressed);
@@ -762,7 +802,7 @@ procedure TextWindowEdit(var state: TTextWindowState; syntaxHighlighting: boolea
 		FreeCopyBuffer;
 	end;
 
-procedure TextWindowOpenFile(filename: TTextWindowLine; var state: TTextWindowState; editing: boolean);
+procedure TextWindowOpenFile(filename: TFilenameString; var state: TTextWindowState; editing, showError: boolean);
 	var
 		f: file;
 		tf: text;
@@ -811,6 +851,13 @@ procedure TextWindowOpenFile(filename: TTextWindowLine; var state: TTextWindowSt
 			EntryPosFoundResData:
 
 			if entryPos <= 0 then begin
+			{$IFDEF EDITOR}
+				if showError and (not FileExists(filename)) then begin
+					VideoWriteText(63, 4, $1E, 'File not found!');
+					PauseOnError;
+					exit;
+				end;
+			{$ENDIF}
 				Assign(tf, filename);
 				Reset(tf);
 				while (IOResult = 0) and (not Eof(tf)) do begin
@@ -852,7 +899,7 @@ procedure TextWindowOpenFile(filename: TTextWindowLine; var state: TTextWindowSt
 		end;
 	end;
 
-procedure TextWindowSaveFile(filename: TTextWindowLine; var state: TTextWindowState);
+procedure TextWindowSaveFile(filename: TFilenameString; var state: TTextWindowState);
 	var
 		f: text;
 		i: integer;
@@ -860,12 +907,12 @@ procedure TextWindowSaveFile(filename: TTextWindowLine; var state: TTextWindowSt
 	begin
 		Assign(f, filename);
 		Rewrite(f);
-		if IOResult <> 0 then goto OnError;
+		if DisplayIOError then goto OnError;
 
 		with state do begin
 			for i := 1 to LineCount do begin
 				WriteLn(f, Lines[i]^);
-				if IOResult <> 0 then goto OnError;
+				if DisplayIOError then goto OnError;
 			end;
 		end;
 
@@ -873,12 +920,12 @@ procedure TextWindowSaveFile(filename: TTextWindowLine; var state: TTextWindowSt
 		Close(f);
 	end;
 
-procedure TextWindowDisplayFile(filename, title: string);
+procedure TextWindowDisplayFile(filename: TFilenameString; title: TTextWindowLine);
 	var
 		state: TTextWindowState;
 	begin
 		state.Title := title;
-		TextWindowOpenFile(filename, state, false);
+		TextWindowOpenFile(filename, state, false, false);
 		state.Selectable := false;
 		if state.LineCount > 0 then begin
 			TextWindowDrawOpen(state);
