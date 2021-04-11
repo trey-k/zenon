@@ -225,6 +225,7 @@ begin
 {$ENDIF}
 		SavedGameFileName := 'SAVED';
 		SavedBoardFileName := 'TEMP';
+		ResetCachedLinePos;
 		WorldCreate;
 
 		GameTitleLoop;

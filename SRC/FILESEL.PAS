@@ -30,10 +30,10 @@ unit FileSel;
 interface
 	uses GameVars;
 	function FileExists(name: TFilenameString): boolean;
-	function FileSelect(title, extension: TString50): TFilenameString;
+	function FileSelect(title, extension: TString50; var cachedLinePos: integer): TFilenameString;
 
 implementation
-uses Dos, TxtWind;
+uses Dos, Game, TxtWind;
 const
 	PATH_PREVIEW_LENGTH = 24;
 
@@ -51,7 +51,7 @@ function FileExists(name: TFilenameString): boolean;
 		end;
 	end;
 
-function FileSelect(title, extension: TString50): TFilenameString;
+function FileSelect(title, extension: TString50; var cachedLinePos: integer): TFilenameString;
 	var
 		textWindow: TTextWindowState;
 		fileSearchRec: SearchRec;
@@ -75,7 +75,6 @@ function FileSelect(title, extension: TString50): TFilenameString;
 
 		while searching do begin
 			TextWindowInitState(textWindow);
-
 {$IFDEF SUBDIRS}
 			GetDir(0, curPath);
 			if Length(curPath) > PATH_PREVIEW_LENGTH then
@@ -121,6 +120,8 @@ function FileSelect(title, extension: TString50): TFilenameString;
 				FindNext(fileSearchRec);
 			end;
 
+			textWindow.LinePos := cachedLinePos;
+
 			TextWindowAppend(textWindow, 'Exit');
 
 			TextWindowDrawOpen(textWindow);
@@ -144,6 +145,10 @@ function FileSelect(title, extension: TString50): TFilenameString;
 					entryName := Copy(entryName, 1, Pos(' ', entryName) - 1);
 				FileSelect := entryName;
 				searching := false;
+
+				if startPath <> curPath then
+					ResetCachedLinePos;
+				cachedLinePos := textWindow.LinePos;
 			end;
 
 			TextWindowFree(textWindow);

@@ -246,6 +246,12 @@ interface
 {$IFDEF DEBUGWND}
 		DebugCompatEnabled: boolean;
 {$ENDIF}
+{$IFDEF EDITOR}
+		FileBoardCachedLinePos: integer;
+		FileTextCachedLinePos: integer;
+{$ENDIF}
+		FileWorldCachedLinePos: integer;
+		FileSaveCachedLinePos: integer;
 	const
 		E_EMPTY = 0;
 		E_BOARD_EDGE = 1;

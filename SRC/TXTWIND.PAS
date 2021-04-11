@@ -86,7 +86,9 @@ interface
 	procedure TextWindowFree(var state: TTextWindowState);
 	procedure TextWindowFreeEdit(var state: TTextWindowState);
 	procedure TextWindowSelect(var state: TTextWindowState; flags: byte);
+{$IFDEF EDITOR}
 	procedure TextWindowEdit(var state: TTextWindowState; extension: TExtensionString; syntaxHighlighting: boolean);
+{$ENDIF}
 	procedure TextWindowOpenFile(filename: TFilenameString; var state: TTextWindowState; editing, showError: boolean);
 	procedure TextWindowSaveFile(filename: TFilenameString; var state: TTextWindowState);
 	procedure TextWindowDisplayFile(filename: TFilenameString; title: TTextWindowLine);
@@ -441,6 +443,7 @@ procedure TextWindowSelect(var state: TTextWindowState; flags: byte);
 		end;
 	end;
 
+{$IFDEF EDITOR}
 procedure TextWindowEdit(var state: TTextWindowState; extension: TExtensionString; syntaxHighlighting: boolean);
 	var
 		newLinePos: integer;
@@ -760,7 +763,7 @@ procedure TextWindowEdit(var state: TTextWindowState; extension: TExtensionStrin
 						forceFullRedraw := true;
 					end;
 					KEY_CTRL_O: begin
-						textFilename := FileSelect('Text Files', extension);
+						textFilename := FileSelect('Text Files', extension, FileTextCachedLinePos);
 						if (InputKeyPressed <> KEY_ESCAPE) and (Length(textFilename) <> 0) then begin
 							TextWindowFreeEdit(state);
 							TextWindowOpenFile('*' + textFilename + extension, state, true, true);
@@ -808,6 +811,7 @@ procedure TextWindowEdit(var state: TTextWindowState; extension: TExtensionStrin
 		end;
 		FreeCopyBuffer;
 	end;
+{$ENDIF}
 
 procedure TextWindowOpenFile(filename: TFilenameString; var state: TTextWindowState; editing, showError: boolean);
 	var

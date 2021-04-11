@@ -34,9 +34,11 @@ interface
 	procedure HighScoresLoad;
 	procedure HighScoresSave;
 	procedure HighScoresDisplay(linePos: integer);
+{$IFDEF EDITOR}
 	procedure EditorOpenEditTextWindow(var state: TTextWindowState; extension: TExtensionString;
 		syntaxHighlighting: boolean);
 	procedure EditorEditTextFile;
+{$ENDIF}
 	procedure HighScoresAdd(score: integer);
 	function EditorGetBoardName(boardId: integer; titleScreenIsNone: boolean): TString50;
 	function EditorSelectBoard(title: string; currentBoard: integer; titleScreenIsNone: boolean;
@@ -746,7 +748,7 @@ procedure EditorLoop;
 			SidebarPromptChoice(true, 3, 'Transfer board:', 'Import Export', i);
 			if InputKeyPressed <> KEY_ESCAPE then begin
 				if i = 0 then begin
-					SavedBoardFileName := FileSelect('ZZT Boards', '.BRD');
+					SavedBoardFileName := FileSelect('ZZT Boards', '.BRD', FileBoardCachedLinePos);
 					if (InputKeyPressed <> KEY_ESCAPE) and (Length(SavedBoardFileName) <> 0) then begin
 						Assign(f, SavedBoardFileName + '.BRD');
 						Reset(f, 1);
@@ -1529,6 +1531,7 @@ procedure HighScoresDisplay(linePos: integer);
 		TextWindowFree(state);
 	end;
 
+{$IFDEF EDITOR}
 procedure EditorOpenEditTextWindow(var state: TTextWindowState; extension: TExtensionString;
 	syntaxHighlighting: boolean);
 	begin
@@ -1588,6 +1591,7 @@ procedure EditorEditTextFile;
 		TextWindowDrawClose(textWindow);
 		TextWindowFreeEdit(textWindow);
 	end;
+{$ENDIF}
 
 procedure HighScoresAdd(score: integer);
 	var
