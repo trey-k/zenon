@@ -286,9 +286,7 @@ procedure ElementCentipedeHeadTick(statId: integer);
 							end;
 						end;
 
-						if (Follower > 0)
-							and (Board.Tiles[Board.Stats[Follower].X][Board.Stats[Follower].Y].Element = E_CENTIPEDE_SEGMENT)
-						then begin
+						if Follower > 0 then begin
 							Board.Stats[Follower].Leader := statId;
 							Board.Stats[Follower].P1 := P1;
 							Board.Stats[Follower].P2 := P2;
