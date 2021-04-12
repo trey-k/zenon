@@ -105,7 +105,6 @@ procedure EditorCopyStat(var fromStat: TStat; var toStat: TStat);
 procedure EditorLoop;
 	var
 		selectedCategory: integer;
-		elemMenuColor: integer;
 		wasModified: boolean;
 		editorExitRequested: boolean;
 		drawMode: TDrawMode;
@@ -1027,6 +1026,36 @@ procedure EditorLoop;
 			end;
 		end;
 
+	procedure EditorPlaceElement(newElem, newColor: byte);
+		var
+			statSetting: TEditorStatSetting;
+		begin
+			if ElementDefs[newElem].Cycle = -1 then begin
+				if EditorPrepareModifyTile(cursorX, cursorY) then
+					EditorSetAndCopyTile(cursorX, cursorY, newElem, newColor);
+			end else begin
+				if EditorPrepareModifyStatAtCursor then begin
+					AddStat(cursorX, cursorY, newElem, newColor,
+						ElementDefs[newElem].Cycle, StatTemplateDefault);
+					with Board.Stats[Board.StatCount] do begin
+						statSetting := World.EditorStatSettings[newElem];
+						if Length(ElementDefs[newElem].Param1Name) <> 0 then
+							P1 := statSetting.P1;
+						if Length(ElementDefs[newElem].Param2Name) <> 0 then
+							P2 := statSetting.P2;
+						if Length(ElementDefs[newElem].ParamDirName) <> 0 then begin
+							StepX := statSetting.StepX;
+							StepY := statSetting.StepY;
+						end;
+						if Length(ElementDefs[newElem].ParamBoardName) <> 0 then
+							P3 := statSetting.P3;
+					end;
+					EditorEditStat(Board.StatCount);
+					if InputKeyPressed = KEY_ESCAPE then
+						RemoveStat(Board.StatCount);
+				end;
+			end;
+		end;
 
 	procedure EditorFloodFill(x, y: integer; from: TTile);
 		var
@@ -1264,14 +1293,29 @@ procedure EditorLoop;
 						for i := 3 to 20 do
 							SidebarClearLine(i);
 						VideoWriteText(65, 4, $1E, 'Advanced:');
+
 						VideoWriteText(61, 5, $70, ' E ');
 						VideoWriteText(65, 5, $1F, 'Board edge');
 						VideoWriteText(78, 5, cursorColor, 'E');
+
+						VideoWriteText(61, 6, $30, ' H ');
+						VideoWriteText(65, 6, $1F, 'Hori. blink');
+						VideoWriteText(78, 6, cursorColor, #205);
+
+						VideoWriteText(61, 7, $70, ' V ');
+						VideoWriteText(65, 7, $1F, 'Vert. blink');
+						VideoWriteText(78, 7, cursorColor, #186);
+
 						InputReadWaitKey;
 						case UpCase(InputKeyPressed) of
 							'E': begin
-								if EditorPrepareModifyTile(cursorX, cursorY) then
-									EditorSetAndCopyTile(cursorX, cursorY, E_BOARD_EDGE, cursorColor);
+								EditorPlaceElement(E_BOARD_EDGE, cursorColor);
+							end;
+							'H': begin
+								EditorPlaceElement(E_BLINK_RAY_EW, cursorColor);
+							end;
+							'V': begin
+								EditorPlaceElement(E_BLINK_RAY_NS, cursorColor);
 							end;
 						end;
 						EditorDrawSidebar;
@@ -1310,33 +1354,7 @@ procedure EditorLoop;
 									if EditorPrepareModifyTile(cursorX, cursorY) then
 										MoveStat(0, cursorX, cursorY);
 								end else begin
-									elemMenuColor := EditorGetDrawingColor(iElem);
-
-									if ElementDefs[iElem].Cycle = -1 then begin
-										if EditorPrepareModifyTile(cursorX, cursorY) then
-											EditorSetAndCopyTile(cursorX, cursorY, iElem, elemMenuColor);
-									end else begin
-										if EditorPrepareModifyStatAtCursor then begin
-											AddStat(cursorX, cursorY, iElem, elemMenuColor,
-
-												ElementDefs[iElem].Cycle, StatTemplateDefault);
-											with Board.Stats[Board.StatCount] do begin
-												if Length(ElementDefs[iElem].Param1Name) <> 0 then
-													P1 := World.EditorStatSettings[iElem].P1;
-												if Length(ElementDefs[iElem].Param2Name) <> 0 then
-													P2 := World.EditorStatSettings[iElem].P2;
-												if Length(ElementDefs[iElem].ParamDirName) <> 0 then begin
-													StepX := World.EditorStatSettings[iElem].StepX;
-													StepY := World.EditorStatSettings[iElem].StepY;
-												end;
-												if Length(ElementDefs[iElem].ParamBoardName) <> 0 then
-													P3 := World.EditorStatSettings[iElem].P3;
-											end;
-											EditorEditStat(Board.StatCount);
-											if InputKeyPressed = KEY_ESCAPE then
-												RemoveStat(Board.StatCount);
-										end;
-									end;
+									EditorPlaceElement(iElem, EditorGetDrawingColor(iElem));
 								end;
 							end;
 						end;
