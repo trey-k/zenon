@@ -35,7 +35,7 @@ interface
 		PROMPT_ANY = 2;
 	procedure SidebarClearLine(y: integer);
 	procedure SidebarClear;
-	function EnsureIoTmpBufSize(size: integer): integer; { 1 if IoTmpBuf was wiped, 2 if the size is too large. }
+	function EnsureIoTmpBufSize(newSize: word): integer; { 1 if IoTmpBuf was wiped, 2 if the size is too large. }
 	procedure AdvancePointer(var address: pointer; count: integer);
 	procedure BoardClose;
 	procedure BoardOpen(boardId: integer);
@@ -146,23 +146,21 @@ procedure SidebarClear;
 			SidebarClearLine(i);
 	end;
 
-function EnsureIoTmpBufSize(size: integer): integer;
+function EnsureIoTmpBufSize(newSize: word): integer;
 	var
-		oldSize: integer;
+		oldSize: word;
 	begin
-		if size > IO_BUFFER_MAXIMUM_SIZE then begin
+		if newSize > IO_BUFFER_MAXIMUM_SIZE then begin
 			EnsureIoTmpBufSize := 2;
 			exit;
 		end;
 		oldSize := IoTmpBufSize;
 		EnsureIoTmpBufSize := 0;
-		while IoTmpBufSize < size do
+		while IoTmpBufSize < newSize do
 			Inc(IoTmpBufSize, IO_BUFFER_SIZE_INCREMENT);
 		if oldSize <> IoTmpBufSize then begin
 			FreeMem(IoTmpBuf, oldSize);
-			oldSize := IoTmpBufSize;
-			IoTmpBufSize := 0;
-			GetMem(IoTmpBuf, oldSize);
+			GetMem(IoTmpBuf, IoTmpBufSize);
 			EnsureIoTmpBufSize := 1;
 		end;
 	end;

@@ -186,7 +186,7 @@ interface
 		MessageGemNotShown: boolean;
 		MessageEnergizerNotShown: boolean;
 
-		IoTmpBufSize: integer; { Borrowed: unkVar_4ABA[0..1] }
+		IoTmpBufSize: word; { Borrowed: unkVar_4ABA[0..1] }
 		unkVar_4ABA: array[2 .. 14] of byte;
 
 		GameTitleExitRequested: boolean;
