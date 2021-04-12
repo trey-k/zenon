@@ -1232,8 +1232,9 @@ procedure EditorLoop;
 							end;
 							wasModified := false;
 							EditorDrawRefresh;
+						end else begin
+							EditorDrawSidebar;
 						end;
-						EditorDrawSidebar;
 					end;
 					'S': begin
 						GameWorldSave('Save world:', LoadedGameFileName, '.ZZT');
@@ -1266,6 +1267,20 @@ procedure EditorLoop;
 					'Q', KEY_ESCAPE: begin
 						editorExitRequested := true;
 					end;
+					KEY_PAGE_UP: begin
+						i := World.Info.CurrentBoard - 1;
+						if i >= 0 then begin
+							BoardChange(i);
+							EditorDrawRefresh;
+						end;
+					end;
+					KEY_PAGE_DOWN: begin
+						i := World.Info.CurrentBoard + 1;
+						if i <= World.BoardCount then begin
+							BoardChange(i);
+							EditorDrawRefresh;
+						end;
+					end;
 					'B': begin
 						i := EditorSelectBoard('Switch boards', World.Info.CurrentBoard, false, false);
 						if (InputKeyPressed <> KEY_ESCAPE) then begin
@@ -1274,8 +1289,9 @@ procedure EditorLoop;
 									EditorAppendBoard;
 							BoardChange(i);
 							EditorDrawRefresh;
+						end else begin
+							EditorDrawSidebar;
 						end;
-						EditorDrawSidebar;
 					end;
 					'?': begin
 						GameDebugPrompt;
