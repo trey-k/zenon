@@ -251,20 +251,26 @@ procedure ElementCentipedeHeadTick(statId: integer);
 				Board.Tiles[X][Y].Element := E_CENTIPEDE_SEGMENT;
 				Leader := -1;
 				while Board.Stats[statId].Follower > 0 do begin
-					tmp := Board.Stats[statId].Follower;
-					Board.Stats[statId].Follower := Board.Stats[statId].Leader;
-					Board.Stats[statId].Leader := tmp;
+					with Board.Stats[statId] do begin
+						tmp := Follower;
+						Follower := Leader;
+						Leader := tmp;
+					end;
 					statId := tmp;
 				end;
-				Board.Stats[statId].Follower := Board.Stats[statId].Leader;
-				Board.Stats[statId].Leader := -1;
-				Board.Tiles[Board.Stats[statId].X][Board.Stats[statId].Y].Element := E_CENTIPEDE_HEAD;
+				with Board.Stats[statId] do begin
+					Follower := Leader;
+					Leader := -1;
+					Board.Tiles[X][Y].Element := E_CENTIPEDE_HEAD;
+				end;
 			end else if Board.Tiles[X + StepX][Y + StepY].Element = E_PLAYER then begin
 				if Follower > 0 then begin
-					Board.Tiles[Board.Stats[Follower].X][Board.Stats[Follower].Y].Element := E_CENTIPEDE_HEAD;
 					Board.Stats[Follower].StepX := StepX;
 					Board.Stats[Follower].StepY := StepY;
-					BoardDrawTile(Board.Stats[Follower].X, Board.Stats[Follower].Y);
+					with Board.Stats[Follower] do begin
+						Board.Tiles[X][Y].Element := E_CENTIPEDE_HEAD;
+						BoardDrawTile(X, Y);
+					end;
 				end;
 				BoardAttack(statId, X + StepX, Y + StepY);
 			end else begin
@@ -293,16 +299,18 @@ procedure ElementCentipedeHeadTick(statId: integer);
 						end;
 
 						if Follower > 0 then begin
-							Board.Stats[Follower].Leader := statId;
 							Board.Stats[Follower].P1 := P1;
 							Board.Stats[Follower].P2 := P2;
-							Board.Stats[Follower].StepX := tx - Board.Stats[Follower].X;
-							Board.Stats[Follower].StepY := ty - Board.Stats[Follower].Y;
+							with Board.Stats[Follower] do begin
+								Leader := statId;
+								StepX := tx - X;
+								StepY := ty - Y;
+							end;
 							MoveStat(Follower, tx, ty);
 						end;
 						statId := Follower;
 					end;
-				until statId = -1;
+				until statId < 0;
 			end;
 		end;
 	end;
