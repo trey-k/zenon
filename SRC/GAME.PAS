@@ -56,7 +56,6 @@ interface
 	procedure SidebarPromptString(prompt: string; extension: TString50; var filename: string; promptMode: byte);
 	procedure PauseOnError;
 	function DisplayIOError: boolean;
-	function DisplayEMSError(fatal: boolean): boolean;
 	procedure WorldUnload;
 	function WorldLoad(filename, extension: TString50; titleOnly: boolean): boolean;
 	procedure WorldSave(filename, extension: TString50);
@@ -858,38 +857,6 @@ function DisplayIOError: boolean;
 		TextWindowFree(textWindow);
 	end;
 
-function DisplayEMSError(fatal: boolean): boolean;
-	var
-		errorNumStr: string[50];
-		textWindow: TTextWindowState;
-	begin
-		if EMSError = 0 then begin
-			DisplayEMSError := false;
-			exit;
-		end;
-
-		DisplayEMSError := true;
-
-		Str(EMSError, textWindow.Title);
-		if fatal then
-			textWindow.Title := 'Fatal Error # ' + textWindow.Title
-		else
-			textWindow.Title := 'Error # ' + textWindow.Title;
-		TextWindowInitState(textWindow);
-		TextWindowAppend(textWindow, '$Memory Error: ');
-		TextWindowAppend(textWindow, '');
-		TextWindowAppend(textWindow, 'This may be caused by running');
-		TextWindowAppend(textWindow, 'out of free memory space.');
-
-		TextWindowDrawOpen(textWindow);
-		TextWindowSelect(textWindow, false, false);
-		TextWindowDrawClose(textWindow);
-		TextWindowFree(textWindow);
-
-		if fatal then
-			RunError(203);
-	end;
-
 procedure WorldUnload;
 	var
 		i: integer;
@@ -1418,7 +1385,6 @@ function Difference(a, b: integer): integer;
 procedure GameUpdateSidebar;
 	var
 		numStr: string[8];
-		numStrEms: string[8];
 		i: integer;
 	begin
 		if GameStateElement = E_PLAYER then begin
