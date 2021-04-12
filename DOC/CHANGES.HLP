@@ -5,11 +5,22 @@ Legend:
 + Additions         * Changes
 - Removals          / Bugfixes
 
-$< ClassicZoo dev >
+$< ClassicZoo 4.11 >
 
-* Tweaks to editor behaviour: opening
-  locked worlds now emits a warning only,
-  opening savefiles always emits one.
++ Text/code editor improvements.
+  + Added support for opening and saving
+    files in the code editor.
+  + Added rudimentary text file editor.
+    Press [!] to open a text file.
+* The editor's board selection menu will
+  now ignore hyperlinks. (Useful for
+  "Super Lock" affected worlds.)
+* Tweaks to editor behaviour.
+  . Pressing CTRL+V will now ask for
+    confirmation before pasting.
+  . Opening locked worlds now emits only
+    a warning, while opening savefiles
+    always emits one.
 / The engine will now try to gracefully
   recover the last board of "Super Lock"
   affected worlds.

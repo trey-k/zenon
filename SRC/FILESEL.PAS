@@ -29,15 +29,15 @@ unit FileSel;
 
 interface
 	uses GameVars;
-	function FileExists(name: string): boolean;
-	function FileSelect(title, extension: TString50): string;
+	function FileExists(name: TFilenameString): boolean;
+	function FileSelect(title, extension: TString50; var cachedLinePos: integer): TFilenameString;
 
 implementation
-uses Dos, TxtWind;
+uses Dos, Game, TxtWind;
 const
 	PATH_PREVIEW_LENGTH = 24;
 
-function FileExists(name: string): boolean;
+function FileExists(name: TFilenameString): boolean;
 	var
 		f: file;
 	begin
@@ -51,18 +51,18 @@ function FileExists(name: string): boolean;
 		end;
 	end;
 
-function FileSelect(title, extension: TString50): string;
+function FileSelect(title, extension: TString50; var cachedLinePos: integer): TFilenameString;
 	var
 		textWindow: TTextWindowState;
 		fileSearchRec: SearchRec;
-		entryName: string;
+		entryName: TFilenameString;
 {$IFDEF WORLDDSC}
 		useWorldFileDesc: boolean;
 {$ENDIF}
 		searching: boolean;
 		i: integer;
-		curPath: string;
-		startPath: string;
+		curPath: TFilenameString;
+		startPath: TFilenameString;
 		previewPath: string[PATH_PREVIEW_LENGTH + 4];
 	begin
 		searching := true;
@@ -75,7 +75,6 @@ function FileSelect(title, extension: TString50): string;
 
 		while searching do begin
 			TextWindowInitState(textWindow);
-
 {$IFDEF SUBDIRS}
 			GetDir(0, curPath);
 			if Length(curPath) > PATH_PREVIEW_LENGTH then
@@ -107,7 +106,7 @@ function FileSelect(title, extension: TString50): string;
 			FindFirst('*' + extension, AnyFile, fileSearchRec);
 			while DosError = 0 do begin
 				if (fileSearchRec.Attr and Directory) = 0 then begin
-					entryName := Copy(fileSearchRec.Name, 1, Length(fileSearchRec.name) - 4);
+					entryName := Copy(fileSearchRec.Name, 1, Length(fileSearchRec.name) - Length(extension));
 
 {$IFDEF WORLDDSC}
 					if useWorldFileDesc then
@@ -121,10 +120,12 @@ function FileSelect(title, extension: TString50): string;
 				FindNext(fileSearchRec);
 			end;
 
+			textWindow.LinePos := cachedLinePos;
+
 			TextWindowAppend(textWindow, 'Exit');
 
 			TextWindowDrawOpen(textWindow);
-			TextWindowSelect(textWindow, true, false);
+			TextWindowSelect(textWindow, TWS_HYPERLINK_AS_SELECT);
 			TextWindowDrawClose(textWindow);
 
 			if (textWindow.LinePos = textWindow.LineCount) or TextWindowRejected then begin
@@ -144,6 +145,10 @@ function FileSelect(title, extension: TString50): string;
 					entryName := Copy(entryName, 1, Pos(' ', entryName) - 1);
 				FileSelect := entryName;
 				searching := false;
+
+				if startPath <> curPath then
+					ResetCachedLinePos;
+				cachedLinePos := textWindow.LinePos;
 			end;
 
 			TextWindowFree(textWindow);

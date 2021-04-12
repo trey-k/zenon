@@ -80,7 +80,7 @@ begin
 
 	SoundQueue(5, #80#10);
 	TextWindowDrawOpen(textWindow);
-	TextWindowSelect(textWindow, false, false);
+	TextWindowSelect(textWindow, 0);
 	TextWindowDrawClose(textWindow);
 	TextWindowFree(textWindow);
 end;
@@ -100,7 +100,7 @@ begin
 	TextWindowAppend(textWindow, '$(' + yStr + '/' + xStr + ' bytes)');
 
 	TextWindowDrawOpen(textWindow);
-	TextWindowSelect(textWindow, false, false);
+	TextWindowSelect(textWindow, 0);
 	TextWindowDrawClose(textWindow);
 	TextWindowFree(textWindow);
 end;

@@ -86,6 +86,7 @@ interface
 	procedure BoardPassageTeleport(x, y: integer);
 	procedure GameDebugPrompt;
 	procedure GameTitleLoop;
+	procedure ResetCachedLinePos;
 const
 	LFSR11_START = 42;
 	ProgressAnimColors: array[0 .. 7] of byte = ($14, $1C, $15, $1D, $16, $1E, $17, $1F);
@@ -293,7 +294,7 @@ procedure DebugBoardIllegalElements;
 					end;
 		if count > 0 then begin
 			TextWindowDrawOpen(textWindow);
-			TextWindowSelect(textWindow, false, false);
+			TextWindowSelect(textWindow, 0);
 			TextWindowDrawClose(textWindow);
 			TextWindowFree(textWindow);
 		end;
@@ -852,7 +853,7 @@ function DisplayIOError: boolean;
 		TextWindowAppend(textWindow, 'for saving the game!');
 
 		TextWindowDrawOpen(textWindow);
-		TextWindowSelect(textWindow, false, false);
+		TextWindowSelect(textWindow, 0);
 		TextWindowDrawClose(textWindow);
 		TextWindowFree(textWindow);
 	end;
@@ -1034,7 +1035,6 @@ procedure GameWorldSave(prompt: TString50; var filename: TString50; extension: T
 
 function GameWorldLoad(extension: TString50): boolean;
 	var
-		title: TString50;
 		entryName: string;
 	begin
 		{ As directory listings can take up a lot of memory, }
@@ -1042,13 +1042,12 @@ function GameWorldLoad(extension: TString50): boolean;
 		{ unloaded later anyway. - asie }
 		FreeMem(IoTmpBuf, IoTmpBufSize);
 
-		if extension = '.ZZT' then
-			title := 'ZZT Worlds'
-		else
-			title := 'Saved Games';
 		GameWorldLoad := false;
+		if extension = '.ZZT' then
+			entryName := FileSelect('ZZT Worlds', extension, FileWorldCachedLinePos)
+		else
+			entryName := FileSelect('Saved Games', extension, FileSaveCachedLinePos);
 
-		entryName := FileSelect(title, extension);
 		GetMem(IoTmpBuf, IoTmpBufSize);
 
 		if Length(entryName) > 0 then begin
@@ -1737,7 +1736,7 @@ procedure DebugPromptFlagWindow;
 		end;
 
 		TextWindowDrawOpen(textWindow);
-		TextWindowSelect(textWindow, false, false);
+		TextWindowSelect(textWindow, 0);
 		TextWindowDrawClose(textWindow);
 		TextWindowFree(textWindow);
 	end;
@@ -2181,6 +2180,16 @@ procedure GameTitleLoop;
 				end;
 			until boardChanged or GameTitleExitRequested;
 		until GameTitleExitRequested;
+	end;
+
+procedure ResetCachedLinePos;
+	begin
+{$IFDEF EDITOR}
+		FileBoardCachedLinePos := 1;
+		FileTextCachedLinePos := 1;
+{$ENDIF}
+		FileWorldCachedLinePos := 1;
+		FileSaveCachedLinePos := 1;
 	end;
 
 end.

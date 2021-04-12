@@ -50,6 +50,7 @@ interface
 		EditorPatternCount = 6;
 	type
 		TString50 = string[50];
+		TFilenameString = string[128];
 		TCoord = record
 			X: integer;
 			Y: integer;
@@ -245,6 +246,12 @@ interface
 {$IFDEF DEBUGWND}
 		DebugCompatEnabled: boolean;
 {$ENDIF}
+{$IFDEF EDITOR}
+		FileBoardCachedLinePos: integer;
+		FileTextCachedLinePos: integer;
+{$ENDIF}
+		FileWorldCachedLinePos: integer;
+		FileSaveCachedLinePos: integer;
 	const
 		E_EMPTY = 0;
 		E_BOARD_EDGE = 1;

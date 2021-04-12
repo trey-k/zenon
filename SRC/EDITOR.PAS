@@ -34,8 +34,11 @@ interface
 	procedure HighScoresLoad;
 	procedure HighScoresSave;
 	procedure HighScoresDisplay(linePos: integer);
-	procedure EditorOpenEditTextWindow(var state: TTextWindowState; syntaxHighlighting: boolean);
-	procedure EditorEditHelpFile;
+{$IFDEF EDITOR}
+	procedure EditorOpenEditTextWindow(var state: TTextWindowState; extension: TExtensionString;
+		syntaxHighlighting: boolean);
+	procedure EditorEditTextFile;
+{$ENDIF}
 	procedure HighScoresAdd(score: integer);
 	function EditorGetBoardName(boardId: integer; titleScreenIsNone: boolean): TString50;
 	function EditorSelectBoard(title: string; currentBoard: integer; titleScreenIsNone: boolean;
@@ -477,7 +480,7 @@ procedure EditorLoop;
 
 				state.Lines[10]^ := '          Quit!';
 
-				TextWindowSelect(state, false, false);
+				TextWindowSelect(state, 0);
 				if (InputKeyPressed = KEY_ENTER) and (state.LinePos <> 10) then begin
 					wasModified := true;
 					case state.LinePos of
@@ -552,11 +555,14 @@ procedure EditorLoop;
 					FillChar(affectedStats, Board.StatCount + 1, false);
 				end;
 
-				EditorOpenEditTextWindow(state, true);
+				EditorOpenEditTextWindow(state, '.TXT', true);
 
 				for iLine := 1 to state.LineCount do
 					Inc(DataLen, Length(state.Lines[iLine]^) + 1);
-				GetMem(Data, DataLen);
+
+				if DataLen > 0 then begin
+					GetMem(Data, DataLen);
+				end;
 
 				{ Update every bound object to have our possibly new pointer
 					and new DataLen. }
@@ -742,7 +748,7 @@ procedure EditorLoop;
 			SidebarPromptChoice(true, 3, 'Transfer board:', 'Import Export', i);
 			if InputKeyPressed <> KEY_ESCAPE then begin
 				if i = 0 then begin
-					SavedBoardFileName := FileSelect('ZZT Boards', '.BRD');
+					SavedBoardFileName := FileSelect('ZZT Boards', '.BRD', FileBoardCachedLinePos);
 					if (InputKeyPressed <> KEY_ESCAPE) and (Length(SavedBoardFileName) <> 0) then begin
 						Assign(f, SavedBoardFileName + '.BRD');
 						Reset(f, 1);
@@ -904,6 +910,33 @@ procedure EditorLoop;
 				end;
 
 				EditorRefreshCopyBuffer(ox + 1, oy + 1, width, height);
+			end;
+		end;
+
+	procedure EditorAskAndPasteCopyBuffer(ox, oy: integer);
+		procedure InvertSel;
+			begin
+				Dec(ox);
+				Dec(oy);
+				VideoInvert(ox, oy, ox + copyBuffer.width, oy + copyBuffer.height);
+				Inc(ox);
+				Inc(oy);
+			end;
+		begin
+			InvertSel;
+			while true do begin
+				InputReadWaitKey;
+				case UpCase(InputKeyPressed) of
+					KEY_ENTER: begin
+						InvertSel;
+						EditorPasteCopyBuffer(ox, oy);
+						exit;
+					end;
+					KEY_ESCAPE: begin
+						InvertSel;
+						exit;
+					end;
+				end;
 			end;
 		end;
 
@@ -1389,7 +1422,7 @@ procedure EditorLoop;
 						EditorFloodFill(cursorX, cursorY, Board.Tiles[cursorX][cursorY]);
 					end;
 					'!': begin
-						EditorEditHelpFile;
+						EditorEditTextFile;
 						EditorDrawSidebar;
 					end;
 					'T': begin
@@ -1416,7 +1449,7 @@ procedure EditorLoop;
 						EditorSelectAndCopyCopyBuffer(cursorX, cursorY, false);
 					end;
 					KEY_CTRL_V: begin
-						EditorPasteCopyBuffer(cursorX, cursorY);
+						EditorAskAndPasteCopyBuffer(cursorX, cursorY);
 					end;
 				end;
 			end;
@@ -1495,13 +1528,15 @@ procedure HighScoresDisplay(linePos: integer);
 		if (state.LineCount > 2) then begin
 			state.Title := 'High scores for ' + World.Info.Name;
 			TextWindowDrawOpen(state);
-			TextWindowSelect(state, false, true);
+			TextWindowSelect(state, TWS_VIEWING_FILE);
 			TextWindowDrawClose(state);
 		end;
 		TextWindowFree(state);
 	end;
 
-procedure EditorOpenEditTextWindow(var state: TTextWindowState; syntaxHighlighting: boolean);
+{$IFDEF EDITOR}
+procedure EditorOpenEditTextWindow(var state: TTextWindowState; extension: TExtensionString;
+	syntaxHighlighting: boolean);
 	begin
 		SidebarClear;
 		VideoWriteText(61, 7, $30, ' Return ');
@@ -1524,28 +1559,42 @@ procedure EditorOpenEditTextWindow(var state: TTextWindowState; syntaxHighlighti
 		VideoWriteText(69, 18, $1F, ' Copy');
 		VideoWriteText(61, 19, $70, ' Ctrl-V ');
 		VideoWriteText(69, 19, $1F, ' Paste');
-		VideoWriteText(61, 21, $30, ' Esc ');
-		VideoWriteText(66, 21, $1F, ' Exit editor');
-		TextWindowEdit(state, syntaxHighlighting);
+		VideoWriteText(61, 21, $30, ' Ctrl-O ');
+		VideoWriteText(69, 21, $1F, ' Open file');
+		VideoWriteText(61, 22, $70, ' Ctrl-S ');
+		VideoWriteText(69, 22, $1F, ' Save file');
+		VideoWriteText(61, 23, $30, ' Esc ');
+		VideoWriteText(66, 23, $1F, ' Exit editor');
+		TextWindowEdit(state, extension, syntaxHighlighting);
 	end;
 
-procedure EditorEditHelpFile;
+procedure EditorEditTextFile;
 	var
 		textWindow: TTextWindowState;
-		filename: TString50;
+		filename: TFilenameString;
+		extension: TExtensionString;
+		i: integer;
 	begin
-		filename := '';
-		SidebarPromptString('File to edit', '.HLP', filename, PROMPT_ALPHANUM);
-		if Length(filename) <> 0 then begin
-			TextWindowOpenFile('*' + filename + '.HLP', textWindow, true);
-			textWindow.Title := 'Editing ' + filename;
-			TextWindowDrawOpen(textWindow);
-			EditorOpenEditTextWindow(textWindow, false);
-			TextWindowSaveFile(filename + '.HLP', textWindow);
-			TextWindowDrawClose(textWindow);
-			TextWindowFreeEdit(textWindow);
+		TextWindowInitState(textWindow);
+		TextWindowPromptFilename('File to open?', filename);
+
+		if Length(filename) <> 0 then
+			TextWindowOpenFile('*' + filename, textWindow, true, true);
+
+		extension := '.HLP';
+		for i := Length(filename) downto (Length(filename) - 4) do begin
+			if (i >= 1) and (filename[i] = '.') then begin
+				extension := Copy(filename, i, 4);
+			end;
 		end;
+
+		textWindow.Title := filename;
+		TextWindowDrawOpen(textWindow);
+		EditorOpenEditTextWindow(textWindow, extension, false);
+		TextWindowDrawClose(textWindow);
+		TextWindowFreeEdit(textWindow);
 	end;
+{$ENDIF}
 
 procedure HighScoresAdd(score: integer);
 	var
@@ -1608,7 +1657,7 @@ function EditorSelectBoard(title: string; currentBoard: integer; titleScreenIsNo
 		end;
 		TextWindowAppend(textWindow, 'Add new board');
 		if not windowAlreadyOpen then TextWindowDrawOpen(textWindow);
-		TextWindowSelect(textWindow, false, false);
+		TextWindowSelect(textWindow, TWS_IGNORE_HYPERLINKS);
 		if not windowAlreadyOpen then TextWindowDrawClose(textWindow);
 		TextWindowFree(textWindow);
 		if InputKeyPressed = KEY_ESCAPE then
