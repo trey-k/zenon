@@ -382,6 +382,8 @@ procedure BoardCreate;
 		for i := 0 to 3 do
 			Board.Info.NeighborBoards[i] := 0;
 
+		FillChar(Board.Tiles, SizeOf(Board.Tiles), 0);
+
 		for ix := 0 to BOARD_WIDTH+1 do begin
 			Board.Tiles[ix][0] := TileBoardEdge;
 			Board.Tiles[ix][BOARD_HEIGHT+1] := TileBoardEdge;
@@ -390,12 +392,6 @@ procedure BoardCreate;
 			Board.Tiles[0][iy] := TileBoardEdge;
 			Board.Tiles[BOARD_WIDTH+1][iy] := TileBoardEdge;
 		end;
-
-		for ix := 1 to BOARD_WIDTH do
-			for iy := 1 to BOARD_HEIGHT do begin
-				Board.Tiles[ix][iy].Element := E_EMPTY;
-				Board.Tiles[ix][iy].Color := 0;
-			end;
 
 		for ix := 1 to BOARD_WIDTH do begin
 			Board.Tiles[ix][1] := TileBorder;
@@ -1161,18 +1157,20 @@ procedure RemoveStat(statId: integer);
 				BoardDrawTile(X, Y);
 
 			for i := 1 to Board.StatCount do begin
-				if Board.Stats[i].Follower >= statId then begin
-					if Board.Stats[i].Follower = statId then
-						Board.Stats[i].Follower := -1
-					else
-						Dec(Board.Stats[i].Follower);
-				end;
+				with Board.Stats[i] do begin
+					if Follower >= statId then begin
+						if Follower = statId then
+							Follower := -1
+						else
+							Dec(Follower);
+					end;
 
-				if Board.Stats[i].Leader >= statId then begin
-					if Board.Stats[i].Leader = statId then
-						Board.Stats[i].Leader := -1
-					else
-						Dec(Board.Stats[i].Leader);
+					if Leader >= statId then begin
+						if Leader = statId then
+							Leader := -1
+						else
+							Dec(Leader);
+					end;
 				end;
 			end;
 
