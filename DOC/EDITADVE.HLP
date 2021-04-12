@@ -10,6 +10,9 @@ rely on.
 
 !edge;Board edges
 !blinkray;Blink rays
+!plrclone;Player clone
+!fakeplr;Fake player
+!project;Projectiles
 
 :edge;Board edges.
 
@@ -18,7 +21,7 @@ border of "board edge" elements. As such,
 these - when touched - act the same way
 as if when crossing a board boundary.
 
-:blinkray;Blink rays
+:blinkray;Blink rays.
 
 When a blinking wall activates, it places
 horizontal and vertical blink rays in the
@@ -26,3 +29,38 @@ cardinal directions it is unblocked in.
 These blink rays can, technically, also
 be placed independently - in which case
 they effectively work as fancy walls.
+
+:plrclone;Player clone.
+
+A player clone is a 1:1 duplicate of a
+Player - including processing game logic!
+They are powerful, but - as they were
+never intended to be a feature - they
+have a lot of quirks and caveats that one
+has to keep in mind. In particular, the
+real player will always stick to the side
+of a clone, if one happens to try moving
+in a direction in which it isn't blocked.
+
+They can be used for a lot of things.
+Feel free to experiment!
+
+:fakeplr;Fake player.
+
+A fake player is a different kind of
+duplicate Player. This one doesn't handle
+game logic; however, it can fool many
+Creatures and other elements, making them
+believe that a real Player is on a tile.
+For example, by surrounding an edge with
+fake players, moving to that edge of the
+board via a neighbor connection (or with
+a Board edge) will not cause the real
+Player to be moved.
+
+:project;Projectiles.
+
+Bullets and stars can be placed directly
+on the board. They will behave as if they
+had just been shot out by a Creature or
+the Player.

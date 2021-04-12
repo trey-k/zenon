@@ -51,6 +51,7 @@ type
 	TDrawMode = (DrawingOff, DrawingOn, TextEntry);
 	TEditorCopiedTile = record
 		stat: TStat;
+		isMainPlayer: boolean;
 		hasStat: boolean;
 		tile: TTile;
 		previewChar: byte;
@@ -226,6 +227,7 @@ procedure EditorLoop;
 		begin
 			with copied do begin
 				hasStat := false;
+				isMainPlayer := false;
 				tile.Element := 0;
 				tile.Color := $0F;
 				previewChar := 0;
@@ -240,15 +242,13 @@ procedure EditorLoop;
 		var
 			statId: integer;
 		begin
-			if Board.Tiles[cursorX][cursorY].Element = E_PLAYER then
-				exit;
-
 			statId := GetStatIdAt(x, y);
 
 			EditorClearPattern(copied, false);
 			with copied do begin
 				tile := Board.Tiles[cursorX][cursorY];
 				hasStat := statId > 0;
+				isMainPlayer := statId = 0;
 				if hasStat then
 					EditorCopyStat(Board.Stats[statId], stat);
 				if ElementDefs[tile.Element].HasDrawProc then
@@ -405,7 +405,10 @@ procedure EditorLoop;
 						Color := cursorColor;
 					end;
 				end else with copiedTiles[cursorPattern - EditorPatternCount] do begin
-					if hasStat then begin
+					if isMainPlayer then begin
+						if EditorPrepareModifyTile(x, y) then
+							MoveStat(0, x, y);
+					end else if hasStat then begin
 						if EditorPrepareModifyStatAtCursor then begin
 							AddStat(x, y, tile.Element, tile.Color, stat.Cycle, stat);
 						end
@@ -636,6 +639,9 @@ procedure EditorLoop;
 						Inc(iy, 4);
 					end; }
 
+					if (element = E_BULLET) or (element = E_STAR) then
+						P2 := 100; { unused on bullet, lifetime on star }
+
 					if (InputKeyPressed <> KEY_ESCAPE) and
 						(Length(ElementDefs[element].ParamTextName) <> 0) then
 					begin
@@ -664,6 +670,18 @@ procedure EditorLoop;
 						if selected then begin
 							P2 := (P2 and $7F) + (promptByte shl 7);
 							World.EditorStatSettings[element].P2 := P2;
+						end;
+						Inc(iy, 4);
+					end;
+
+					if (InputKeyPressed <> KEY_ESCAPE) and
+						(element = E_BULLET) then
+					begin
+						promptByte := (P1 and 1);
+						SidebarPromptChoice(selected, iy, 'Source?', 'Player Creature', promptByte);
+						if selected then begin
+							P1 := promptByte;
+							World.EditorStatSettings[element].P1 := P1;
 						end;
 						Inc(iy, 4);
 					end;
@@ -1106,13 +1124,18 @@ procedure EditorLoop;
 			end;
 		end;
 
+	procedure EditorPlaceElementNoStat(newElem, newColor: byte);
+		begin
+			if EditorPrepareModifyTile(cursorX, cursorY) then
+				EditorSetAndCopyTile(cursorX, cursorY, newElem, newColor);
+		end;
+
 	procedure EditorPlaceElement(newElem, newColor: byte);
 		var
 			statSetting: TEditorStatSetting;
 		begin
 			if ElementDefs[newElem].Cycle = -1 then begin
-				if EditorPrepareModifyTile(cursorX, cursorY) then
-					EditorSetAndCopyTile(cursorX, cursorY, newElem, newColor);
+				EditorPlaceElementNoStat(newElem, newColor);
 			end else begin
 				if EditorPrepareModifyStatAtCursor then begin
 					AddStat(cursorX, cursorY, newElem, newColor,
@@ -1385,6 +1408,24 @@ procedure EditorLoop;
 						VideoWriteText(65, 7, $1F, 'Vert. blink');
 						VideoWriteText(78, 7, cursorColor, #186);
 
+						VideoWriteText(61, 8, $30, ' C ');
+						VideoWriteText(65, 8, $1F, 'Player clone');
+						VideoWriteText(78, 8, $1F, #2);
+
+						VideoWriteText(61, 9, $70, ' F ');
+						VideoWriteText(65, 9, $1F, 'Fake player');
+						VideoWriteText(78, 9, cursorColor, #2);
+
+						VideoWriteText(65, 11, $1E, 'Projectiles:');
+
+						VideoWriteText(61, 12, $30, ' U ');
+						VideoWriteText(65, 12, $1F, 'Bullet');
+						VideoWriteText(78, 12, cursorColor, #248);
+
+						VideoWriteText(61, 13, $70, ' A ');
+						VideoWriteText(65, 13, $1F, 'Star');
+						VideoWriteText(78, 13, cursorColor, '/');
+
 						InputReadWaitKey;
 						case UpCase(InputKeyPressed) of
 							'E': begin
@@ -1395,6 +1436,18 @@ procedure EditorLoop;
 							end;
 							'V': begin
 								EditorPlaceElement(E_BLINK_RAY_NS, cursorColor);
+							end;
+							'C': begin
+								EditorPlaceElement(E_PLAYER, $1F);
+							end;
+							'F': begin
+								EditorPlaceElementNoStat(E_PLAYER, cursorColor);
+							end;
+							'U': begin
+								EditorPlaceElement(E_BULLET, cursorColor);
+							end;
+							'A': begin
+								EditorPlaceElement(E_STAR, cursorColor);
 							end;
 						end;
 						EditorDrawSidebar;
