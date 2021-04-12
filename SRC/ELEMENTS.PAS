@@ -638,8 +638,9 @@ procedure ElementTransporterMove(x, y, deltaX, deltaY: integer);
 						end;
 						if Element = E_TRANSPORTER then begin
 							iStat := GetStatIdAt(ix, iy);
-							if (Board.Stats[iStat].StepX = -deltaX) and (Board.Stats[iStat].StepY = -deltaY) then
-								isValidDest := true;
+							with Board.Stats[iStat] do
+								if (StepX = -deltaX) and (StepY = -deltaY) then
+									isValidDest := true;
 						end;
 					end;
 				until finishSearch;
@@ -1392,10 +1393,11 @@ procedure ElementPlayerTick(statId: integer);
 					end else begin
 						bulletCount := 0;
 						for i := 0 to Board.StatCount do
-							if (Board.Tiles[Board.Stats[i].X][Board.Stats[i].Y].Element = E_BULLET)
-								and (Board.Stats[i].P1 = SHOT_SOURCE_PLAYER)
-							then
-								Inc(bulletCount);
+							with Board.Stats[i] do
+								if (Board.Tiles[X][Y].Element = E_BULLET)
+									and (P1 = SHOT_SOURCE_PLAYER)
+								then
+									Inc(bulletCount);
 
 						if bulletCount < Board.Info.MaxShots then begin
 							if BoardShoot(E_BULLET, X, Y, PlayerDirX, PlayerDirY, SHOT_SOURCE_PLAYER) then begin
