@@ -36,7 +36,19 @@ interface
 	procedure SidebarClearLine(y: integer);
 	procedure SidebarClear;
 	procedure GenerateTransitionTable;
+{$IFNDEF FPC}
+{$IFDEF CPU86}
 	procedure AdvancePointer(var address: pointer; count: integer);
+		inline(
+			$58/$5F/$07/ { POP AX, DI, ES }
+			$26/$01/$05 { ADD ES:[DI], AX }
+		);
+{$ELSE}
+	procedure AdvancePointer(var address: pointer; count: integer);
+{$ENDIF}
+{$ELSE}
+	procedure AdvancePointer(var address: pointer; count: integer);
+{$ENDIF}
 	procedure BoardClose;
 	procedure BoardOpen(boardId: integer);
 	procedure BoardChange(boardId: integer);
@@ -144,10 +156,20 @@ procedure GenerateTransitionTable;
 		end;
 	end;
 
+
+{$IFDEF FPC}
+procedure AdvancePointer(var address: pointer; count: integer);
+	begin
+		Inc(address, count);
+	end;
+{$ELSE}
+{$IFNDEF CPU86}
 procedure AdvancePointer(var address: pointer; count: integer);
 	begin
 		address := Ptr(Seg(address^), Ofs(address^) + count);
 	end;
+{$ENDIF}
+{$ENDIF}
 
 procedure BoardClose;
 	var
