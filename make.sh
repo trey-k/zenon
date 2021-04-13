@@ -214,7 +214,7 @@ if [ -n "$FREE_PASCAL" ]; then
 
 	sed -i -e "s/^BUILD$/PACKDAT/" SYSTEM/dosbox.conf
 	touch BUILD.LOG
-	SDL_VIDEODRIVER=dummy dosbox -noconsole -conf SYSTEM/dosbox.conf > /dev/null &
+	SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy dosbox -noconsole -conf SYSTEM/dosbox.conf > /dev/null &
 	tail --pid $! -n +1 -f BUILD.LOG
 else
 	# HACK! NEC98 requires SRC/DOS/EXTMEM.PAS, as the underlying standards are
@@ -225,7 +225,7 @@ else
 	cp SRC/"$PLATFORM_UNIT"/*.INC SRC/ 2>/dev/null
 
 	touch BUILD.LOG
-	SDL_VIDEODRIVER=dummy dosbox -noconsole -conf SYSTEM/dosbox.conf > /dev/null &
+	SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy  dosbox -noconsole -conf SYSTEM/dosbox.conf > /dev/null &
 	tail --pid $! -n +1 -f BUILD.LOG
 fi
 
@@ -258,8 +258,9 @@ fi
 cp LICENSE.TXT DIST/
 cp RES/* DIST/
 
-cd DIST
-zip -9 -r "$RETURN_PATH"/OUTPUT/"$OUTPUT_ARCHIVE" .
+cp -R DIST/ "$RETURN_PATH"/
+#cd DIST
+#zip -9 -r "$RETURN_PATH"/OUTPUT/"$OUTPUT_ARCHIVE" .
 cd ..
 
 cd "$RETURN_PATH"
