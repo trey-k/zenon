@@ -5,6 +5,29 @@ Legend:
 + Additions         * Changes
 - Removals          / Bugfixes
 
+$< ClassicZoo 4.12 >
+
++ The file selection menu now remembers,
+  within a single session, the position
+  of the last opened file.
++ Editor improvements.
+  + Added new elements to the F5 menu.
+    . Blink rays.
+    . Player clones.
+    . Fake players.
+    . Projectiles: bullets, stars.
+  + PgUp/PgDn can now be used to browse
+    boards.
+  * Copying players, player clones and
+    fake players is now allowed.
+* Minor filesize/CPU optimizations have
+  been made to the engine.
+/ Fixed major crash bug involving boards
+  above 20000 bytes.
+/ Restored a bug regarding centipede
+  follower attachment, relied on by some
+  ZZT 3.2 games as a feature.
+
 $< ClassicZoo 4.11 >
 
 + Text/code editor improvements.

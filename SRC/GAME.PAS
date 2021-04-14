@@ -35,8 +35,20 @@ interface
 		PROMPT_ANY = 2;
 	procedure SidebarClearLine(y: integer);
 	procedure SidebarClear;
-	function EnsureIoTmpBufSize(size: integer): integer; { 1 if IoTmpBuf was wiped, 2 if the size is too large. }
+	function EnsureIoTmpBufSize(newSize: word): integer; { 1 if IoTmpBuf was wiped, 2 if the size is too large. }
+{$IFNDEF FPC}
+{$IFDEF CPU86}
 	procedure AdvancePointer(var address: pointer; count: integer);
+		inline(
+			$58/$5F/$07/ { POP AX, DI, ES }
+			$26/$01/$05 { ADD ES:[DI], AX }
+		);
+{$ELSE}
+	procedure AdvancePointer(var address: pointer; count: integer);
+{$ENDIF}
+{$ELSE}
+	procedure AdvancePointer(var address: pointer; count: integer);
+{$ENDIF}
 	procedure BoardClose;
 	procedure BoardOpen(boardId: integer);
 	procedure BoardChange(boardId: integer);
@@ -146,31 +158,39 @@ procedure SidebarClear;
 			SidebarClearLine(i);
 	end;
 
-function EnsureIoTmpBufSize(size: integer): integer;
+function EnsureIoTmpBufSize(newSize: word): integer;
 	var
-		oldSize: integer;
+		oldSize: word;
 	begin
-		if size > IO_BUFFER_MAXIMUM_SIZE then begin
+		if newSize > IO_BUFFER_MAXIMUM_SIZE then begin
 			EnsureIoTmpBufSize := 2;
 			exit;
 		end;
 		oldSize := IoTmpBufSize;
 		EnsureIoTmpBufSize := 0;
-		while IoTmpBufSize < size do
+		while IoTmpBufSize < newSize do
 			Inc(IoTmpBufSize, IO_BUFFER_SIZE_INCREMENT);
 		if oldSize <> IoTmpBufSize then begin
 			FreeMem(IoTmpBuf, oldSize);
-			oldSize := IoTmpBufSize;
-			IoTmpBufSize := 0;
-			GetMem(IoTmpBuf, oldSize);
+			GetMem(IoTmpBuf, IoTmpBufSize);
 			EnsureIoTmpBufSize := 1;
 		end;
 	end;
 
+
+{$IFDEF FPC}
+procedure AdvancePointer(var address: pointer; count: integer);
+	begin
+		Inc(address, count);
+	end;
+{$ELSE}
+{$IFNDEF CPU86}
 procedure AdvancePointer(var address: pointer; count: integer);
 	begin
 		address := Ptr(Seg(address^), Ofs(address^) + count);
 	end;
+{$ENDIF}
+{$ENDIF}
 
 procedure BoardClose;
 	var
@@ -382,6 +402,8 @@ procedure BoardCreate;
 		for i := 0 to 3 do
 			Board.Info.NeighborBoards[i] := 0;
 
+		FillChar(Board.Tiles, SizeOf(Board.Tiles), 0);
+
 		for ix := 0 to BOARD_WIDTH+1 do begin
 			Board.Tiles[ix][0] := TileBoardEdge;
 			Board.Tiles[ix][BOARD_HEIGHT+1] := TileBoardEdge;
@@ -390,12 +412,6 @@ procedure BoardCreate;
 			Board.Tiles[0][iy] := TileBoardEdge;
 			Board.Tiles[BOARD_WIDTH+1][iy] := TileBoardEdge;
 		end;
-
-		for ix := 1 to BOARD_WIDTH do
-			for iy := 1 to BOARD_HEIGHT do begin
-				Board.Tiles[ix][iy].Element := E_EMPTY;
-				Board.Tiles[ix][iy].Color := 0;
-			end;
 
 		for ix := 1 to BOARD_WIDTH do begin
 			Board.Tiles[ix][1] := TileBorder;
@@ -1161,18 +1177,20 @@ procedure RemoveStat(statId: integer);
 				BoardDrawTile(X, Y);
 
 			for i := 1 to Board.StatCount do begin
-				if Board.Stats[i].Follower >= statId then begin
-					if Board.Stats[i].Follower = statId then
-						Board.Stats[i].Follower := -1
-					else
-						Dec(Board.Stats[i].Follower);
-				end;
+				with Board.Stats[i] do begin
+					if Follower >= statId then begin
+						if Follower = statId then
+							Follower := -1
+						else
+							Dec(Follower);
+					end;
 
-				if Board.Stats[i].Leader >= statId then begin
-					if Board.Stats[i].Leader = statId then
-						Board.Stats[i].Leader := -1
-					else
-						Dec(Board.Stats[i].Leader);
+					if Leader >= statId then begin
+						if Leader = statId then
+							Leader := -1
+						else
+							Dec(Leader);
+					end;
 				end;
 			end;
 

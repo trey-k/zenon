@@ -51,6 +51,7 @@ type
 	TDrawMode = (DrawingOff, DrawingOn, TextEntry);
 	TEditorCopiedTile = record
 		stat: TStat;
+		isMainPlayer: boolean;
 		hasStat: boolean;
 		tile: TTile;
 		previewChar: byte;
@@ -135,7 +136,6 @@ procedure EditorWorldCanOpenCheck(closeSavesSilently: boolean);
 procedure EditorLoop;
 	var
 		selectedCategory: integer;
-		elemMenuColor: integer;
 		wasModified: boolean;
 		editorExitRequested: boolean;
 		drawMode: TDrawMode;
@@ -227,6 +227,7 @@ procedure EditorLoop;
 		begin
 			with copied do begin
 				hasStat := false;
+				isMainPlayer := false;
 				tile.Element := 0;
 				tile.Color := $0F;
 				previewChar := 0;
@@ -241,15 +242,13 @@ procedure EditorLoop;
 		var
 			statId: integer;
 		begin
-			if Board.Tiles[cursorX][cursorY].Element = E_PLAYER then
-				exit;
-
 			statId := GetStatIdAt(x, y);
 
 			EditorClearPattern(copied, false);
 			with copied do begin
 				tile := Board.Tiles[cursorX][cursorY];
 				hasStat := statId > 0;
+				isMainPlayer := statId = 0;
 				if hasStat then
 					EditorCopyStat(Board.Stats[statId], stat);
 				if ElementDefs[tile.Element].HasDrawProc then
@@ -406,7 +405,10 @@ procedure EditorLoop;
 						Color := cursorColor;
 					end;
 				end else with copiedTiles[cursorPattern - EditorPatternCount] do begin
-					if hasStat then begin
+					if isMainPlayer then begin
+						if EditorPrepareModifyTile(x, y) then
+							MoveStat(0, x, y);
+					end else if hasStat then begin
 						if EditorPrepareModifyStatAtCursor then begin
 							AddStat(x, y, tile.Element, tile.Color, stat.Cycle, stat);
 						end
@@ -637,6 +639,9 @@ procedure EditorLoop;
 						Inc(iy, 4);
 					end; }
 
+					if (element = E_BULLET) or (element = E_STAR) then
+						P2 := 100; { unused on bullet, lifetime on star }
+
 					if (InputKeyPressed <> KEY_ESCAPE) and
 						(Length(ElementDefs[element].ParamTextName) <> 0) then
 					begin
@@ -665,6 +670,18 @@ procedure EditorLoop;
 						if selected then begin
 							P2 := (P2 and $7F) + (promptByte shl 7);
 							World.EditorStatSettings[element].P2 := P2;
+						end;
+						Inc(iy, 4);
+					end;
+
+					if (InputKeyPressed <> KEY_ESCAPE) and
+						(element = E_BULLET) then
+					begin
+						promptByte := (P1 and 1);
+						SidebarPromptChoice(selected, iy, 'Source?', 'Player Creature', promptByte);
+						if selected then begin
+							P1 := promptByte;
+							World.EditorStatSettings[element].P1 := P1;
 						end;
 						Inc(iy, 4);
 					end;
@@ -1107,6 +1124,41 @@ procedure EditorLoop;
 			end;
 		end;
 
+	procedure EditorPlaceElementNoStat(newElem, newColor: byte);
+		begin
+			if EditorPrepareModifyTile(cursorX, cursorY) then
+				EditorSetAndCopyTile(cursorX, cursorY, newElem, newColor);
+		end;
+
+	procedure EditorPlaceElement(newElem, newColor: byte);
+		var
+			statSetting: TEditorStatSetting;
+		begin
+			if ElementDefs[newElem].Cycle = -1 then begin
+				EditorPlaceElementNoStat(newElem, newColor);
+			end else begin
+				if EditorPrepareModifyStatAtCursor then begin
+					AddStat(cursorX, cursorY, newElem, newColor,
+						ElementDefs[newElem].Cycle, StatTemplateDefault);
+					with Board.Stats[Board.StatCount] do begin
+						statSetting := World.EditorStatSettings[newElem];
+						if Length(ElementDefs[newElem].Param1Name) <> 0 then
+							P1 := statSetting.P1;
+						if Length(ElementDefs[newElem].Param2Name) <> 0 then
+							P2 := statSetting.P2;
+						if Length(ElementDefs[newElem].ParamDirName) <> 0 then begin
+							StepX := statSetting.StepX;
+							StepY := statSetting.StepY;
+						end;
+						if Length(ElementDefs[newElem].ParamBoardName) <> 0 then
+							P3 := statSetting.P3;
+					end;
+					EditorEditStat(Board.StatCount);
+					if InputKeyPressed = KEY_ESCAPE then
+						RemoveStat(Board.StatCount);
+				end;
+			end;
+		end;
 
 	procedure EditorFloodFill(x, y: integer; from: TTile);
 		var
@@ -1266,8 +1318,9 @@ procedure EditorLoop;
 							EditorWorldCanOpenCheck(false);
 							wasModified := false;
 							EditorDrawRefresh;
+						end else begin
+							EditorDrawSidebar;
 						end;
-						EditorDrawSidebar;
 					end;
 					'S': begin
 						GameWorldSave('Save world:', LoadedGameFileName, '.ZZT');
@@ -1303,6 +1356,20 @@ procedure EditorLoop;
 					'E': begin
 						editorExitRequested := true;
 					end;
+					KEY_PAGE_UP: begin
+						i := World.Info.CurrentBoard - 1;
+						if i >= 0 then begin
+							BoardChange(i);
+							EditorDrawRefresh;
+						end;
+					end;
+					KEY_PAGE_DOWN: begin
+						i := World.Info.CurrentBoard + 1;
+						if i <= World.BoardCount then begin
+							BoardChange(i);
+							EditorDrawRefresh;
+						end;
+					end;
 					'B': begin
 						i := EditorSelectBoard('Switch boards', World.Info.CurrentBoard, false, false);
 						if (InputKeyPressed <> KEY_ESCAPE) then begin
@@ -1311,8 +1378,9 @@ procedure EditorLoop;
 									EditorAppendBoard;
 							BoardChange(i);
 							EditorDrawRefresh;
+						end else begin
+							EditorDrawSidebar;
 						end;
-						EditorDrawSidebar;
 					end;
 					'?': begin
 						GameDebugPrompt;
@@ -1330,14 +1398,59 @@ procedure EditorLoop;
 						for i := 3 to 20 do
 							SidebarClearLine(i);
 						VideoWriteText(65, 4, $1E, 'Advanced:');
+
 						VideoWriteText(61, 5, $70, ' E ');
 						VideoWriteText(65, 5, $1F, 'Board edge');
 						VideoWriteText(78, 5, cursorColor, 'E');
+
+						VideoWriteText(61, 6, $30, ' H ');
+						VideoWriteText(65, 6, $1F, 'Hori. blink');
+						VideoWriteText(78, 6, cursorColor, #205);
+
+						VideoWriteText(61, 7, $70, ' V ');
+						VideoWriteText(65, 7, $1F, 'Vert. blink');
+						VideoWriteText(78, 7, cursorColor, #186);
+
+						VideoWriteText(61, 8, $30, ' C ');
+						VideoWriteText(65, 8, $1F, 'Player clone');
+						VideoWriteText(78, 8, $1F, #2);
+
+						VideoWriteText(61, 9, $70, ' F ');
+						VideoWriteText(65, 9, $1F, 'Fake player');
+						VideoWriteText(78, 9, cursorColor, #2);
+
+						VideoWriteText(65, 11, $1E, 'Projectiles:');
+
+						VideoWriteText(61, 12, $30, ' U ');
+						VideoWriteText(65, 12, $1F, 'Bullet');
+						VideoWriteText(78, 12, cursorColor, #248);
+
+						VideoWriteText(61, 13, $70, ' A ');
+						VideoWriteText(65, 13, $1F, 'Star');
+						VideoWriteText(78, 13, cursorColor, '/');
+
 						InputReadWaitKey;
 						case UpCase(InputKeyPressed) of
 							'E': begin
-								if EditorPrepareModifyTile(cursorX, cursorY) then
-									EditorSetAndCopyTile(cursorX, cursorY, E_BOARD_EDGE, cursorColor);
+								EditorPlaceElement(E_BOARD_EDGE, cursorColor);
+							end;
+							'H': begin
+								EditorPlaceElement(E_BLINK_RAY_EW, cursorColor);
+							end;
+							'V': begin
+								EditorPlaceElement(E_BLINK_RAY_NS, cursorColor);
+							end;
+							'C': begin
+								EditorPlaceElement(E_PLAYER, $1F);
+							end;
+							'F': begin
+								EditorPlaceElementNoStat(E_PLAYER, cursorColor);
+							end;
+							'U': begin
+								EditorPlaceElement(E_BULLET, cursorColor);
+							end;
+							'A': begin
+								EditorPlaceElement(E_STAR, cursorColor);
 							end;
 						end;
 						EditorDrawSidebar;
@@ -1376,33 +1489,7 @@ procedure EditorLoop;
 									if EditorPrepareModifyTile(cursorX, cursorY) then
 										MoveStat(0, cursorX, cursorY);
 								end else begin
-									elemMenuColor := EditorGetDrawingColor(iElem);
-
-									if ElementDefs[iElem].Cycle = -1 then begin
-										if EditorPrepareModifyTile(cursorX, cursorY) then
-											EditorSetAndCopyTile(cursorX, cursorY, iElem, elemMenuColor);
-									end else begin
-										if EditorPrepareModifyStatAtCursor then begin
-											AddStat(cursorX, cursorY, iElem, elemMenuColor,
-
-												ElementDefs[iElem].Cycle, StatTemplateDefault);
-											with Board.Stats[Board.StatCount] do begin
-												if Length(ElementDefs[iElem].Param1Name) <> 0 then
-													P1 := World.EditorStatSettings[iElem].P1;
-												if Length(ElementDefs[iElem].Param2Name) <> 0 then
-													P2 := World.EditorStatSettings[iElem].P2;
-												if Length(ElementDefs[iElem].ParamDirName) <> 0 then begin
-													StepX := World.EditorStatSettings[iElem].StepX;
-													StepY := World.EditorStatSettings[iElem].StepY;
-												end;
-												if Length(ElementDefs[iElem].ParamBoardName) <> 0 then
-													P3 := World.EditorStatSettings[iElem].P3;
-											end;
-											EditorEditStat(Board.StatCount);
-											if InputKeyPressed = KEY_ESCAPE then
-												RemoveStat(Board.StatCount);
-										end;
-									end;
+									EditorPlaceElement(iElem, EditorGetDrawingColor(iElem));
 								end;
 							end;
 						end;
