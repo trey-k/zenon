@@ -1998,6 +1998,8 @@ procedure GamePlayLoop(boardChanged: boolean);
 		if JustStarted then begin
 			GameOnStart;
 			JustStarted := false;
+			{ZENON VARS}
+			bulletsOn := true;
 		end;
 
 		Board.Tiles[Board.Stats[0].X][Board.Stats[0].Y].Element := GameStateElement;

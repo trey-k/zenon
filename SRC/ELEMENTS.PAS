@@ -1475,7 +1475,7 @@ procedure ElementPlayerTick(statId: integer);
 									Inc(bulletCount);
 
 						if bulletCount < Board.Info.MaxShots then begin
-							if BoardShoot(E_BULLET, X, Y, PlayerDirX, PlayerDirY, SHOT_SOURCE_PLAYER) then begin
+							if bulletsOn and BoardShoot(E_BULLET, X, Y, PlayerDirX, PlayerDirY, SHOT_SOURCE_PLAYER) then begin
 								Dec(World.Info.Ammo);
 								GameUpdateSidebar;
 
@@ -1484,6 +1484,7 @@ procedure ElementPlayerTick(statId: integer);
 								InputDeltaX := 0;
 								InputDeltaY := 0;
 							end;
+							if OopSend(-1, 'PLAYERCTRL:SHOOT', false) then begin end;
 						end;
 					end;
 				end;
@@ -1565,9 +1566,11 @@ procedure ElementPlayerTick(statId: integer);
 					InputKeyPressed := #0;
 				end;
 				{ZENON LIVEEDIT}
+{$IFDEF EDITOR}
 				'E': begin
 					EditorLoop;
 				end;
+{$ENDIF}
 				{END}
 			end;
 

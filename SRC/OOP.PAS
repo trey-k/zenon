@@ -87,7 +87,7 @@ procedure OopReadWord(statId: integer; var position: integer);
 		OopChar := UpCase(OopChar);
 		if (OopChar < '0') or (OopChar > '9') then begin
 			while ((OopChar >= 'A') and (OopChar <= 'Z')) or (OopChar = ':')
-				or ((OopChar >= '0') and (OopChar <= '9')) or (OopChar = '_') do
+				or ((OopChar >= '0') and (OopChar <= '9')) or (OopChar = '_') or (OopChar = '$') do
 			begin
 				if wordPos <= OOP_TOKEN_LENGTH then begin
 					Inc(wordPos);
@@ -396,24 +396,30 @@ function OopStringToWord(input: TString50): TString50;
 function OopParseTile(var statId, position: integer; var tile: TTile): boolean;
 	var
 		i: integer;
+		code: integer;
 	label ColorFound;
 	begin
 		OopParseTile := false;
 		tile.Color := 0;
 
 		OopReadWord(statId, position);
+		{ZENON [RND|$BYTE] color choices}
+		if OopWord = 'RND' then begin
+			tile.Color := Random(7) + $09;
+			OopReadWord(statId, position);
+			goto ColorFound;
+		end else if OopWord[1] = '$' then begin
+			Val(OopWord, tile.Color, code);
+			OopReadWord(statId, position);
+			goto ColorFound;
+		end;
+		{END}
 		for i := 1 to 7 do begin
 			if OopWord = OopStringToWord(ColorNames[i]) then begin
 				tile.Color := i + $08;
 				OopReadWord(statId, position);
 				goto ColorFound;
-			{ZENON RANDOM}
-			end else if OopWord = 'RANDOM' then begin
-				tile.Color := Random(7) + $09;
-				OopReadWord(statId, position);
-				goto ColorFound;
 			end;
-			{END}
 		end;
 	ColorFound:
 
@@ -503,6 +509,7 @@ function OopCheckCondition(statId: integer; var position: integer): boolean;
 		deltaX, deltaY: integer;
 		tile: TTile;
 		ix, iy: integer;
+		operation: char;
 	begin
 		with Board.Stats[statId] do begin
 			if OopWord = 'NOT' then begin
@@ -524,6 +531,26 @@ function OopCheckCondition(statId: integer; var position: integer): boolean;
 				ix := 0;
 				iy := 1;
 				OopCheckCondition := FindTileOnBoard(ix, iy, tile);
+			end else if OopWord = 'X' then begin
+				OopReadChar(statId, position);
+				operation := OopChar;
+				OopReadValue(statId, position);
+				if operation = '>' then
+					OopCheckCondition := (Board.Stats[statId].X > OopValue)
+				else if operation = '<' then
+					OopCheckCondition := (Board.Stats[statId].X < OopValue)
+				else 
+					OopCheckCondition := (Board.Stats[statId].X = OopValue);
+			end else if OopWord = 'Y' then begin
+				OopReadChar(statId, position);
+				operation := OopChar;
+				OopReadValue(statId, position);
+				if operation = '>' then
+					OopCheckCondition := (Board.Stats[statId].Y > OopValue)
+				else if operation = '<' then
+					OopCheckCondition := (Board.Stats[statId].Y < OopValue)
+				else 
+					OopCheckCondition := (Board.Stats[statId].Y = OopValue);
 			end else begin
 				OopCheckCondition := WorldGetFlagPosition(OopWord) >= 0;
 			end;
@@ -866,6 +893,25 @@ procedure OopExecute(statId: integer; var position: integer; name: TString50);
 								end;
 								position := 0;
 							end;
+						{#BOARD <number>}
+						end else if OopWord = 'BOARD' then begin
+							OopReadValue(statId, position);
+							BoardChange(OopValue);
+							TransitionDrawBoardChange;
+							BoardEnter;
+						{#BULLETS <ON|OFF>}
+						end else if OopWord = 'BULLETS' then begin
+							OopReadWord(statId, position);
+							if OopWord = 'OFF' then
+								bulletsOn := false
+							else
+								bulletsOn := true;
+						{#COLOR <color|$BYTE>}
+						end else if OopWord = 'COLOR' then begin
+							if OopParseTile(statId, position, argTile) then begin
+								Board.Tiles[X][Y].Color := argTile.Color;
+								BoardDrawTile(X, Y);
+							end;
 						{ZENON #TIMER <time 0-127> [SHOW]}
 						end else if OopWord = 'TIMER' then begin
 							OopReadValue(statId, position);
@@ -876,7 +922,7 @@ procedure OopExecute(statId: integer; var position: integer; name: TString50);
 								P3 := OopValue + $80;
 							if OopValue = 0 then
 								BoardDrawTile(X, Y);
-						{END}
+						{ZENON END}
 						end else begin
 							textLine := OopWord;
 							if OopSend(statId, OopWord, false) then begin

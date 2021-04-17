@@ -168,6 +168,9 @@ interface
 		unkVar_0476: integer;
 		unkVar_0478: integer;
 
+		bulletsOn: boolean;
+		{add defs at game start}
+
 		LoadedGameFileName: TString50;
 		SavedGameFileName: TString50;
 		SavedBoardFileName: TString50;
