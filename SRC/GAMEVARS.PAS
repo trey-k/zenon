@@ -169,6 +169,7 @@ interface
 		unkVar_0478: integer;
 
 		bulletsOn: boolean;
+		zContents: string;
 		{add defs at game start}
 
 		LoadedGameFileName: TString50;

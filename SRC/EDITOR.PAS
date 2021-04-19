@@ -128,8 +128,8 @@ procedure EditorWorldCanOpenCheck(closeSavesSilently: boolean);
 			PauseOnError;
 		end;
 		if World.Info.IsSave and (not DebugEnabled) then begin
-			WorldUnload;
-			WorldCreate;
+			{WorldUnload;}
+			{WorldCreate;}
 		end;
 	end;
 
