@@ -1475,7 +1475,7 @@ procedure ElementPlayerTick(statId: integer);
 									Inc(bulletCount);
 
 						if bulletCount < Board.Info.MaxShots then begin
-							if bulletsOn and BoardShoot(E_BULLET, X, Y, PlayerDirX, PlayerDirY, SHOT_SOURCE_PLAYER) then begin
+							if BulletsOn and BoardShoot(E_BULLET, X, Y, PlayerDirX, PlayerDirY, SHOT_SOURCE_PLAYER) then begin
 								Dec(World.Info.Ammo);
 								GameUpdateSidebar;
 

@@ -1999,7 +1999,9 @@ procedure GamePlayLoop(boardChanged: boolean);
 			GameOnStart;
 			JustStarted := false;
 			{ZENON VARS}
-			bulletsOn := true;
+			BulletsOn := true;
+			SongIsPlaying := false;
+			LoopSong := false;
 		end;
 
 		Board.Tiles[Board.Stats[0].X][Board.Stats[0].Y].Element := GameStateElement;
@@ -2092,6 +2094,19 @@ procedure GamePlayLoop(boardChanged: boolean);
 				{ all stats ticked }
 				if SoundHasTimeElapsed(TickTimeCounter, TickTimeDuration) then begin
 					{ next cycle }
+					{#SONG queue}
+					if ((Length(SoundBuffer) < 190) or (SoundBufferPos > 60)) and (SongIsPlaying) then begin
+						with LoadedSong do begin
+							if LinePos <= LineCount then begin
+								SoundQueue(-1, SoundParse(Lines[LinePos]^));
+								Inc(LinePos);
+							end else if LoopSong then begin
+								LinePos := 1;
+							end else
+								SongIsPlaying := false;
+						end;
+					end;
+					{END}
 					Inc(CurrentTick);
 					if CurrentTick > 420 then
 						CurrentTick := 1;

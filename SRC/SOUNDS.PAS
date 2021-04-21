@@ -31,7 +31,16 @@ interface
 			Len: integer;
 			Data: array[1 .. 15] of word;
 		end;
+		TSongLine = string[50];
+		TSongState = record
+			LineCount: integer;
+			LinePos: integer;
+			Lines: array[1 .. 1024] of ^TSongLine;
+		end;
 	var
+		SongIsPlaying: boolean;
+		LoopSong: boolean;
+		LoadedSong: TSongState;
 		SoundEnabled: boolean;
 		SoundBlockQueueing: boolean;
 		SoundCurrentPriority: integer;
@@ -53,6 +62,7 @@ interface
 {$ENDIF}
 	procedure AccurateDelayCalibrate;
 	procedure AccurateDelay(ms: word);
+	procedure SoundOpenFile(filename: TSongLine; var state: TSongState);
 	procedure SoundQueue(priority: integer; pattern: string);
 	procedure SoundClearQueue;
 	function SoundHasTimeElapsed(var counter: integer; duration: integer): boolean;
@@ -147,6 +157,27 @@ procedure AccurateDelay(ms: word);
 		Delay(ms);
 	end;
 {$ENDIF}
+
+procedure SoundOpenFile(filename: TSongLine; var state: TSongState);
+	var
+		tf: text;
+	begin
+		with state do begin
+			LineCount := 0;
+			LinePos := 1;
+			{LoadedFilename := '';}
+			Assign(tf, filename);
+			Reset(tf);
+			while (IOResult = 0) and (not Eof(tf)) do begin
+				Inc(LineCount);
+				New(Lines[LineCount]);
+				ReadLn(tf, Lines[LineCount]^);
+				{SoundQueue(-1, SoundParse(Lines[LineCount]^));}
+				writeln(Lines[LineCount]^);
+			end;
+			Close(tf);
+		end;
+	end;
 
 procedure SoundQueue(priority: integer; pattern: string);
 	begin

@@ -954,10 +954,7 @@ procedure OopExecute(statId: integer; var position: integer; name: TString50);
 						{#BULLETS <ON|OFF>}
 						end else if OopWord = 'BULLETS' then begin
 							OopReadWord(statId, position);
-							if OopWord = 'OFF' then
-								bulletsOn := false
-							else
-								bulletsOn := true;
+							BulletsOn := (OopWord <> 'OFF');
 						{#COLOR <color|$byte>}
 						end else if OopWord = 'COLOR' then begin
 							if OopParseTile(statId, position, argTile) then begin
@@ -987,6 +984,17 @@ procedure OopExecute(statId: integer; var position: integer; name: TString50);
 						end else if OopWord= 'READ' then begin
 							if OopCheckCondition(statId, position) then
 								goto ReadCommand;
+						{#SONG <filename>}
+						end else if OopWord = 'SONG' then begin
+							LoopSong := false;
+							OopReadWord(statId, position);
+							if OopWord = 'LOOP' then begin
+								LoopSong := true;
+								OopReadWord(statId, position);
+							end;
+							SoundOpenFile(OopWord, LoadedSong);
+							{error check?}
+							SongIsPlaying := true;
 						{ZENON END}
 						end else begin
 							textLine := OopWord;

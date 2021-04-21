@@ -28,9 +28,9 @@ unit GameVars;
 interface
 	uses ExtMem;
 	const
-		MAX_STAT = 150;
+		MAX_STAT = 254; {150}
 		MAX_ELEMENT = 53;
-		MAX_BOARD = 100;
+		MAX_BOARD = 255; {100}
 		MAX_FLAG = 10;
 		BOARD_WIDTH = 60;
 		BOARD_HEIGHT = 25;
@@ -168,7 +168,7 @@ interface
 		unkVar_0476: integer;
 		unkVar_0478: integer;
 
-		bulletsOn: boolean;
+		BulletsOn: boolean;
 		zContents: string;
 		{add defs at game start}
 
