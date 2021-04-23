@@ -158,6 +158,7 @@ procedure AccurateDelay(ms: word);
 	end;
 {$ENDIF}
 
+{#SONG file opener}
 procedure SoundOpenFile(filename: TSongLine; var state: TSongState);
 	var
 		tf: text;
@@ -165,19 +166,18 @@ procedure SoundOpenFile(filename: TSongLine; var state: TSongState);
 		with state do begin
 			LineCount := 0;
 			LinePos := 1;
-			{LoadedFilename := '';}
 			Assign(tf, filename);
 			Reset(tf);
 			while (IOResult = 0) and (not Eof(tf)) do begin
 				Inc(LineCount);
 				New(Lines[LineCount]);
 				ReadLn(tf, Lines[LineCount]^);
-				{SoundQueue(-1, SoundParse(Lines[LineCount]^));}
 				writeln(Lines[LineCount]^);
 			end;
 			Close(tf);
 		end;
 	end;
+{END}
 
 procedure SoundQueue(priority: integer; pattern: string);
 	begin

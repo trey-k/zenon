@@ -130,7 +130,7 @@ DebugWnd,
 {$IFDEF ZETAEMU}
 ZetaSupp,
 {$ENDIF}
-Dos, FileSel, ExtMem, ZVideo, Sounds, Input, Elements, Editor, Oop;
+Dos, FileSel, ExtMem, ZVideo, Sounds, Input, Elements, Editor, Oop, Crt;
 
 function LFSR11UpdateSeed(var seed: word; var tx, ty: byte): boolean;
 	begin
@@ -2018,10 +2018,12 @@ procedure GamePlayLoop(boardChanged: boolean);
 		if JustStarted then begin
 			GameOnStart;
 			JustStarted := false;
-			{ZENON VARS}
+			{ZENON VARS INIT}
 			BulletsOn := true;
+			MicroSpeed := 0;
 			SongIsPlaying := false;
 			LoopSong := false;
+			{END}
 		end;
 
 		Board.Tiles[Board.Stats[0].X][Board.Stats[0].Y].Element := GameStateElement;
@@ -2126,6 +2128,9 @@ procedure GamePlayLoop(boardChanged: boolean);
 								SongIsPlaying := false;
 						end;
 					end;
+					{#SPEED MicroSpeed ticks}
+					if (TickTimeDuration = 0) and (MicroSpeed > 0) then
+						Delay(MicroSpeed);
 					{END}
 					Inc(CurrentTick);
 					if CurrentTick > 420 then

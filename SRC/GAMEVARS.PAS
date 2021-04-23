@@ -168,10 +168,6 @@ interface
 		unkVar_0476: integer;
 		unkVar_0478: integer;
 
-		BulletsOn: boolean;
-		zContents: string;
-		{add defs at game start}
-
 		LoadedGameFileName: TString50;
 		SavedGameFileName: TString50;
 		SavedBoardFileName: TString50;
@@ -204,6 +200,12 @@ interface
 
 		ElementDefs: array[0 .. MAX_ELEMENT] of TElementDef;
 		{ Anything after ElementDefs cannot be reached by the die-move trick. }
+
+		{ZENON VARS}
+		BulletsOn: boolean;
+		MicroSpeed: byte;
+		FileContents: string;
+		{END}
 
 {$IFDEF EDITOR}
 		EditorPatterns: array[1 .. EditorPatternCount] of byte;

@@ -57,13 +57,13 @@ procedure OopMakeFile(filename: string; contents: string);
 		end;
 	end;
 
-procedure OopReadFile(filename: string; var zContents: string);
+procedure OopReadFile(filename: string; var FileContents: string);
 	var
 		f: file of string;
 	begin
 		Assign(f, filename);
 		Reset(f);
-		Read(f, zContents);
+		Read(f, FileContents);
 		Close(f);
 		if DisplayIOError then begin
 		end else begin
@@ -201,10 +201,8 @@ function OopParseDirection(statId: integer; var position: integer; var dx, dy: i
 				else begin
 					OopReadWord(statId, position);
 					iStat := 0;
-					if OopIterateStat(statId, iStat, OopWord) then begin
-						Write(OopWord);
+					if OopIterateStat(statId, iStat, OopWord) then
 						CalcDirectionSeekObj(X, Y, iStat, dx, dy);
-					end;
 				end;
 				{move iteratestat function or definition in unit before}
 			{END}
@@ -604,11 +602,11 @@ function OopCheckCondition(statId: integer; var position: integer): boolean;
 			{#IF READ <filename>[=|<|>]<value|string>}
 			end else if OopWord = 'READ' then begin
 				OopReadWord(statId, position);
-				OopReadFile(OopWord, zContents);
+				OopReadFile(OopWord, FileContents);
 				OopReadChar(statId, position);
 				operation := OopChar;
 				OopReadValue(statId, position);
-				Val(zContents, num, code);
+				Val(FileContents, num, code);
 				if (code = 0) and (OopValue <> -1) then begin
 					if operation = '>' then
 						OopCheckCondition := (num > OopValue)
@@ -618,7 +616,7 @@ function OopCheckCondition(statId: integer; var position: integer): boolean;
 						OopCheckCondition := (num = OopValue);
 				end else begin
 					OopReadWord(statId, position);
-					OopCheckCondition := (UpCase(zContents) = OopWord);
+					OopCheckCondition := (UpCase(FileContents) = OopWord);
 				end;
 			{END}
 			end else begin
@@ -979,10 +977,14 @@ procedure OopExecute(statId: integer; var position: integer; name: TString50);
 								Board.Tiles[X][Y].Color := argTile.Color;
 								BoardDrawTile(X, Y);
 							end;
-						{#TICK <value (default 8)>}
-						end else if OopWord = 'TICK' then begin
+						{#SPEED <value (default 8)> [<value 0-90 (micro ticks at 0)>]}
+						end else if OopWord = 'SPEED' then begin
 							OopReadValue(statId, position);
 							TickTimeDuration := OopValue;
+							if OopValue = 0 then begin
+								OopReadValue(statId, position);
+								MicroSpeed := OopValue;
+							end;
 						{#TIMER <time 0-127> [SHOW]}
 						end else if OopWord = 'TIMER' then begin
 							OopReadValue(statId, position);
