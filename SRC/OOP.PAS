@@ -34,6 +34,7 @@ interface
 	procedure WorldClearFlag(name: TString50);
 	function OopSend(statId: integer; sendLabel: string; ignoreLock: boolean): boolean;
 	procedure OopExecute(statId: integer; var position: integer; name: TString50);
+	function OopIterateStat(statId: integer; var iStat: integer; lookup: string): boolean;
 
 implementation
 uses
@@ -169,6 +170,8 @@ procedure OopSkipLine(statId: integer; var position: integer);
 	end;
 
 function OopParseDirection(statId: integer; var position: integer; var dx, dy: integer): boolean;
+	var
+		iStat: integer;
 	begin
 		with Board.Stats[statId] do begin
 			OopParseDirection := true;
@@ -190,6 +193,21 @@ function OopParseDirection(statId: integer; var position: integer; var dx, dy: i
 				dy := 0;
 			end else if (OopWord = 'SEEK') then begin
 				CalcDirectionSeek(X, Y, dx, dy);
+			{SEEKOBJ <value>|<name> direction constant}
+			end else if (OopWord = 'SEEKOBJ') then begin
+				OopReadValue(statId, position);
+				if OopValue <> -1 then
+					CalcDirectionSeekObj(X, Y, OopValue, dx, dy)
+				else begin
+					OopReadWord(statId, position);
+					iStat := 0;
+					if OopIterateStat(statId, iStat, OopWord) then begin
+						Write(OopWord);
+						CalcDirectionSeekObj(X, Y, iStat, dx, dy);
+					end;
+				end;
+				{move iteratestat function or definition in unit before}
+			{END}
 			end else if (OopWord = 'FLOW') then begin
 				dx := StepX;
 				dy := StepY;
@@ -961,6 +979,10 @@ procedure OopExecute(statId: integer; var position: integer; name: TString50);
 								Board.Tiles[X][Y].Color := argTile.Color;
 								BoardDrawTile(X, Y);
 							end;
+						{#TICK <value (default 8)>}
+						end else if OopWord = 'TICK' then begin
+							OopReadValue(statId, position);
+							TickTimeDuration := OopValue;
 						{#TIMER <time 0-127> [SHOW]}
 						end else if OopWord = 'TIMER' then begin
 							OopReadValue(statId, position);
@@ -971,6 +993,10 @@ procedure OopExecute(statId: integer; var position: integer; name: TString50);
 								P3 := OopValue + $80;
 							if OopValue = 0 then
 								BoardDrawTile(X, Y);
+						{#READ alias of #IF READ}
+						end else if OopWord= 'READ' then begin
+							if OopCheckCondition(statId, position) then
+								goto ReadCommand;
 						{#WRITE <filename> <content>}
 						end else if OopWord = 'WRITE' then begin
 							OopReadWord(statId, position);
@@ -980,10 +1006,6 @@ procedure OopExecute(statId: integer; var position: integer; name: TString50);
 							{zFile.Lines[1]^ := OopReadLineToEnd(statId, position);}
 							{TextWindowSaveFile(OopWord, zFile);}
 							OopMakeFile(OopWord, OopReadLineToEnd(statId, position));
-						{#READ alias of #IF READ}
-						end else if OopWord= 'READ' then begin
-							if OopCheckCondition(statId, position) then
-								goto ReadCommand;
 						{#SONG <filename>}
 						end else if OopWord = 'SONG' then begin
 							LoopSong := false;

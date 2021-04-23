@@ -89,6 +89,7 @@ interface
 	function BoardShoot(element: byte; tx, ty, deltaX, deltaY: integer; source: integer): boolean;
 	procedure CalcDirectionRnd(var deltaX, deltaY: integer);
 	procedure CalcDirectionSeek(x, y: integer; var deltaX, deltaY: integer);
+	procedure CalcDirectionSeekObj(x, y, obj: integer; var deltaX, deltaY: integer);
 	procedure TransitionDrawBoardChange;
 	procedure GameUpdateSidebar;
 	procedure GameAboutScreen;
@@ -1616,6 +1617,25 @@ procedure CalcDirectionSeek(x, y: integer; var deltaX, deltaY: integer);
 			deltaY := -deltaY;
 		end;
 	end;
+
+{SEEKOBJ <value>|<name> direction constant}
+procedure CalcDirectionSeekObj(x, y, obj: integer; var deltaX, deltaY: integer);
+	begin
+		deltaX := 0;
+		deltaY := 0;
+
+		if (Random(2) < 1) or (Board.Stats[obj].Y = y) then
+			deltaX := Signum(Board.Stats[obj].X - x);
+
+		if deltaX = 0 then
+			deltaY := Signum(Board.Stats[obj].Y - y);
+
+		if World.Info.EnergizerTicks > 0 then begin
+			deltaX := -deltaX;
+			deltaY := -deltaY;
+		end;
+	end;
+{END}
 
 procedure TransitionDrawBoardChange;
 	begin
