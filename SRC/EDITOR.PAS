@@ -128,8 +128,9 @@ procedure EditorWorldCanOpenCheck(closeSavesSilently: boolean);
 			PauseOnError;
 		end;
 		if World.Info.IsSave and (not DebugEnabled) then begin
-			{WorldUnload;}
-			{WorldCreate;}
+		{LIVE EDIT HERE}
+			WorldUnload;
+			WorldCreate;
 		end;
 	end;
 
@@ -138,6 +139,7 @@ procedure EditorLoop;
 		selectedCategory: integer;
 		wasModified: boolean;
 		editorExitRequested: boolean;
+		{liveExitRequested: boolean;}
 		drawMode: TDrawMode;
 		cursorX, cursorY: integer;
 		cursorPattern, cursorColor: integer;
@@ -1195,6 +1197,12 @@ procedure EditorLoop;
 
 	begin
 		EditorWorldCanOpenCheck(true);
+		{ZENON live edit}
+		{REQUIRES FILENAME BE SAME AS WORLD NAME!!!}
+		{WorldLoad(World.Info.Name, '.ZZT', false);}
+		{liveExitRequested := false;}
+		{END}
+		BoardChange(World.Info.CurrentBoard);
 		InitElementsEditor;
 		CurrentTick := 0;
 		wasModified := false;
@@ -1353,9 +1361,11 @@ procedure EditorLoop;
 					'Q', KEY_ESCAPE: begin
 						editorExitRequested := true;
 					end;
-					'E': begin
-						editorExitRequested := true;
-					end;
+					{'E': begin}
+						{WorldSave(World.Info.Name + 'TMP', '.ZZT');}
+						{liveExitRequested := true;}
+						{editorExitRequested := true;}
+					{end;}
 					KEY_PAGE_UP: begin
 						i := World.Info.CurrentBoard - 1;
 						if i >= 0 then begin
@@ -1541,7 +1551,7 @@ procedure EditorLoop;
 				end;
 			end;
 
-			if editorExitRequested then begin
+			if editorExitRequested then begin {and not liveExitRequested}
 				EditorAskSaveChanged;
 				if InputKeyPressed = KEY_ESCAPE then begin
 					editorExitRequested := false;
@@ -1555,6 +1565,9 @@ procedure EditorLoop;
 			EditorClearPattern(copiedTiles[i], false);
 		InputKeyPressed := #0;
 		InitElementsGame;
+		{if liveExitRequested then begin}
+			{GamePlayLoop(true);}
+		{end;}
 	end;
 {$ENDIF}
 

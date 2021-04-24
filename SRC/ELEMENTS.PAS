@@ -1565,11 +1565,11 @@ procedure ElementPlayerTick(statId: integer);
 					GameDebugPrompt;
 					InputKeyPressed := #0;
 				end;
-				{ZENON LIVEEDIT}
+				{ZENON LIVE EDIT}
 {$IFDEF EDITOR}
-				'E': begin
-					EditorLoop;
-				end;
+				{'E': begin}
+					{EditorLoop;}
+				{end;}
 {$ENDIF}
 				{END}
 			end;
