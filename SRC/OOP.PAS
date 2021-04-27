@@ -945,6 +945,13 @@ procedure OopExecute(statId: integer; var position: integer; name: TString50);
 								P1 := OopValue;
 								BoardDrawTile(X, Y);
 							end;
+							if OopValue = -1 then begin
+								OopReadWord(statId, position);
+								if OopWord = 'RND' then begin
+									P1 := Random(222) + 32;
+									BoardDrawTile(X, Y);
+								end;
+							end;
 						end else if OopWord = 'DIE' then begin
 							replaceStat := true;
 							replaceTile.Element := E_EMPTY;
@@ -996,6 +1003,13 @@ procedure OopExecute(statId: integer; var position: integer; name: TString50);
 							if fxDmg then
 								OopReadWord(statId, position);
 							DrawParticles(X, Y, fxArgs[0], fxDmg, fxArgs[1], fxArgs[2], fxArgs[3], OopWord);
+						{#HEALTH <value>}
+						end else if OopWord = 'HEALTH' then begin
+							OopReadValue(statId, position);
+							if OopValue <> -1 then begin
+								World.Info.Health := OopValue;
+								GameUpdateSidebar;
+							end;
 						{#SPEED <value (default 8)> [<value 0-90 (micro ticks at 0)>]}
 						end else if OopWord = 'SPEED' then begin
 							OopReadValue(statId, position);
