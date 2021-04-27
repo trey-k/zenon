@@ -1550,8 +1550,8 @@ procedure EditorLoop;
 					end;
 				end;
 			end;
-
-			if editorExitRequested then begin {and not liveExitRequested}
+												{and not liveExitRequested}
+			if editorExitRequested then begin 
 				EditorAskSaveChanged;
 				if InputKeyPressed = KEY_ESCAPE then begin
 					editorExitRequested := false;

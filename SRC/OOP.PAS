@@ -696,6 +696,9 @@ procedure OopExecute(statId: integer; var position: integer; name: TString50);
 		insCount: integer;
 		argTile: TTile;
 		argTile2: TTile;
+		fxArgs: array[0 .. 3] of byte;
+		f: byte;
+		fxDmg: boolean;
 	label StartParsing;
 	label ReadInstruction;
 	label ReadCommand;
@@ -977,6 +980,22 @@ procedure OopExecute(statId: integer; var position: integer; name: TString50);
 								Board.Tiles[X][Y].Color := argTile.Color;
 								BoardDrawTile(X, Y);
 							end;
+						{#FX [DMG] [<value>1/2] [x?<value>] [y?<value>] [distsqr?<palette>]}
+						end else if OopWord = 'FX' then begin
+							fxDmg := false;
+							for f := 0 to 3 do begin
+								OopReadValue(statId, position);
+								if OopValue > 0 then begin
+									fxArgs[f] := OopValue;
+								end else begin
+									fxArgs[f] := fxDefaults[f];
+								end;
+							end;
+							OopReadWord(statId, position);
+							fxDmg := (OopWord = 'DMG');
+							if fxDmg then
+								OopReadWord(statId, position);
+							DrawParticles(X, Y, fxArgs[0], fxDmg, fxArgs[1], fxArgs[2], fxArgs[3], OopWord);
 						{#SPEED <value (default 8)> [<value 0-90 (micro ticks at 0)>]}
 						end else if OopWord = 'SPEED' then begin
 							OopReadValue(statId, position);

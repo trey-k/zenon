@@ -32,6 +32,7 @@ interface
 	procedure ElementMove(oldX, oldY, newX, newY: integer);
 	procedure ElementPushablePush(x, y: integer; deltaX, deltaY: integer);
 	procedure DrawPlayerSurroundings(x, y: integer; bombPhase: integer);
+	procedure DrawParticles(x, y: integer; bombPhase: integer; dmg: boolean; dx: integer; dy: integer; fxsqr: integer; palette: string);
 	procedure GamePromptEndPlay;
 	procedure ResetMessageNotShownFlags;
 	procedure InitElementsEditor;
@@ -1399,6 +1400,72 @@ procedure DrawPlayerSurroundings(x, y: integer; bombPhase: integer);
 						end;
 	end;
 
+procedure DrawParticles(x, y: integer; bombPhase: integer; dmg: boolean; dx: integer; dy: integer; fxsqr: integer; palette: string);
+	var
+		ix, iy: integer;
+		istat: integer;
+		result: boolean;
+	begin
+		for ix := ((x - dx) - 1) to ((x + dx) + 1) do
+			if (ix >= 1) and (ix <= BOARD_WIDTH) then
+				for iy := ((y - dy) - 1) to ((y + dy) + 1) do
+					if (iy >= 1) and (iy <= BOARD_HEIGHT) then
+						with Board.Tiles[ix][iy] do begin
+							if (bombPhase > 0) and ((Sqr(ix-x) + Sqr(iy-y)*2) < fxsqr) then begin
+								if bombPhase = 1 then begin
+									if Length(ElementDefs[Element].ParamTextName) <> 0 then begin
+										istat := GetStatIdAt(ix, iy);
+										if istat > 0 then
+											if dmg then
+												result := OopSend(-istat, 'BOMBED', false);
+									end;
+
+									if ElementDefs[Element].Destructible or (Element = E_STAR) then
+										if dmg then
+											BoardDamageTile(ix, iy);
+
+									if (Element = E_EMPTY) or (Element = E_BREAKABLE) then begin
+										Element := E_BREAKABLE;
+										if palette = 'RED' then begin
+											Color := swatches[0].Bg[Random(3)] + swatches[0].Fg[Random(3)];
+											{($40 + (Random(4) * 16)) + ($0C + (Random(4)));}
+										end else if palette = 'WHITE' then begin
+											Color := swatches[1].Bg[Random(2)] + swatches[1].Fg[Random(2)];
+										end else begin
+											Color := $09 + Random(7);
+										end;
+										BoardDrawTile(ix, iy);
+									end;
+
+									if (Element = E_FAKE) or (Element = E_FOREST) then begin
+										if TmpBoard.Tiles[ix][iy].Element <> 1 then begin
+											TmpBoard.Tiles[ix][iy].Color := Color;
+											TmpBoard.Tiles[ix][iy].Element := 1;
+										end;
+										{some elements could glimmer by default, no palette}
+										if palette = 'RED' then begin
+											Color := swatches[0].Bg[Random(3)] + swatches[0].Fg[Random(3)];
+											{($40 + (Random(4) * 16)) + ($0C + (Random(4)));}
+										end else if palette = 'WHITE' then begin
+											Color := swatches[1].Bg[Random(2)] + swatches[1].Fg[Random(2)];
+										end else begin
+											Color := $09 + Random(7);
+										end;
+										BoardDrawTile(ix, iy);
+									end;
+								end else begin
+									if Element = E_BREAKABLE then
+										Element := E_EMPTY;
+									if (Element = E_FAKE) or (Element = E_FOREST) then begin
+										Color := TmpBoard.Tiles[ix][iy].Color;
+										TmpBoard.Tiles[ix][iy].Element := 0;
+									end;
+								end;
+							end;
+							BoardDrawTile(ix, iy);
+						end;
+	end;
+	
 procedure GamePromptEndPlay;
 	begin
 		if World.Info.Health <= 0 then begin

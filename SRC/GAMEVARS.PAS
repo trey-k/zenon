@@ -149,6 +149,9 @@ interface
 			Stats: array[0 .. MAX_STAT + 1] of TStat;
 			Info: TBoardInfo;      
 		end;
+		TTmpBoard = record
+			Tiles: array[0 .. BOARD_WIDTH + 1] of array[0 .. BOARD_HEIGHT + 1] of TTile;
+		end;
 		TWorld = record
 			BoardCount: integer;
 			{ TODO: This shifts the memory layout. Can we make this pointer-sized again? }
@@ -162,6 +165,11 @@ interface
 			Score: integer;
 		end;
 		THighScoreList = array[1 .. HIGH_SCORE_COUNT] of THighScoreEntry;
+		TSwatch = record
+			Name: string[10];
+			Bg: array[0 .. 7] of byte;
+			Fg: array[0 .. 15] of byte;
+		end;
 	var
 		PlayerDirX: integer;
 		PlayerDirY: integer;
@@ -173,6 +181,7 @@ interface
 		SavedBoardFileName: TString50;
 		StartupWorldFileName: TString50;
 		Board: TBoard;
+		TmpBoard: TTmpBoard;
 		World: TWorld;
 		MessageAmmoNotShown: boolean;
 		MessageOutOfAmmoNotShown: boolean;

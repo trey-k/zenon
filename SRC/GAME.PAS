@@ -107,6 +107,16 @@ const
 		('....|', '...*/', '..*.-', '.*..\', '*...|', '..../', '....-', '....\');
 	ColorNames: array[1 .. 7] of string[8] =
 		('Blue', 'Green', 'Cyan', 'Red', 'Purple', 'Yellow', 'White');
+	fxDefaults: array[0 .. 3] of byte = (1, TORCH_DX, TORCH_DY, TORCH_DIST_SQR);
+	swatches: array[0 .. 1] of TSwatch = ((
+		Name: 'RED';
+		Bg: ($40, $60, $70, 0, 0, 0, 0, 0);
+		Fg: ($0C, $0E, $0F, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+	),(
+		Name: 'WHITE';
+		Bg: ($00, $70, 0, 0, 0, 0, 0, 0);
+		Fg: ($0E, $0F, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+	));
 	{}
 	DiagonalDeltaX: array[0 .. 7] of integer = (-1, 0, 1, 1, 1, 0, -1, -1);
 	DiagonalDeltaY: array[0 .. 7] of integer = (1, 1, 1, 0, -1, -1, -1, 0);

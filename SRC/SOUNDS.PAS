@@ -172,7 +172,6 @@ procedure SoundOpenFile(filename: TSongLine; var state: TSongState);
 				Inc(LineCount);
 				New(Lines[LineCount]);
 				ReadLn(tf, Lines[LineCount]^);
-				writeln(Lines[LineCount]^);
 			end;
 			Close(tf);
 		end;
