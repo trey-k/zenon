@@ -699,6 +699,9 @@ procedure OopExecute(statId: integer; var position: integer; name: TString50);
 		fxArgs: array[0 .. 3] of byte;
 		f: byte;
 		fxDmg: boolean;
+		iStat: integer;
+		{newStat: TStat;}
+		{iPos: integer;}
 	label StartParsing;
 	label ReadInstruction;
 	label ReadCommand;
@@ -987,6 +990,35 @@ procedure OopExecute(statId: integer; var position: integer; name: TString50);
 								Board.Tiles[X][Y].Color := argTile.Color;
 								BoardDrawTile(X, Y);
 							end;
+						{#CLONE [<object name>] X Y [<clone name>]}
+						end else if OopWord = 'CLONE' then begin
+							OopReadWord(statId, position);
+							OopReadValue(statId, position);
+							ix := OopValue;
+							OopReadValue(statId, position);
+							iy := OopValue;
+							iStat := 0;
+							{newStat := Board.Stats[iStat];}
+							if OopWord <> '' then begin
+								if not OopIterateStat(statId, iStat, OopWord) then
+									OopError(statId, 'Bad #CLONE');
+							end else
+								iStat := statId;
+							{OopReadWord(statId, position);}
+							{if Length(OopWord) <> 0 then begin}
+								{if Board.Stats[iStat].Data <> nil then begin}
+									{iPos := 0;}
+									{OopReadChar(iStat, iPos);}
+									{if OopChar = '@' then begin}
+										{OopReadLineToEnd(iStat, iPos);}
+										{newStat.Data := Copy(Board.Stats[iStat].Data, iPos, Length(Board.Stats[iStat].Data));}
+										{newStat.DataLen := Length(newStat.Data);}
+									{end;}
+								{end;}
+							AddStat(ix, iy, Board.Tiles[Board.Stats[iStat].X][Board.Stats[iStat].Y].Element,
+								Board.Tiles[Board.Stats[iStat].X][Board.Stats[iStat].Y].Color,
+								Board.Stats[iStat].Cycle, Board.Stats[iStat]);
+							BoardDrawTile(ix, iy);
 						{#FX [DMG] [<value>1/2] [x?<value>] [y?<value>] [distsqr?<palette>]}
 						end else if OopWord = 'FX' then begin
 							fxDmg := false;
