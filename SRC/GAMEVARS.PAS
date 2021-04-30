@@ -214,6 +214,7 @@ interface
 		BulletsOn: boolean;
 		MicroSpeed: byte;
 		FileContents: string;
+		ZVars: array[1 .. MAX_FLAG] of TString50;
 		{END}
 
 {$IFDEF EDITOR}

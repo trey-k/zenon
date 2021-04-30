@@ -172,6 +172,7 @@ procedure OopSkipLine(statId: integer; var position: integer);
 function OopParseDirection(statId: integer; var position: integer; var dx, dy: integer): boolean;
 	var
 		iStat: integer;
+		ix, iy: integer;
 	begin
 		with Board.Stats[statId] do begin
 			OopParseDirection := true;
@@ -193,7 +194,7 @@ function OopParseDirection(statId: integer; var position: integer; var dx, dy: i
 				dy := 0;
 			end else if (OopWord = 'SEEK') then begin
 				CalcDirectionSeek(X, Y, dx, dy);
-			{SEEKOBJ <value>|<name> direction constant}
+			{SEEKOBJ <number statId>|<objectname> direction constant}
 			end else if (OopWord = 'SEEKOBJ') then begin
 				OopReadValue(statId, position);
 				if OopValue <> -1 then
@@ -204,7 +205,14 @@ function OopParseDirection(statId: integer; var position: integer; var dx, dy: i
 					if OopIterateStat(statId, iStat, OopWord) then
 						CalcDirectionSeekObj(X, Y, iStat, dx, dy);
 				end;
-				{move iteratestat function or definition in unit before}
+			{XY <number x> <number y>}
+			end else if (OopWord = 'XY') then begin
+				OopReadValue(statId, position);
+				ix := OopValue;
+				OopReadValue(statId, position);
+				iy := OopValue;
+				if (ix <> -1) and (iy <> -1) then
+					CalcDirectionXY(X, Y, ix, iy, dx, dy);
 			{END}
 			end else if (OopWord = 'FLOW') then begin
 				dx := StepX;
@@ -556,6 +564,7 @@ function OopCheckCondition(statId: integer; var position: integer): boolean;
 		operation: char;
 		num: integer;
 		code: integer;
+		iVar: integer;
 	begin
 		with Board.Stats[statId] do begin
 			if OopWord = 'NOT' then begin
@@ -577,7 +586,7 @@ function OopCheckCondition(statId: integer; var position: integer): boolean;
 				ix := 0;
 				iy := 1;
 				OopCheckCondition := FindTileOnBoard(ix, iy, tile);
-			{#IF X[=|<|>]<value>}
+			{#IF X[=|<|>]<number>}
 			end else if OopWord = 'X' then begin
 				OopReadChar(statId, position);
 				operation := OopChar;
@@ -588,7 +597,7 @@ function OopCheckCondition(statId: integer; var position: integer): boolean;
 					OopCheckCondition := (Board.Stats[statId].X < OopValue)
 				else {=}
 					OopCheckCondition := (Board.Stats[statId].X = OopValue);
-			{#IF Y[=|<|>]<value>}
+			{#IF Y[=|<|>]<number>}
 			end else if OopWord = 'Y' then begin
 				OopReadChar(statId, position);
 				operation := OopChar;
@@ -599,7 +608,7 @@ function OopCheckCondition(statId: integer; var position: integer): boolean;
 					OopCheckCondition := (Board.Stats[statId].Y < OopValue)
 				else {=}
 					OopCheckCondition := (Board.Stats[statId].Y = OopValue);
-			{#IF READ <filename>[=|<|>]<value|string>}
+			{#IF READ <filename>[=|<|>]<number|string>}
 			end else if OopWord = 'READ' then begin
 				OopReadWord(statId, position);
 				OopReadFile(OopWord, FileContents);
@@ -618,6 +627,28 @@ function OopCheckCondition(statId: integer; var position: integer): boolean;
 					OopReadWord(statId, position);
 					OopCheckCondition := (UpCase(FileContents) = OopWord);
 				end;
+			{#IF VAR <number 1-MAX_FLAG>[=|<|>]<number|string>}
+			end else if OopWord = 'VAR' then begin
+				OopReadValue(statId, position);
+				iVar := OopValue;
+				if ZVars[iVar] <> '' then begin
+					Val(ZVars[iVar], num, code);
+					OopReadChar(statId, position);
+					operation := OopChar;
+					OopReadValue(statId, position);
+					if (code = 0) and (OopValue <> -1) then begin
+						if operation = '>' then
+							OopCheckCondition := (num > OopValue)
+						else if operation = '<' then
+							OopCheckCondition := (num < OopValue)
+						else {=}
+							OopCheckCondition := (num = OopValue);
+					end else begin
+						OopReadWord(statId, position);
+						OopCheckCondition := (UpCase(ZVars[iVar]) = OopWord);
+					end;
+				end else
+					OopSkipLine(statId, position);
 			{END}
 			end else begin
 				OopCheckCondition := WorldGetFlagPosition(OopWord) >= 0;
@@ -990,7 +1021,7 @@ procedure OopExecute(statId: integer; var position: integer; name: TString50);
 								Board.Tiles[X][Y].Color := argTile.Color;
 								BoardDrawTile(X, Y);
 							end;
-						{#CLONE [<object name>] X Y [<clone name>]}
+						{#CLONE [<object name>] <number x> <number y>} {trying to add clone name change}
 						end else if OopWord = 'CLONE' then begin
 							OopReadWord(statId, position);
 							OopReadValue(statId, position);
@@ -1004,6 +1035,8 @@ procedure OopExecute(statId: integer; var position: integer; name: TString50);
 									OopError(statId, 'Bad #CLONE');
 							end else
 								iStat := statId;
+							{if (ix <> -1) and (iy <> -1) then trying to add direction}
+								
 							{OopReadWord(statId, position);}
 							{if Length(OopWord) <> 0 then begin}
 								{if Board.Stats[iStat].Data <> nil then begin}
@@ -1019,7 +1052,7 @@ procedure OopExecute(statId: integer; var position: integer; name: TString50);
 								Board.Tiles[Board.Stats[iStat].X][Board.Stats[iStat].Y].Color,
 								Board.Stats[iStat].Cycle, Board.Stats[iStat]);
 							BoardDrawTile(ix, iy);
-						{#FX [DMG] [<value>1/2] [x?<value>] [y?<value>] [distsqr?<palette>]}
+						{#FX [DMG] [<number 1|2>] [<number x>] [<number y>] [<number distsqr>] [RED|WHITE]}
 						end else if OopWord = 'FX' then begin
 							fxDmg := false;
 							for f := 0 to 3 do begin
@@ -1035,14 +1068,14 @@ procedure OopExecute(statId: integer; var position: integer; name: TString50);
 							if fxDmg then
 								OopReadWord(statId, position);
 							DrawParticles(X, Y, fxArgs[0], fxDmg, fxArgs[1], fxArgs[2], fxArgs[3], OopWord);
-						{#HEALTH <value>}
+						{#HEALTH <number>}
 						end else if OopWord = 'HEALTH' then begin
 							OopReadValue(statId, position);
 							if OopValue <> -1 then begin
 								World.Info.Health := OopValue;
 								GameUpdateSidebar;
 							end;
-						{#SPEED <value (default 8)> [<value 0-90 (micro ticks at 0)>]}
+						{#SPEED <number (default 8)> [<number 0-90 micro ticks, use when initial #SPEED set to 0>]}
 						end else if OopWord = 'SPEED' then begin
 							OopReadValue(statId, position);
 							TickTimeDuration := OopValue;
@@ -1050,7 +1083,7 @@ procedure OopExecute(statId: integer; var position: integer; name: TString50);
 								OopReadValue(statId, position);
 								MicroSpeed := OopValue;
 							end;
-						{#TIMER <time 0-127> [SHOW]}
+						{#TIMER <number 0-127 ticks> [SHOW]}
 						end else if OopWord = 'TIMER' then begin
 							OopReadValue(statId, position);
 							OopReadWord(statId, position);
@@ -1064,7 +1097,7 @@ procedure OopExecute(statId: integer; var position: integer; name: TString50);
 						end else if OopWord= 'READ' then begin
 							if OopCheckCondition(statId, position) then
 								goto ReadCommand;
-						{#WRITE <filename> <content>}
+						{#WRITE <filename> <number|string>}
 						end else if OopWord = 'WRITE' then begin
 							OopReadWord(statId, position);
 							Inc(position);
@@ -1084,6 +1117,11 @@ procedure OopExecute(statId: integer; var position: integer; name: TString50);
 							SoundOpenFile(OopWord, LoadedSong);
 							{error check?}
 							SongIsPlaying := true;
+						{#VAR <number 1-MAX_FLAG> <number|string>}
+						end else if OopWord = 'VAR' then begin
+							OopReadValue(statId, position);
+							position := position + 1;
+							ZVars[OopValue] := OopReadLineToEnd(statId, position);
 						{ZENON END}
 						end else begin
 							textLine := OopWord;

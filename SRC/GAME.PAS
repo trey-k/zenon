@@ -90,6 +90,7 @@ interface
 	procedure CalcDirectionRnd(var deltaX, deltaY: integer);
 	procedure CalcDirectionSeek(x, y: integer; var deltaX, deltaY: integer);
 	procedure CalcDirectionSeekObj(x, y, obj: integer; var deltaX, deltaY: integer);
+	procedure CalcDirectionXY(x, y, ix, iy: integer; var deltaX, deltaY: integer);
 	procedure TransitionDrawBoardChange;
 	procedure GameUpdateSidebar;
 	procedure GameAboutScreen;
@@ -1628,7 +1629,7 @@ procedure CalcDirectionSeek(x, y: integer; var deltaX, deltaY: integer);
 		end;
 	end;
 
-{SEEKOBJ <value>|<name> direction constant}
+{SEEKOBJ <number statId>|<objectname> direction constant}
 procedure CalcDirectionSeekObj(x, y, obj: integer; var deltaX, deltaY: integer);
 	begin
 		deltaX := 0;
@@ -1639,11 +1640,19 @@ procedure CalcDirectionSeekObj(x, y, obj: integer; var deltaX, deltaY: integer);
 
 		if deltaX = 0 then
 			deltaY := Signum(Board.Stats[obj].Y - y);
+	end;
 
-		if World.Info.EnergizerTicks > 0 then begin
-			deltaX := -deltaX;
-			deltaY := -deltaY;
-		end;
+{XY <number x> <number y>}
+procedure CalcDirectionXY(x, y, ix, iy: integer; var deltaX, deltaY: integer);
+	begin
+		deltaX := 0;
+		deltaY := 0;
+
+		if (Random(2) < 1) or (iy = y) then
+			deltaX := Signum(ix - x);
+
+		if deltaX = 0 then
+			deltaY := Signum(iy - y);
 	end;
 {END}
 
@@ -1955,6 +1964,7 @@ procedure GamePlayLoop(boardChanged: boolean);
 	var
 		exitLoop: boolean;
 		pauseBlink: boolean;
+		i: integer;
 	procedure GameDrawSidebar;
 		begin
 			SidebarClear;
@@ -1962,7 +1972,7 @@ procedure GamePlayLoop(boardChanged: boolean);
 			SidebarClearLine(1);
 			SidebarClearLine(2);
 			VideoWriteText(61, 0, $1F, '    - - - - -      ');
-			VideoWriteText(62, 1, $70, '      ZENON     ');
+			VideoWriteText(62, 1, $70, '     ZENON      ');
 			VideoWriteText(61, 2, $1F, '    - - - - -      ');
 			if GameStateElement = E_PLAYER then begin
 				VideoWriteText(64, 7, $1E, ' Health:');
@@ -2028,13 +2038,17 @@ procedure GamePlayLoop(boardChanged: boolean);
 		if JustStarted then begin
 			GameOnStart;
 			JustStarted := false;
-			{ZENON VARS INIT}
-			BulletsOn := true;
-			MicroSpeed := 0;
-			SongIsPlaying := false;
-			LoopSong := false;
-			{END}
 		end;
+
+		{ZENON VARS INIT}
+		BulletsOn := true;
+		MicroSpeed := 0;
+		SongIsPlaying := false;
+		LoopSong := false;
+		for i := 1 to Length(ZVars) do begin
+			ZVars[i] := '';
+		end;
+		{END}
 
 		Board.Tiles[Board.Stats[0].X][Board.Stats[0].Y].Element := GameStateElement;
 		Board.Tiles[Board.Stats[0].X][Board.Stats[0].Y].Color := ElementDefs[GameStateElement].Color;
