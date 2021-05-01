@@ -731,6 +731,10 @@ procedure OopExecute(statId: integer; var position: integer; name: TString50);
 		f: byte;
 		fxDmg: boolean;
 		iStat: integer;
+		iVar: integer;
+		num: integer;
+		code: integer;
+		operation: char;
 		{newStat: TStat;}
 		{iPos: integer;}
 	label StartParsing;
@@ -1106,22 +1110,38 @@ procedure OopExecute(statId: integer; var position: integer; name: TString50);
 							{zFile.Lines[1]^ := OopReadLineToEnd(statId, position);}
 							{TextWindowSaveFile(OopWord, zFile);}
 							OopMakeFile(OopWord, OopReadLineToEnd(statId, position));
-						{#SONG <filename>}
+						{#SONG [LOOP|STOP] <filename>}
 						end else if OopWord = 'SONG' then begin
 							LoopSong := false;
 							OopReadWord(statId, position);
-							if OopWord = 'LOOP' then begin
-								LoopSong := true;
-								OopReadWord(statId, position);
+							if OopWord = 'STOP' then
+								SoundClearQueue
+							else begin
+								if OopWord = 'LOOP' then begin
+									LoopSong := true;
+									OopReadWord(statId, position);
+								end;
+								SoundOpenFile(OopWord, LoadedSong);
+								if LoadedSong.LineCount <> 0 then
+									SongIsPlaying := true;
 							end;
-							SoundOpenFile(OopWord, LoadedSong);
-							{error check?}
-							SongIsPlaying := true;
 						{#VAR <number 1-MAX_FLAG> <number|string>}
 						end else if OopWord = 'VAR' then begin
 							OopReadValue(statId, position);
-							position := position + 1;
-							ZVars[OopValue] := OopReadLineToEnd(statId, position);
+							iVar := OopValue;
+							OopReadChar(statId, position);
+							operation := OopChar;
+							if ((operation = '-') or (operation = '+')) and (ZVars[iVar] <> '') then begin
+								OopReadValue(statId, position);
+								if OopValue = -1 then
+									OopValue := 1;
+								if operation = '-' then
+									OopValue := -OopValue;
+								Val(ZVars[iVar], num, code);
+								Str(num + OopValue, ZVars[iVar]);
+							end else
+								ZVars[iVar] := OopReadLineToEnd(statId, position);
+							{position := position + 1;}
 						{ZENON END}
 						end else begin
 							textLine := OopWord;

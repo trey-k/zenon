@@ -203,6 +203,11 @@ procedure SoundClearQueue;
 	begin
 		SoundBuffer := '';
 		SoundIsPlaying := false;
+		{#SONG [STOP]}
+		SongIsPlaying := false;
+		LoopSong := false;
+		LoadedSong.LinePos := 1;
+		{END}
 		NoSound;
 	end;
 
